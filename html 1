@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breacher Bros Fanpage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            margin: 20px 0;
+        }
+        nav a {
+            color: #fff;
+            margin: 0 15px;
+            text-decoration: none;
+        }
+        .banner {
+            width: 100%;
+            height: auto;
+        }
+        .content {
+            padding: 20px;
+        }
+        .footer {
+            background: #1a1a1a;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+            bottom: 0;
+            width: 100%;
+        }
+        .shop-button {
+            background-color: #ff6600;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .social-buttons {
+            margin: 20px 0;
+        }
+        .social-buttons a {
+            margin: 0 10px;
+            text-decoration: none;
+            padding: 10px 15px;
+            background: #1a1a1a;
+            color: #fff;
+            border-radius: 5px;
+        }
+        .contact-form {
+            margin-top: 20px;
+        }
+        .privacy-policy {
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Willkommen auf der Breacher Bros Fanpage!</h1>
+    <nav>
+        <a href="#about">Über uns</a>
+        <a href="#shop">Shop</a>
+        <a href="#contact">Kontakt</a>
+        <a href="#privacy">Datenschutz</a>
+    </nav>
+</header>
+
+<img src="https://youtube.com/@breacherbros?si=2tfd9qx-0BnRraZG" alt="Breacher Bros Banner" class="banner">
+
+<div class="content" id="about">
+    <h2>Über uns</h2>
+    <p>Hier finden Sie alle Informationen über die Breacher Bros. Folgen Sie uns für die neuesten Updates und Inhalte!</p>
+    <div class="social-buttons">
+        <a href="https://www.tiktok.com/@breacherbros?_t=ZN-8w4rhCUQwkw&_r=1">TikTok</a>
+        <a href="https://www.instagram.com/breacherbros?igsh=MWQ3dTNmNG02aW9yYQ%3D%3D&utm_source=qr">Instagram</a>
+        <a href="https://youtube.com/@breacherbros?si=Xfnq9D1To0mhcF1r">YouTube</a>
+        <a href="https://www.twitch.tv/breacherbros?sr=a">Twitch</a>
+    </div>
+</div>
+
+<div class="content" id="shop">
+    <h2>Shop</h2>
+    <p>Besuchen Sie unseren Shop für exklusive Merchandise-Artikel!</p>
+    <button class="shop-button">Jetzt einkaufen</button>
+</div>
+
+<div class="content" id="contact">
+    <h2>Kontakt</h2>
+    <p>Für Anfragen kontaktieren Sie uns bitte unter: breacherbros@gmail.com</p>
+    <form class="contact-form" action="mailto:breacherbros@gmail.com" method="post" enctype="text/plain">
+        <p>Bitte füllen Sie das CAPTCHa aus, um uns zu kontaktieren:</p>
+        <input type="text" placeholder="CAPTCHA" required>
+        <button type="submit">Nachricht senden</button>
+    </form>
+</div>
+
+<div class="content" id="privacy">
+    <h2>Datenschutzerklärung</h2>
+    <div class="privacy-policy">
+        <p>Unsere Videos sind nicht für Dritte gedacht und das Herunterladen ist nicht gestattet. Die Inhalte sind nicht speziell für Kinder geeignet. Jeder, der unsere Videos auf einer unserer Plattformen anschaut, tut dies aus freiem Willen.</p>
+    </div>
+</div>
+
+<footer class="footer">
+    <p>&copy; 2023 Breacher Bros. Alle Rechte vorbehalten.</p>
+</footer>
+
+</body>
+</html>
