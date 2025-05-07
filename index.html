@@ -6,7 +6,7 @@
   <title>Breacher Bros Fanpage</title>
   <style>
     body {
-      font-family: Bello, sans-serif;
+      font-family: Britannic, sans-serif;
       background-color: #f4f4f4;
       color: #333;
       margin: 0;
@@ -123,7 +123,30 @@
     </form>
 </div>
 
-  <script>
+  <style>
+    #scrollTopBtn {
+    display: none;
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    font-size: 18px;
+    font-weight: bold;
+    border: none;
+    outline: none;
+    background-color: #ffa347; /* leichtes Orange */
+    color: white;
+    cursor: pointer;
+    padding: 18px 80px; /* höher + 4x breiter */
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease;
+}
+
+#scrollTopBtn:hover {
+    background-color: #ff8c00;
+}  </style><script>
     window.onscroll = function() {
         let btn = document.getElementById("scrollTopBtn");
         if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
@@ -140,7 +163,7 @@
         });
     }
 </script>
-  <button onclick="scrollToTop()" id="scrollTopBtn" title="Zurück nach oben">↑</button>
+ <button onclick="scrollToTop()" id="scrollTopBtn" title="Zurück nach oben">↑ Nach oben</button>
   
     
     <footer class="footer">
