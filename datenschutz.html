@@ -5,6 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Datenschutzerklärung – Breacher Bros</title>
   <style>
+    #backHomeBtn {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  z-index: 1000;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  outline: none;
+  background-color: #ffa347; /* Orange */
+  color: white;
+  cursor: pointer;
+  padding: 18px 60px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+#backHomeBtn:hover {
+  background-color: #ff8c00;
+}
     body {
       font-family: Arial, sans-serif;
       background-color: #fff;
@@ -89,7 +111,7 @@
 </main>
 
 <footer>
-  <p><a href="index.html">Zurück zur Startseite</a></p>
+  <p><a href="index.html" id="backHomeBtn" title="Zurück zur Startseite">Startseite</a>
   <p>&copy; 2025 Breacher Bros</p>
 </footer>
 
