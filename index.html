@@ -122,14 +122,30 @@
         <button type="submit">Nachricht senden</button>
     </form>
 </div>
+
+  <script>
+    window.onscroll = function() {
+        let btn = document.getElementById("scrollTopBtn");
+        if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+            btn.style.display = "block";
+        } else {
+            btn.style.display = "none";
+        }
+    };
+
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+</script>
     
     <footer class="footer">
   <p>&copy; 2025 Breacher Bros. Alle Rechte vorbehalten.</p>
 </footer>
 
-  <button onclick="scrollToTop()" id="scrollTopBtn" title="Zurück nach oben">
-    ↑
-</button>
+ 
   
 </body>
 </html>
