@@ -163,7 +163,7 @@
 <div class="content" id="contact">
   <h2>Kontakt</h2>
   <p>Du willst uns schreiben? Kein Problem! Einfach das Formular ausfüllen:</p>
-  <form action="https://formspree.io/f/xeogkewp" method="POST">
+  <form action="https://formspree.io/f/xeogkewp" method="POST" onsubmit="showThanksMessage()">
     <label for="name">Dein Name:</label><br />
     <input type="text" name="name" id="name" required><br /><br />
 
@@ -201,6 +201,10 @@
     });
   }
 </script>
-
+<script>
+  function showThanksMessage() {
+    alert("Vielen Dank für deine Nachricht.\nDu bekommst in Kürze eine Antwort.");
+  }
+</script>
 </body>
 </html>
