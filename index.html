@@ -173,6 +173,56 @@ input[type="submit"]:hover,
   font-size: 1.3rem;
   color: #ffa347;
 }
+    /* Zentrieren des Kontaktbereichs */
+#contact {
+  text-align: center;
+  margin: 40px auto;
+  max-width: 800px; /* Maximale Breite des Kontaktbereichs */
+  padding: 20px;
+  background-color: #222; /* Dunkler Hintergrund für den Bereich */
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Formularfelder anpassen */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center; /* Zentrieren der Felder */
+}
+
+form input,
+form textarea {
+  width: 80%; /* Felder etwas breiter */
+  max-width: 500px; /* Maximale Breite der Felder */
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+form textarea {
+  height: 150px; /* Höhe des Textareas anpassen */
+}
+
+/* Button anpassen */
+form button {
+  padding: 12px 25px;
+  background-color: #ffa347; /* Orange Button */
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+form button:hover {
+  background-color: #ff8c00;
+}
   </style>
 </head>
 <body>
