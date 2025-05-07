@@ -48,21 +48,28 @@
     .social-buttons {
       margin: 20px 0;
     }
-    .social-buttons a {
-      margin: 0 10px;
-      text-decoration: none;
-      padding: 10px 15px;
-      background: #1a1a1a;
-      color: #fff;
-      border-radius: 5px;
-    }
-    iframe {
-      width: 100%;
-      max-width: 560px;
-      height: 315px;
-      margin: 10px auto;
-      display: block;
-    }
+    .social-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin: 20px 0;
+  padding: 10px 0;
+}
+
+.social-buttons a {
+  text-decoration: none;
+  padding: 10px 20px;
+  background: #ffa347;
+  color: #fff;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.social-buttons a:hover {
+  background-color: #ff8c00;
+}
   </style>
 </head>
 <body>
