@@ -46,34 +46,70 @@
       text-align: center;
       padding: 10px 0;
     }
+
     .social-buttons {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 20px 0;
+      padding: 10px 0;
+    }
+
+    .social-buttons a {
+      text-decoration: none;
+      padding: 10px 20px;
+      background: #ffa347;
+      color: #fff;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    .social-buttons a:hover {
+      background-color: #ff8c00;
+    }
+
+    .social-buttons a i {
+      margin-right: 8px;
+    }
+
+    .video-embed {
+      display: flex;
+      justify-content: center;
       margin: 20px 0;
     }
-    .social-buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin: 20px 0;
-  padding: 10px 0;
-}
 
-.social-buttons a {
-  text-decoration: none;
-  padding: 10px 20px;
-  background: #ffa347;
-  color: #fff;
-  border-radius: 5px;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
-}
+    .video-embed iframe,
+    .video-embed blockquote {
+      max-width: 100%;
+      width: 560px;
+      height: 315px;
+    }
 
-.social-buttons a:hover {
-  background-color: #ff8c00;
-}
-    .social-buttons a i {
-  margin-right: 8px;
-}
+    #scrollTopBtn {
+      display: none;
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      font-size: 18px;
+      font-weight: bold;
+      border: none;
+      outline: none;
+      background-color: #ffa347;
+      color: white;
+      cursor: pointer;
+      padding: 18px 60px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.3s ease;
+    }
+
+    #scrollTopBtn:hover {
+      background-color: #ff8c00;
+    }
   </style>
 </head>
 <body>
@@ -95,93 +131,76 @@
   <h2>Über uns</h2>
   <p>Hier finden Sie alle Informationen über die Breacher Bros. Folgen Sie uns für die neuesten Updates und Inhalte!</p>
   <div class="social-buttons">
-  <a href="https://www.tiktok.com/@breacherbros" target="_blank"><i class="fab fa-tiktok"></i> TikTok</a>
-  <a href="https://www.instagram.com/breacherbros" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
-  <a href="https://youtube.com/@breacherbros" target="_blank"><i class="fab fa-youtube"></i> YouTube</a>
-  <a href="https://www.twitch.tv/breacherbros" target="_blank"><i class="fab fa-twitch"></i> Twitch</a>
-</div>
+    <a href="https://www.tiktok.com/@breacherbros" target="_blank"><i class="fab fa-tiktok"></i> TikTok</a>
+    <a href="https://www.instagram.com/breacherbros" target="_blank"><i class="fab fa-instagram"></i> Instagram</a>
+    <a href="https://youtube.com/@breacherbros" target="_blank"><i class="fab fa-youtube"></i> YouTube</a>
+    <a href="https://www.twitch.tv/breacherbros" target="_blank"><i class="fab fa-twitch"></i> Twitch</a>
+  </div>
 </div>
 
 <div class="content" id="videos">
   <h2>Neueste Videos</h2>
+
   <!-- YouTube Embed -->
-  <iframe src="https://www.youtube.com/embed?listType=AxwQae2WXYc&list=PLf_FIfiHRIAUCHjD7fUr_vy3yGCFx3xzC" allowfullscreen></iframe>
+  <div class="video-embed">
+    <iframe src="https://www.youtube.com/embed?listType=playlist&list=PLf_FIfiHRIAUCHjD7fUr_vy3yGCFx3xzC" allowfullscreen></iframe>
+  </div>
 
   <!-- TikTok Embed -->
-<blockquote class="tiktok-embed" cite="https://www.tiktok.com/@breacherbros/video/1234567890" data-video-id="1234567890" style="max-width: 605px;min-width: 325px;" >
-  <section> </section>
-</blockquote>
-<script async src="https://www.tiktok.com/embed.js"></script>
+  <div class="video-embed">
+    <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@breacherbros/video/1234567890" data-video-id="1234567890" style="max-width: 605px; min-width: 325px;">
+      <section> </section>
+    </blockquote>
+  </div>
+  <script async src="https://www.tiktok.com/embed.js"></script>
 
   <!-- Twitch Embed -->
-  <iframe src="https://player.twitch.tv/?channel=breacherbros&parent=breacherbros.com" allowfullscreen></iframe>
+  <div class="video-embed">
+    <iframe src="https://player.twitch.tv/?channel=breacherbros&parent=breacherbros.com" allowfullscreen></iframe>
+  </div>
 </div>
 
 <div class="content" id="contact">
-    <h2>Kontakt</h2>
-    <p>Du willst uns schreiben? Kein Problem! Einfach das Formular ausfüllen:</p>
-   <form action="https://formspree.io/f/xeogkewp" method="POST">
-  <label for="name">Dein Name:</label><br />
-  <input type="text" name="name" id="name" required><br /><br />
+  <h2>Kontakt</h2>
+  <p>Du willst uns schreiben? Kein Problem! Einfach das Formular ausfüllen:</p>
+  <form action="https://formspree.io/f/xeogkewp" method="POST">
+    <label for="name">Dein Name:</label><br />
+    <input type="text" name="name" id="name" required><br /><br />
 
-  <label for="email">Deine E-Mail:</label><br />
-  <input type="email" name="email" id="email" required><br /><br />
+    <label for="email">Deine E-Mail:</label><br />
+    <input type="email" name="email" id="email" required><br /><br />
 
-  <label for="message">Deine Nachricht:</label><br />
-  <textarea name="message" id="message" rows="5" required></textarea><br /><br />
+    <label for="message">Deine Nachricht:</label><br />
+    <textarea name="message" id="message" rows="5" required></textarea><br /><br />
 
-  <button type="submit">Nachricht senden</button>
-</form>
+    <button type="submit">Nachricht senden</button>
+  </form>
 </div>
 
-  <style>
-    #scrollTopBtn {
-    display: none;
-    position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    font-size: 18px;
-    font-weight: bold;
-    border: none;
-    outline: none;
-    background-color: #ffa347; /* leichtes Orange */
-    color: white;
-    cursor: pointer;
-    padding: 18px 60px; /* höher + 4x breiter */
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    transition: background-color 0.3s ease;
-}
+<!-- Scroll-To-Top Button -->
+<button onclick="scrollToTop()" id="scrollTopBtn" title="Zurück nach oben">↑ Nach oben</button>
 
-#scrollTopBtn:hover {
-    background-color: #ff8c00;
-}  </style><script>
-    window.onscroll = function() {
-        let btn = document.getElementById("scrollTopBtn");
-        if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-            btn.style.display = "block";
-        } else {
-            btn.style.display = "none";
-        }
-    };
-
-    function scrollToTop() {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    }
-</script>
- <button onclick="scrollToTop()" id="scrollTopBtn" title="Zurück nach oben">↑ Nach oben</button>
-  
-    
-    <footer class="footer">
+<footer class="footer">
   <p>&copy; 2025 Breacher Bros. Alle Rechte vorbehalten.</p>
 </footer>
 
- 
-  
+<script>
+  window.onscroll = function () {
+    let btn = document.getElementById("scrollTopBtn");
+    if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+      btn.style.display = "block";
+    } else {
+      btn.style.display = "none";
+    }
+  };
+
+  function scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
+</script>
+
 </body>
 </html>
