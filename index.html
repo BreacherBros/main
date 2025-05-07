@@ -95,11 +95,22 @@
 
 <div class="content" id="contact">
     <h2>Kontakt</h2>
-    <p>Für Anfragen kontaktieren Sie uns bitte unter: breacherbros@gmail.com</p>
+    <p>Du willst uns schreiben? Kein Problem! Einfach das Formular ausfüllen:</p>
     <form class="contact-form" action="mailto:breacherbros@gmail.com" method="post" enctype="text/plain">
-      
+        <label for="name">Dein Name:</label><br />
+        <input type="text" name="name" id="name" required><br /><br />
+
+        <label for="email">Deine E-Mail:</label><br />
+        <input type="email" name="email" id="email" required><br /><br />
+
+        <label for="message">Deine Nachricht:</label><br />
+        <textarea name="message" id="message" rows="5" required></textarea><br /><br />
+
+        <button type="submit">Nachricht senden</button>
+    </form>
 </div>
 
+    
 <div class="content" id="privacy">
     <h2>Datenschutzerklärung</h2>
     <div class="privacy-policy">
