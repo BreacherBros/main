@@ -363,16 +363,50 @@ Controller ready? Dann rein ins Getümmel.</p>
 <div class="content" id="contact">
   <h2>Kontakt</h2>
   <p>Du willst uns schreiben? Kein Problem! Einfach das Formular ausfüllen:</p>
-  <form id="contact-form">
+
+  <form id="contactForm" action="https://formspree.io/f/xeogkewp" method="POST">
     <label for="name">Dein Name:</label><br />
     <input type="text" name="name" id="name" required><br /><br />
+
     <label for="email">Deine E-Mail:</label><br />
     <input type="email" name="email" id="email" required><br /><br />
+
     <label for="message">Deine Nachricht:</label><br />
     <textarea name="message" id="message" rows="5" required></textarea><br /><br />
+
     <button type="submit">Nachricht senden</button>
   </form>
+
+  <!-- Popup-Fenster -->
+  <div id="popup" style="display:none; margin-top:20px; color:lightgreen; font-weight:bold;">
+    Vielen Dank für deine Nachricht. Du bekommst in Kürze eine Antwort.
+  </div>
 </div>
+  <script>
+document.getElementById("contactForm").addEventListener("submit", function(e) {
+  e.preventDefault(); // Verhindert Weiterleitung
+
+  const form = e.target;
+  const data = new FormData(form);
+
+  fetch(form.action, {
+    method: form.method,
+    body: data,
+    headers: {
+      'Accept': 'application/json'
+    }
+  }).then(response => {
+    if (response.ok) {
+      document.getElementById("popup").style.display = "block";
+      form.reset();
+    } else {
+      alert("Es gab ein Problem beim Senden. Bitte später erneut versuchen.");
+    }
+  }).catch(error => {
+    alert("Netzwerkfehler. Bitte später erneut versuchen.");
+  });
+});
+</script>
 
 <!-- Scroll-To-Top Button -->
 <button onclick="scrollToTop()" id="scrollTopBtn" title="Zurück nach oben">↑ Nach oben</button>
