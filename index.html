@@ -43,11 +43,18 @@
     }
 
     header img.logo {
-      width: 300px;
-      height: auto;
-      display: block;
-      margin: 0 auto 10px;
-    }
+  width: 300px;
+  height: auto;
+  display: block;
+  margin: 0 auto 10px;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 0 30px rgba(255, 163, 71, 0.3); /* leichtes Grundleuchten */
+}
+
+header img.logo:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 0 60px rgba(255, 163, 71, 0.8); /* orange Hinterleuchtung beim Hover */
+}
    
 
     nav {
@@ -265,15 +272,15 @@
     }
 
     .card img {
-      width: 100%;
-      max-height: 370px;
-      object-fit: contain;
-      justify-content: center;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      background-color: #333;
-      padding: 10px;
-    }
+  width: 100%;
+  height: 370px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin: 0 auto 15px;
+  display: block;
+  box-shadow: 0 0 25px rgba(255, 140, 0, 0.6); /* orange Hinterleuchtung */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
     .card h2 {
       color: #ffa347;
