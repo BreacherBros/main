@@ -6,6 +6,72 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <title>Breacher Bros Fanpage</title>
   <style>
+    <style>
+.logo-glow-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.logo {
+  display: block;
+  width: 200px; /* Anpassen je nach Logo-Größe */
+  height: auto;
+  z-index: 1;
+  position: relative;
+}
+
+/* Linker orangefarbener Glow */
+.logo-glow-wrapper::before {
+  content: '';
+  position: absolute;
+  left: -30px;
+  top: 50%;
+  width: 60px;
+  height: 60px;
+  background: orange;
+  border-radius: 50%;
+  filter: blur(20px);
+  transform: translateY(-50%);
+  animation: glowLeft 2.5s infinite ease-in-out;
+}
+
+/* Rechter hellblauer Glow */
+.logo-glow-wrapper::after {
+  content: '';
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  width: 60px;
+  height: 60px;
+  background: #00d9ff;
+  border-radius: 50%;
+  filter: blur(20px);
+  transform: translateY(-50%);
+  animation: glowRight 2.5s infinite ease-in-out;
+}
+
+@keyframes glowLeft {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(-50%) scale(0.9);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
+@keyframes glowRight {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateY(-50%) scale(0.9);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+</style>
     .shine-effect {
   position: relative;
   display: inline-block;
@@ -350,7 +416,9 @@
 <body>
 
 <header>
-  <img src="logo.png" alt="Breacher Bros Logo" class="logo shine-effect">
+  <div class="logo-glow-wrapper">
+  <img src="logo.png" alt="Breacher Bros Logo" class="logo">
+</div>
   <h1>Willkommen bei den BreacherBros!</h1>
   <nav>
    <p5>
