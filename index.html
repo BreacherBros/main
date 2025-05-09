@@ -313,13 +313,92 @@
       .breacher-right {
         width: 95%;
       }
+      .logo-container {
+  position: relative;
+  display: inline-block;
+}
+
+.logo {
+  width: 200px;
+  height: auto;
+  display: block;
+  position: relative;
+  z-index: 2;
+}
+
+/* Glows links und rechts */
+.glow {
+  position: absolute;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  filter: blur(20px);
+  transform: translateY(-50%);
+  z-index: 1;
+  animation: pulse 2.5s infinite;
+}
+
+.glow-left {
+  left: -30px;
+  background-color: orange;
+}
+
+.glow-right {
+  right: -30px;
+  background-color: #00d9ff;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translateY(-50%) scale(0.9);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-50%) scale(1.2);
+  }
+}
+
+/* Shine-Effekt */
+.shine {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-20deg);
+  z-index: 3;
+  animation: shineMove 3s infinite;
+}
+
+@keyframes shineMove {
+  0% {
+    left: -75%;
+  }
+  100% {
+    left: 125%;
+  }
+}
     }
   </style>
 </head>
 <body>
 
 <header>
-  <img src="logo.png" alt="Breacher Bros Logo" class="logo" />
+  <div class="logo-container">
+  <span class="glow glow-left"></span>
+  <img src="logo.png" alt="Breacher Bros Logo" class="logo">
+  <span class="glow glow-right"></span>
+  <span class="shine"></span>
+</div>
   <h1>Willkommen bei den BreacherBros!</h1>
   <nav>
    <p5>
