@@ -6,103 +6,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <title>Breacher Bros Fanpage</title>
   <style>
-    <style>
-.logo-glow-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.logo {
-  display: block;
-  width: 200px; /* Anpassen je nach Logo-Größe */
-  height: auto;
-  z-index: 1;
-  position: relative;
-}
-
-/* Linker orangefarbener Glow */
-.logo-glow-wrapper::before {
-  content: '';
-  position: absolute;
-  left: -30px;
-  top: 50%;
-  width: 60px;
-  height: 60px;
-  background: orange;
-  border-radius: 50%;
-  filter: blur(20px);
-  transform: translateY(-50%);
-  animation: glowLeft 2.5s infinite ease-in-out;
-}
-
-/* Rechter hellblauer Glow */
-.logo-glow-wrapper::after {
-  content: '';
-  position: absolute;
-  right: -30px;
-  top: 50%;
-  width: 60px;
-  height: 60px;
-  background: #00d9ff;
-  border-radius: 50%;
-  filter: blur(20px);
-  transform: translateY(-50%);
-  animation: glowRight 2.5s infinite ease-in-out;
-}
-
-@keyframes glowLeft {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translateY(-50%) scale(0.9);
-  }
-  50% {
-    opacity: 0.8;
-    transform: translateY(-50%) scale(1.2);
-  }
-}
-
-@keyframes glowRight {
-  0%, 100% {
-    opacity: 0.3;
-    transform: translateY(-50%) scale(0.9);
-  }
-  50% {
-    opacity: 0.8;
-    transform: translateY(-50%) scale(1.2);
-  }
-}
-</style>
-    .shine-effect {
-  position: relative;
-  display: inline-block;
-  overflow: hidden;
-}
-    .shine-effect {
-  filter: drop-shadow(0 0 15px #ffa347);
-}
-
-.shine-effect::before {
-  content: '';
-  
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%);
-  transform: rotate(25deg);
-  animation: shine 2.5s infinite;
-  pointer-events: none;
-}
-
-@keyframes shine {
-  0% {
-    transform: translateX(-100%) rotate(25deg);
-  }
-  100% {
-    transform: translateX(100%) rotate(25deg);
-  }
-}
 
     .video-embed iframe {
   width: 100%;
@@ -317,7 +220,7 @@
     form input,
     form textarea {
       width: device-width;
-      max-width: 800px;
+      max-width: 450px;
       padding: 10px;
       font-size: 1rem;
       border: 2px solid #ccc;
@@ -416,9 +319,7 @@
 <body>
 
 <header>
-  <div class="logo-glow-wrapper">
-  <img src="logo.png" alt="Breacher Bros Logo" class="logo">
-</div>
+  <img src="logo.png" alt="Breacher Bros Logo" class="logo" />
   <h1>Willkommen bei den BreacherBros!</h1>
   <nav>
    <p5>
