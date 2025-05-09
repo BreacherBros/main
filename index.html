@@ -6,6 +6,33 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <title>Breacher Bros Fanpage</title>
   <style>
+    .shine-effect {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.shine-effect::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%);
+  transform: rotate(25deg);
+  animation: shine 2.5s infinite;
+  pointer-events: none;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(25deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(25deg);
+  }
+}
 
     .video-embed iframe {
   width: 100%;
@@ -319,7 +346,7 @@
 <body>
 
 <header>
-  <img src="logo.png" alt="Breacher Bros Logo" class="logo" />
+  <img src="logo.png" alt="Breacher Bros Logo" class="logo shine-effect">
   <h1>Willkommen bei den BreacherBros!</h1>
   <nav>
    <p5>
