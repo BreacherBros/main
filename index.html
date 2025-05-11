@@ -17,37 +17,25 @@
     }
 
     .logo {
-      width: 200px;
+      width: 300px;
       height: auto;
       position: relative;
       z-index: 1;
     }
 
-    /* Leuchten links (orange) */
-    .glow-left {
-      position: absolute;
-      left: -20px;
-      top: 70%;
-      transform: translateY(-50%);
-      width: 40px;
-      height: 100px;
-      background: rgba(255, 165, 0, 0.4); /* Orange */
-      filter: blur(40px);
-      z-index: 1;
-    }
-
-    /* Leuchten rechts (hellblau) */
-    .glow-right {
-      position: absolute;
-      right: -20px;
-      top: 70%;
-      transform: translateY(-50%);
-      width: 40px;
-      height: 100px;
-      background: rgba(0, 200, 255, 0.4); /* Hellblau */
-      filter: blur(40px);
-      z-index: 1;
-    }
+.glow-left,
+.glow-right {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 0; /* hinter dem Logo */
+  background: radial-gradient(circle at 25% center, rgba(255, 165, 0, 0.7), transparent 70%), 
+              radial-gradient(circle at 75% center, rgba(173, 216, 230, 0.7), transparent 70%);
+  animation: glowAnimation 4s linear infinite;
+}
 
 
 
