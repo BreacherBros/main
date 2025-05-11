@@ -16,7 +16,7 @@
 }
     }
 
-.logo-wrapper {
+.logo-container {
   position: relative;
   display: inline-block;
 }
@@ -25,22 +25,25 @@
   display: block;
   position: relative;
   z-index: 2;
-  width: 300px; /* passe die Breite an dein Logo an */
+  width: 300px;
+  height: auto;
 }
 
-.glow {
+.logo-container::before {
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 120%;
-  height: 100%;
   transform: translate(-50%, -50%);
+  width: 140%;
+  height: 140%;
   z-index: 1;
+  background: radial-gradient(circle at 25% center, rgba(255, 165, 0, 0.6) 0%, transparent 70%),
+              radial-gradient(circle at 75% center, rgba(173, 216, 230, 0.6) 0%, transparent 70%);
+  filter: blur(40px);
   pointer-events: none;
-  background: radial-gradient(circle at 30% center, rgba(255, 165, 0, 0.5) 0%, transparent 60%),
-              radial-gradient(circle at 70% center, rgba(173, 216, 230, 0.5) 0%, transparent 60%);
-  filter: blur(30px);
 }
+
 .shine {
   width: 12px;
   height: 12px;
@@ -378,10 +381,11 @@
 </body>
 
 <header>
-   <div class="logo-wrapper">
-  <div class="glow"></div>
-  <img src="dein-logo.png" alt="Breacher Bros Logo" class="logo">
-</div>
+   <div class="logo-container">
+    <div class="glow-left"></div>
+    <div class="glow-right"></div>
+        <img src="logo.png" alt="Breacher Bros Logo" class="logo">
+  </div>
      
  <h1>Willkommen bei den BreacherBros!</h1>
   <nav>
