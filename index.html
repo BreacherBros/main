@@ -45,17 +45,7 @@
       z-index: 1;
     }
 
-    /* Shine-Effekt (Punkt, der rotiert) */
-  .shine-wrapper {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 240px;  /* etwas größer als das Logo */
-  height: 240px;
-  transform: translate(-50%, -50%);
-  animation: rotateShineWrapper 4s linear infinite;
-  z-index: 3;
-}
+
 
 .shine {
   width: 12px;
@@ -68,10 +58,7 @@
   transform: translateX(-50%);
 }
 
-@keyframes rotateShineWrapper {
-  0%   { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
+
 
 
     .video-embed iframe {
