@@ -380,6 +380,36 @@
  
 </body>
 
+  <!-- SVG-FILTER FÜR ORANGE + HELLBLAUEN GLOW -->
+  <svg width="0" height="0">
+    <filter id="dual-glow" x="-150%" y="-150%" width="400%" height="400%">
+      <!-- Basis-Weichzeichnung -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur"/>
+
+      <!-- Orange Glow (links) -->
+      <feOffset in="blur" dx="-6" dy="0" result="orangeOffset"/>
+      <feFlood flood-color="orange" result="orangeColor"/>
+      <feComposite in="orangeColor" in2="orangeOffset" operator="in" result="orangeGlow"/>
+
+      <!-- Hellblauer Glow (rechts) -->
+      <feOffset in="blur" dx="6" dy="0" result="blueOffset"/>
+      <feFlood flood-color="deepskyblue" result="blueColor"/>
+      <feComposite in="blueColor" in2="blueOffset" operator="in" result="blueGlow"/>
+
+      <!-- Alle zusammenführen -->
+      <feMerge>
+        <feMergeNode in="orangeGlow"/>
+        <feMergeNode in="blueGlow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </svg>
+
+  <!-- DEIN LOGO -->
+  <img src="breacherbros-logo.png" alt="Breacher Bros Logo" class="logo">
+
+</body>
+</html>
 <header>
    <div class="logo-container">
     <div class="glow-left"></div>
