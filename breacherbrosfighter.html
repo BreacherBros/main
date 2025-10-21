@@ -15,13 +15,11 @@
       font-family: Inter, system-ui, -apple-system, Roboto, "Segoe UI", "Helvetica Neue", Arial;
     }
     html,body{height:100%;margin:0;background:linear-gradient(180deg,#071018 0%, #0b1220 100%);overflow:hidden;color:var(--text)}
-    /* canvas must be behind the UI */
     canvas{display:block; position:absolute; top:0; left:0; z-index:0}
 
     /* UI */
     #ui{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none; z-index:10}
     .panel{position:absolute;background:var(--panel);backdrop-filter:blur(6px);border-radius:14px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,0.6);color:var(--text);pointer-events:auto}
-    /* Startscreen / Logo */
     #startScreen{width:640px;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;padding:28px;border-radius:16px;
                  background: radial-gradient(circle at 30% 10%, rgba(255,59,59,0.12), rgba(0,0,0,0.7));border:2px solid rgba(255,59,59,0.18);
                  box-shadow:0 12px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02)}
@@ -52,9 +50,6 @@
     /* Level panel */
     #levelPanel{position:absolute;right:12px;bottom:12px;padding:14px 18px;border-radius:12px}
 
-    /* Buttons fancy */
-    .btnSmall{padding:8px 12px;border-radius:8px;border:none;background:linear-gradient(180deg,#121417,#0b0d10);color:var(--text);cursor:pointer}
-
     /* Responsive */
     @media (max-width:800px){
       #startScreen{width:94%}
@@ -67,11 +62,8 @@
   <div id="ui">
     <div id="startScreen" class="panel" aria-label="Startscreen">
       <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
-        <!-- Simplified SVG-Logo (BreacherB-like mark) -->
         <svg width="72" height="72" viewBox="0 0 64 64" aria-hidden="true">
-          <defs>
-            <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ff3b3b"/><stop offset="1" stop-color="#ffd166"/></linearGradient>
-          </defs>
+          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ff3b3b"/><stop offset="1" stop-color="#ffd166"/></linearGradient></defs>
           <rect x="0" y="0" width="64" height="64" rx="10" fill="#08101a"/>
           <path d="M16 44 L32 16 L48 44 Z" fill="url(#g)" stroke="#111" stroke-width="1.2"/>
           <circle cx="32" cy="34" r="5" fill="#08101a"/>
@@ -109,32 +101,100 @@
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
     import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
 
-    // ----- Globals -----
+    // ---- WebAudio simple synthesized SFX (works immediately) ----
+    const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playGunshot() {
+      // short noise burst + pitch envelope
+      const bufferSize = AudioCtx.sampleRate * 0.12;
+      const noiseBuffer = AudioCtx.createBuffer(1, bufferSize, AudioCtx.sampleRate);
+      const data = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.5));
+
+      const noise = AudioCtx.createBufferSource();
+      noise.buffer = noiseBuffer;
+
+      const noiseFilter = AudioCtx.createBiquadFilter();
+      noiseFilter.type = 'highpass';
+      noiseFilter.frequency.value = 800;
+
+      const gain = AudioCtx.createGain();
+      gain.gain.value = 0.001;
+      gain.gain.linearRampToValueAtTime(0.8, AudioCtx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, AudioCtx.currentTime + 0.12);
+
+      noise.connect(noiseFilter).connect(gain).connect(AudioCtx.destination);
+      noise.start();
+      noise.stop(AudioCtx.currentTime + 0.13);
+
+      // optional metallic click (bullet)
+      const osc = AudioCtx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1200, AudioCtx.currentTime);
+      const g2 = AudioCtx.createGain();
+      g2.gain.setValueAtTime(0.0001, AudioCtx.currentTime);
+      g2.gain.exponentialRampToValueAtTime(0.06, AudioCtx.currentTime + 0.01);
+      g2.gain.exponentialRampToValueAtTime(0.00001, AudioCtx.currentTime + 0.18);
+      osc.connect(g2).connect(AudioCtx.destination);
+      osc.start();
+      osc.stop(AudioCtx.currentTime + 0.18);
+    }
+
+    function playHitSound() {
+      const osc = AudioCtx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(650, AudioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(220, AudioCtx.currentTime + 0.16);
+      const g = AudioCtx.createGain();
+      g.gain.setValueAtTime(0.6, AudioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, AudioCtx.currentTime + 0.16);
+      osc.connect(g).connect(AudioCtx.destination);
+      osc.start();
+      osc.stop(AudioCtx.currentTime + 0.16);
+    }
+
+    let footstepTimer = null;
+    function startFootsteps() {
+      if (footstepTimer) return;
+      footstepTimer = setInterval(()=> {
+        // small footstep click
+        const o = AudioCtx.createOscillator();
+        o.type = 'square';
+        o.frequency.value = 200 + Math.random()*80;
+        const g = AudioCtx.createGain();
+        g.gain.setValueAtTime(0.0001, AudioCtx.currentTime);
+        g.gain.linearRampToValueAtTime(0.12, AudioCtx.currentTime + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.00001, AudioCtx.currentTime + 0.2);
+        o.connect(g).connect(AudioCtx.destination);
+        o.start();
+        o.stop(AudioCtx.currentTime + 0.22);
+      }, 360);
+    }
+    function stopFootsteps() { if(footstepTimer){ clearInterval(footstepTimer); footstepTimer = null; } }
+
+    // ---- Three.js game code ----
     let scene, camera, renderer, controls;
     const clock = new THREE.Clock();
     const objects = [];
     const enemies = [];
+    const particles = [];
 
-    // player state
     const player = {
       health: 100,
       maxHealth: 100,
       speed: 6,
       sprintMultiplier: 1.7,
       position: new THREE.Vector3(),
-      velocity: new THREE.Vector3(),
-      canShoot: true,
-      fireRate: 0.12,
-      lastShot: 0,
       ammo: 30,
       magSize: 30,
       reloadTime: 1.6,
       reloading: false,
+      fireRate: 0.12,
+      lastShot: 0,
       selectedClass: null,
       level: 0
     };
 
-    // classes
     const classes = [
       { id:'assault', name:'Assault', desc:'Balanced - guter Allrounder', hp:110, speed:6, fireRate:0.12, mag:30, reload:1.6, color:0xff6b6b },
       { id:'breacher', name:'Breacher', desc:'High HP, langsamer', hp:150, speed:4.8, fireRate:0.16, mag:20, reload:2.0, color:0xffb86b },
@@ -143,7 +203,7 @@
       { id:'sniper', name:'Sniper', desc:'Hoher Schaden, langsamer Feuern', hp:90, speed:5.4, fireRate:0.6, mag:10, reload:2.2, color:0xc896ff }
     ];
 
-    // UI refs
+    // UI
     const startScreen = document.getElementById('startScreen');
     const classSelect = document.getElementById('classSelect');
     const startBtn = document.getElementById('startGame');
@@ -155,60 +215,50 @@
     const msg = document.getElementById('message');
     const enemyCountEl = document.getElementById('enemyCount');
 
-    // movement state
     const keys = { forward:false, back:false, left:false, right:false, sprint:false };
 
-    // --- Initialize scene + UI (but keep canvas behind UI) ---
-    initScene();
+    init();
     populateClassUI();
     animate();
 
-    function initScene(){
-      // scene + camera
+    function init(){
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0a0f12);
 
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 500);
-      camera.position.set(0,1.6,8);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera.position.set(0,1.6,4);
 
-      // renderer
       renderer = new THREE.WebGLRenderer({antialias:true});
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
-      // ensure canvas is behind UI
-      renderer.domElement.style.position = 'absolute';
-      renderer.domElement.style.top = '0';
-      renderer.domElement.style.left = '0';
-      renderer.domElement.style.zIndex = '0';
+      renderer.domElement.style.position='absolute';
+      renderer.domElement.style.zIndex='0';
       document.body.appendChild(renderer.domElement);
 
-      // lights
       const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
       scene.add(hemi);
       const dir = new THREE.DirectionalLight(0xffffff, 0.8);
       dir.position.set(5,10,7);
       scene.add(dir);
 
+      // Level architecture generator: grid rooms with walls and door gaps
+      generateRooms(5,5, 8); // 5x5 rooms, each room size 8
+
       // floor
-      const floorMat = new THREE.MeshStandardMaterial({color:0x2a2f33, roughness:0.95});
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(300,300), floorMat);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(400,400), new THREE.MeshStandardMaterial({color:0x2a2f33, roughness:1}));
       floor.rotation.x = -Math.PI/2;
       scene.add(floor);
-      objects.push(floor);
 
-      // cover blocks
-      for(let i=0;i<60;i++){
-        const box = new THREE.Mesh(new THREE.BoxGeometry(2 + Math.random()*4, 1 + Math.random()*2, 2 + Math.random()*4),
+      // cover props
+      for(let i=0;i<80;i++){
+        const box = new THREE.Mesh(new THREE.BoxGeometry(1 + Math.random()*3, 1 + Math.random()*2, 1 + Math.random()*3),
           new THREE.MeshStandardMaterial({color:0x1f2326}));
-        box.position.set((Math.random()-0.5)*160, 0.5 + Math.random()*1.5, (Math.random()-0.5)*160);
+        box.position.set((Math.random()-0.5)*200, 0.5 + Math.random()*1.5, (Math.random()-0.5)*200);
         scene.add(box);
         objects.push(box);
       }
 
-      // fog
-      scene.fog = new THREE.FogExp2(0x0b1013, 0.002);
-
-      // pointer controls
+      // pointer lock
       controls = new PointerLockControls(camera, document.body);
       controls.addEventListener('lock', ()=>{
         fadeOutStartScreen();
@@ -219,24 +269,80 @@
         msg.innerText = 'Pause';
       });
 
-      // input
+      // inputs
       window.addEventListener('keydown', onKeyDown);
       window.addEventListener('keyup', onKeyUp);
       window.addEventListener('resize', onResize);
       window.addEventListener('mousedown', (e)=>{ if(e.button===0) tryShoot(); });
       window.addEventListener('keydown', (e)=>{ if(e.code==='KeyR') reload(); });
 
-      // start button: only enabled after selection
+      // start button
       startBtn.addEventListener('click', ()=>{
         if(!player.selectedClass){ msg.innerText = 'Wähle zuerst eine Klasse!'; return; }
-        // start mission logic first (spawning, HUD update)
         startMission();
-        // then trigger pointer lock — must be direct user gesture (we are inside click handler)
+        // resume audio context on user gesture to allow WebAudio playback
+        if (AudioCtx.state === 'suspended') { AudioCtx.resume(); }
+        // pointer lock must be triggered on user gesture
         controls.lock();
       });
 
       magSize.innerText = player.magSize;
       msg.innerText = 'Wähle Klasse & starte Mission';
+    }
+
+    // Room generator: creates simple rooms and walls with door gaps
+    function generateRooms(cols, rows, roomSize){
+      const offset = (cols * roomSize) / 2;
+      const wallMat = new THREE.MeshStandardMaterial({color:0x232528});
+      for(let x=0;x<cols;x++){
+        for(let y=0;y<rows;y++){
+          const cx = x*roomSize - offset + roomSize/2;
+          const cz = y*roomSize - offset + roomSize/2;
+          // create four walls (with random door)
+          const wallThickness = 0.4;
+          const wallHeight = 2.6;
+          // north wall
+          createWall(cx, wallHeight/2, cz - roomSize/2, roomSize, wallThickness, wallHeight, (Math.random()<0.7));
+          // south
+          createWall(cx, wallHeight/2, cz + roomSize/2, roomSize, wallThickness, wallHeight, (Math.random()<0.7));
+          // west
+          createWall(cx - roomSize/2, wallHeight/2, cz, wallThickness, roomSize, wallHeight, (Math.random()<0.7));
+          // east
+          createWall(cx + roomSize/2, wallHeight/2, cz, wallThickness, roomSize, wallHeight, (Math.random()<0.7));
+        }
+      }
+    }
+
+    function createWall(x,y,z,w,d,h, withDoor){
+      // w,d: width-depth extents
+      if(!withDoor || Math.random() < 0.3){
+        const geo = new THREE.BoxGeometry(w,d,h);
+        const mat = new THREE.MeshStandardMaterial({color:0x222229, roughness:1});
+        const m = new THREE.Mesh(geo, mat);
+        m.position.set(x, y, z);
+        scene.add(m);
+        objects.push(m);
+      } else {
+        // create wall with a door gap in center
+        // left piece
+        const pieceW = (w/2) - 1;
+        const geoL = new THREE.BoxGeometry(pieceW, d, h);
+        const geoR = new THREE.BoxGeometry(pieceW, d, h);
+        const mat = new THREE.MeshStandardMaterial({color:0x222229, roughness:1});
+        const left = new THREE.Mesh(geoL, mat);
+        const right = new THREE.Mesh(geoR, mat);
+        // orientation depends which side is larger
+        if(w > d){
+          // wall oriented along X
+          left.position.set(x - (w/2 - pieceW/2), y, z);
+          right.position.set(x + (w/2 - pieceW/2), y, z);
+        } else {
+          left.position.set(x, y, z - (d/2 - pieceW/2));
+          right.position.set(x, y, z + (d/2 - pieceW/2));
+        }
+        scene.add(left); scene.add(right);
+        objects.push(left); objects.push(right);
+      }
     }
 
     function populateClassUI(){
@@ -255,7 +361,6 @@
     }
 
     function toHex(num){
-      // convert number like 0xff6b6b to #ff6b6b
       return '#' + (num.toString(16).padStart(6,'0')).slice(-6);
     }
 
@@ -274,12 +379,8 @@
       ammoVal.innerText = player.ammo;
       magSize.innerText = player.magSize;
 
-      Array.from(classSelect.children).forEach(ch => {
-        ch.classList.remove('selectedClass');
-      });
+      Array.from(classSelect.children).forEach(ch => { ch.classList.remove('selectedClass'); });
       btn.classList.add('selectedClass');
-
-      // enable start
       startBtn.disabled = false;
       msg.innerText = `${c.name} ausgewählt — Klick auf "Start Mission"`;
     }
@@ -301,7 +402,6 @@
       }, 20);
     }
 
-    // Gameplay functions (spawn, AI, shooting, etc.)
     function startMission(){
       player.level = 1;
       levelNumEl.innerText = player.level;
@@ -315,8 +415,6 @@
       for(let i=0;i<enemyCount;i++) spawnEnemy(level);
       enemyCountEl.innerText = enemies.length;
       msg.innerText = `Level ${level}: ${enemies.length} Gegner`;
-
-      // small heal between levels
       player.health = Math.min(player.health + 20, player.maxHealth);
       hpVal.innerText = Math.round(player.health);
     }
@@ -333,8 +431,17 @@
       const group = new THREE.Group();
       group.add(body); group.add(head);
 
+      // spawn near a random room center
+      const roomCenters = [];
+      // get a few rooms positions from scene objects (approx by walls)
+      // fallback: spawn around origin if none
+      for(let obj of objects) {
+        if(obj.geometry && obj.geometry.type === 'BoxGeometry' && obj.position.y < 1.5) {
+          roomCenters.push(obj.position);
+        }
+      }
       const angle = Math.random()*Math.PI*2;
-      const dist = 12 + Math.random()*40 + level*2;
+      const dist = 6 + Math.random()*30 + level*1.8;
       group.position.set(Math.cos(angle)*dist, 0.8, Math.sin(angle)*dist);
       scene.add(group);
 
@@ -356,7 +463,6 @@
       if(e.code==='KeyD') keys.right=true;
       if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys.sprint=true;
       if(e.code === 'Escape') {
-        // unlock (pause)
         if(controls && controls.isLocked) controls.unlock();
       }
     }
@@ -385,6 +491,11 @@
       player.ammo--;
       ammoVal.innerText = player.ammo;
 
+      // play gunshot
+      playGunshot();
+      showMuzzleFlash();
+
+      // raycast
       const ray = new THREE.Raycaster();
       ray.setFromCamera(new THREE.Vector2(0,0), camera);
       const hits = [];
@@ -397,7 +508,8 @@
         const target = hits[0].e;
         const dmg = Math.round(18 + Math.random()*12 + (player.level*0.6));
         target.hp -= dmg;
-        flashHit(target.mesh.position);
+        spawnHitParticles(target.mesh.position);
+        playHitSound();
         if(target.hp<=0) killEnemy(target);
       }
     }
@@ -410,11 +522,50 @@
       setTimeout(()=>{ player.ammo = player.magSize; player.reloading=false; ammoVal.innerText = player.ammo; msg.innerText=''; }, player.reloadTime*1000);
     }
 
-    function flashHit(pos){
-      const s = new THREE.Mesh(new THREE.SphereGeometry(0.15,8,8), new THREE.MeshBasicMaterial({color:0xffdd66}));
-      s.position.copy(pos);
-      scene.add(s);
-      setTimeout(()=> scene.remove(s), 120);
+    // muzzleflash: a sprite briefly shown in front of the camera
+    let muzzleSprite = null;
+    function ensureMuzzle(){
+      if(muzzleSprite) return;
+      const map = new THREE.Texture(generateMuzzleCanvas());
+      map.needsUpdate = true;
+      const mat = new THREE.SpriteMaterial({map: map, transparent:true, blending:THREE.AdditiveBlending});
+      muzzleSprite = new THREE.Sprite(mat);
+      muzzleSprite.scale.set(0.9,0.9,1);
+      camera.add(muzzleSprite);
+      muzzleSprite.position.set(0, -0.1, -1.2);
+      muzzleSprite.visible = false;
+    }
+    function generateMuzzleCanvas(){
+      const c = document.createElement('canvas'); c.width=128; c.height=64;
+      const ctx = c.getContext('2d');
+      const g = ctx.createLinearGradient(0,0,128,0);
+      g.addColorStop(0,'rgba(255,220,100,0.95)'); g.addColorStop(0.6,'rgba(255,120,60,0.7)'); g.addColorStop(1,'rgba(255,60,60,0.0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,128,64);
+      return c;
+    }
+    function showMuzzleFlash(){
+      ensureMuzzle();
+      muzzleSprite.visible = true;
+      muzzleSprite.material.opacity = 1;
+      muzzleSprite.scale.set(1.2 + Math.random()*0.6, 1.2 + Math.random()*0.6, 1);
+      setTimeout(()=> {
+        if(muzzleSprite) muzzleSprite.material.opacity = 0;
+        setTimeout(()=> { if(muzzleSprite) muzzleSprite.visible = false; }, 80);
+      }, 60);
+    }
+
+    // hit particles
+    function spawnHitParticles(pos){
+      const group = new THREE.Group();
+      for(let i=0;i<8;i++){
+        const s = new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6), new THREE.MeshStandardMaterial({color:0xffb86b}));
+        s.position.set(pos.x + (Math.random()-0.5)*0.5, pos.y + 0.6 + Math.random()*0.2, pos.z + (Math.random()-0.5)*0.5);
+        s.userData.vel = new THREE.Vector3((Math.random()-0.5)*1.6, Math.random()*1.5, (Math.random()-0.5)*1.6);
+        group.add(s);
+      }
+      particles.push({group, life:0.9});
+      scene.add(group);
     }
 
     function killEnemy(target){
@@ -437,7 +588,6 @@
     }
 
     function updateEnemies(delta){
-      // if controls not yet available, skip
       if(!controls || !controls.getObject) return;
       const ppos = controls.getObject().position;
       enemies.forEach(e=>{
@@ -471,6 +621,11 @@
       requestAnimationFrame(animate);
       const delta = Math.min(clock.getDelta(), 0.1);
 
+      // footsteps start/stop based on movement
+      const moving = keys.forward || keys.back || keys.left || keys.right;
+      if(moving && controls && controls.isLocked) startFootsteps();
+      else stopFootsteps();
+
       if(controls && controls.isLocked){
         const forward = (keys.forward?1:0) - (keys.back?1:0);
         const sideways = (keys.right?1:0) - (keys.left?1:0);
@@ -479,15 +634,26 @@
         if(move.length() > 0) move.normalize().multiplyScalar(player.speed * sprint * delta);
         controls.moveRight(move.x);
         controls.moveForward(move.z);
-
         player.position.copy(controls.getObject().position);
         updateEnemies(delta);
       }
 
+      // particles update
+      for(let i=particles.length-1;i>=0;i--){
+        const p = particles[i];
+        p.life -= delta;
+        p.group.children.forEach(ch=>{
+          ch.position.addScaledVector(ch.userData.vel, delta);
+          ch.userData.vel.y -= 9.8 * delta * 0.3;
+        });
+        if(p.life <= 0){
+          scene.remove(p.group);
+          particles.splice(i,1);
+        }
+      }
+
       renderer.render(scene, camera);
     }
-
-    // End of script
   </script>
 </body>
 </html>
