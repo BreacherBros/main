@@ -398,6 +398,7 @@
    <p5>
      <a href="#about">Über uns</a>
     <a href="#videos">Videos</a>
+     <a href="#game">Game</a>
     <a href="#contact">Kontakt</a> </p5>
   </nav>
 </header>
@@ -481,6 +482,587 @@ Also schnapp dir ’nen Controller, schnall dich an – und komm mit auf unsere 
  
   </div>
 </div>
+
+  <h2>Game</h2>
+
+  <!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BreacherBrosFighter - Prototyp</title>
+<!-- Three.js (r150+ kompatibel) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/examples/js/controls/OrbitControls.js"></script>
+<style>
+  :root{
+    --ui-bg: rgba(12,12,14,0.85);
+    --accent: #ff7a00;
+    --accent2: #00d1ff;
+    --font: "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  html,body{height:100%;margin:0;font-family:var(--font);background:#070708;color:#eee}
+  #gameCanvas{display:block;width:100vw;height:100vh;cursor:none;background:#111}
+  /* UI Overlay */
+  .ui {
+    position: absolute; left: 12px; top: 12px; z-index: 10;
+    background: linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,.35));
+    border-radius:10px;padding:10px;font-size:14px;
+    backdrop-filter: blur(4px);
+  }
+  .bigCenter {
+    position:absolute;left:50%;top:10%;transform:translateX(-50%);z-index:11;
+    background:var(--ui-bg);padding:18px;border-radius:12px;text-align:center;min-width:360px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.6)
+  }
+  .logo {height:84px;margin-bottom:8px}
+  button{padding:8px 12px;margin:6px;border-radius:8px;border:0;background:var(--accent);color:#111;font-weight:700}
+  .muted{background:#444;color:#ddd}
+  label{display:block;margin-top:8px;font-size:13px}
+  select,input[type=range]{width:100%}
+  .hud {position:absolute;right:12px;bottom:12px;background:rgba(0,0,0,0.35);padding:10px;border-radius:8px}
+  .small{font-size:12px;color:#bbb}
+  .stats{display:flex;gap:8px;flex-wrap:wrap}
+  .stat{background:rgba(255,255,255,0.03);padding:6px 10px;border-radius:6px}
+  .centerText{font-size:16px}
+  .footerSmall{font-size:12px;color:#999;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="gameCanvas"></canvas>
+
+<!-- Top-left HUD (quick info) -->
+<div class="ui" id="topLeftUI">
+  <div><strong>BreacherBrosFighter • Prototyp</strong></div>
+  <div class="small">WASD + Maus: bewegen & zielen · Linksklick feuern</div>
+  <div class="small">Coop: Aktivieren im Menü</div>
+</div>
+
+<!-- Center menu -->
+<div class="bigCenter" id="mainMenu">
+  <img class="logo" src="/mnt/data/7310FA1E-B09E-4F61-B5D4-1B9F1F276070.png" alt="BreacherBros Logo" onerror="this.style.display='none'">
+  <h2>BreacherBrosFighter</h2>
+  <div>
+    <label>Spielmodus:</label>
+    <select id="modeSelect">
+      <option value="single">Singleplayer</option>
+      <option value="coop">Local Coop (2 Spieler)</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Klasse Spieler 1:</label>
+    <select id="classSelect">
+      <option value="assault">Assault (Allround)</option>
+      <option value="support">Support (Schutz)</option>
+      <option value="sniper">Sniper (Reichweite)</option>
+      <option value="engineer">Engineer (Gadgets)</option>
+      <option value="heavy">Heavy (Panzer)</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Outfit Farbe:</label>
+    <input type="color" id="colorPicker" value="#00aaff">
+  </div>
+
+  <div style="margin-top:10px">
+    <button id="startBtn">Spiel Starten</button>
+    <button id="optionsBtn" class="muted">Optionen</button>
+    <button id="creditsBtn" class="muted">Credits</button>
+  </div>
+
+  <div class="footerSmall">15 Level • Third Person • Stil-inspiriert von Taktischen Shootern</div>
+</div>
+
+<!-- Options modal -->
+<div class="bigCenter" id="options" style="display:none;top:8%">
+  <h3>Optionen</h3>
+  <label>Mouse Sensitivity: <span id="sensVal">1.0</span></label>
+  <input id="sensRange" type="range" min="0.3" max="3" step="0.1" value="1.0">
+  <label>Sound:</label>
+  <select id="soundSelect"><option value="on">An</option><option value="off">Aus</option></select>
+  <label>Grafikqualität:</label>
+  <select id="gfxSelect"><option value="low">Niedrig</option><option value="med" selected>Mittel</option><option value="high">Hoch</option></select>
+  <div style="margin-top:10px">
+    <button id="backFromOptions" class="muted">Zurück</button>
+  </div>
+</div>
+
+<!-- Credits -->
+<div class="bigCenter" id="credits" style="display:none;top:8%">
+  <h3>Credits</h3>
+  <div class="small">Prototyp erstellt für den Breacher Bros Fan-Projekt. 3D & Gameplay: Three.js. Platzhalter-Assets.</div>
+  <div style="margin-top:10px"><button id="backFromCredits" class="muted">Zurück</button></div>
+</div>
+
+<!-- HUD bottom-right -->
+<div class="hud" id="hud">
+  <div class="stats" id="statBox">
+    <div class="stat" id="hpStat">HP: 100</div>
+    <div class="stat" id="ammoStat">Ammo: ∞</div>
+    <div class="stat" id="levelStat">Level: 1 / 15</div>
+  </div>
+  <div style="margin-top:6px">
+    <button id="pauseBtn" class="muted">Pause</button>
+  </div>
+</div>
+
+<script>
+/* ===============================
+   Simple Third-Person Shooter Prototype
+   Uses Three.js
+   - Basic third-person camera follow
+   - 5 Classes with different stats
+   - 15 levels increasing difficulty
+   - Local coop option (second player uses arrow keys + 0 to shoot)
+   - Outfit color customization (applied to player mesh)
+   =============================== */
+
+const canvas = document.getElementById('gameCanvas');
+const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0b0c);
+const clock = new THREE.Clock();
+
+// Camera & third-person rig
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 1000);
+camera.position.set(0, 4, -7);
+const camTarget = new THREE.Object3D();
+scene.add(camTarget);
+
+// Light
+const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.9);
+hemi.position.set(0,20,0); scene.add(hemi);
+const dir = new THREE.DirectionalLight(0xffffff, 0.6); dir.position.set(5,10,7); scene.add(dir);
+
+// Ground
+const groundMat = new THREE.MeshStandardMaterial({color:0x222226, roughness:0.9});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(200,200), groundMat);
+ground.rotation.x = -Math.PI/2; ground.receiveShadow = true; scene.add(ground);
+
+// Simple skybox gradient
+const fogColor = new THREE.Color(0x0b0b0c);
+scene.fog = new THREE.Fog(fogColor, 10, 80);
+
+// Player definitions
+const CLASSES = {
+  assault: {hp:120, speed:6, dmg:12, fireRate:0.25, desc:'Allround'},
+  support: {hp:150, speed:5, dmg:10, fireRate:0.35, desc:'Support / Shield'},
+  sniper: {hp:90, speed:5.5, dmg:45, fireRate:1.2, desc:'Long range'},
+  engineer: {hp:110, speed:5.5, dmg:9, fireRate:0.18, desc:'Fast fire / gadgets'},
+  heavy: {hp:200, speed:4, dmg:18, fireRate:0.5, desc:'High HP'}
+};
+
+// Game state
+let GAME = {
+  running: false,
+  paused: false,
+  level: 1,
+  maxLevel: 15,
+  enemies: [],
+  bullets: [],
+  players: [],
+  coop: false,
+  sensitivity: 1.0,
+  sound: true,
+  gfx: 'med'
+};
+
+// Utility
+function rand(min,max){return Math.random()*(max-min)+min}
+
+// Basic Player class (simple box humanoid)
+class Player {
+  constructor(id, spawnPos, options){
+    this.id = id;
+    this.classKey = options.classKey || 'assault';
+    this.color = options.color || 0x00aaff;
+    this.isPlayer = true;
+    this.hp = CLASSES[this.classKey].hp;
+    this.maxHp = this.hp;
+    this.speed = CLASSES[this.classKey].speed;
+    this.dmg = CLASSES[this.classKey].dmg;
+    this.fireRate = CLASSES[this.classKey].fireRate;
+    this.lastShot = 0;
+    // mesh
+    this.group = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({color:this.color, roughness:0.6, metalness:0.2});
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.9,1.2,0.5), bodyMat);
+    torso.position.y = 1;
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), bodyMat);
+    head.position.y = 2;
+    const gun = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.2,1.2), new THREE.MeshStandardMaterial({color:0x222222}));
+    gun.position.set(0.5,1,0.3);
+    gun.rotation.set(0,0.2,0);
+    this.group.add(torso, head, gun);
+    this.group.position.copy(spawnPos);
+    scene.add(this.group);
+    this.velocity = new THREE.Vector3();
+    this.rotationY = 0;
+    this.controls = {forward:false,back:false,left:false,right:false,shoot:false};
+    this.isAlive = true;
+    this.score = 0;
+  }
+  setColor(hex){
+    this.color = hex;
+    this.group.children.forEach(m=>{
+      if(m.material && m.geometry.type.includes('Box')) m.material.color.setHex(hex);
+    });
+  }
+  update(dt, t){
+    if(!this.isAlive) return;
+    // movement
+    let dir = new THREE.Vector3();
+    if(this.controls.forward) dir.z -= 1;
+    if(this.controls.back) dir.z += 1;
+    if(this.controls.left) dir.x -= 1;
+    if(this.controls.right) dir.x += 1;
+    if(dir.lengthSq()>0){
+      dir.normalize().multiplyScalar(this.speed * dt);
+      // rotate movement by camera yaw
+      const yaw = camera.rotation.y;
+      const sin = Math.sin(yaw), cos = Math.cos(yaw);
+      const worldDX = dir.x * cos - dir.z * sin;
+      const worldDZ = dir.x * sin + dir.z * cos;
+      this.group.position.x += worldDX;
+      this.group.position.z += worldDZ;
+    }
+    // keep above ground
+    this.group.position.y = 0;
+    // shooting
+    if(this.controls.shoot && (t - this.lastShot) > this.fireRate){
+      this.shoot();
+      this.lastShot = t;
+    }
+  }
+  shoot(){
+    // bullet as ray with speed
+    const origin = new THREE.Vector3().copy(this.group.position).add(new THREE.Vector3(0,1.2,0));
+    // direction: camera forward for player1; for player2 use group's forward
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    // if coop and player 2, aim forward based on camera but offset
+    const dir = forward.clone().normalize();
+    const bullet = {
+      pos: origin.clone(),
+      vel: dir.multiplyScalar(60),
+      owner: this,
+      damage: this.dmg,
+      mesh: createBulletMesh(origin)
+    };
+    GAME.bullets.push(bullet);
+  }
+  takeDamage(d){
+    this.hp -= d;
+    if(this.hp<=0){
+      this.die();
+    }
+  }
+  die(){
+    this.isAlive = false;
+    // visual feedback
+    this.group.children.forEach(m=>{
+      if(m.material) m.material.opacity = 0.35; m.material.transparent = true;
+    });
+  }
+}
+
+// Enemy simple seeker
+class Enemy {
+  constructor(spawnPos, hp, speed){
+    this.hp = hp;
+    this.speed = speed;
+    this.group = new THREE.Mesh(new THREE.SphereGeometry(0.5,12,12), new THREE.MeshStandardMaterial({color:0xcc3333}));
+    this.group.position.copy(spawnPos);
+    scene.add(this.group);
+    this.isAlive = true;
+    this.target = null;
+  }
+  update(dt){
+    if(!this.isAlive) return;
+    // find closest alive player
+    const players = GAME.players.filter(p=>p.isAlive);
+    if(players.length===0) return;
+    let target = players[0]; let dmin = Infinity;
+    players.forEach(p=>{
+      const d = p.group.position.distanceTo(this.group.position);
+      if(d<dmin){dmin=d; target=p;}
+    });
+    this.target = target;
+    const dir = new THREE.Vector3().subVectors(this.target.group.position, this.group.position).setY(0).normalize();
+    this.group.position.add(dir.multiplyScalar(this.speed * dt));
+    // simple melee if close
+    const dist = this.group.position.distanceTo(this.target.group.position);
+    if(dist < 1.2 && this.target.isAlive){
+      this.target.takeDamage(10 * dt); // continuous damage
+    }
+  }
+  takeDamage(d){
+    this.hp -= d;
+    if(this.hp<=0) this.die();
+  }
+  die(){
+    this.isAlive=false;
+    scene.remove(this.group);
+  }
+}
+
+// Bullet mesh small sphere
+function createBulletMesh(pos){
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6), new THREE.MeshStandardMaterial({color:0xffdd66}));
+  m.position.copy(pos);
+  scene.add(m);
+  return m;
+}
+
+// Spawn helpers
+function spawnPlayer(id, pos, classKey, colorHex){
+  const p = new Player(id, pos, {classKey, color:colorHex});
+  GAME.players.push(p);
+  return p;
+}
+
+// Level spawner
+function spawnEnemiesForLevel(level){
+  const enemyCount = 3 + Math.floor(level * 1.5);
+  for(let i=0;i<enemyCount;i++){
+    const angle = Math.random()*Math.PI*2;
+    const r = rand(8, 18);
+    const x = Math.cos(angle)*r;
+    const z = Math.sin(angle)*r;
+    const hp = Math.round(20 + level*6 + Math.random()*level*3);
+    const spd = 1.2 + level*0.05 + Math.random()*0.5;
+    GAME.enemies.push(new Enemy(new THREE.Vector3(x,0,z), hp, spd));
+  }
+  document.getElementById('levelStat').innerText = `Level: ${GAME.level} / ${GAME.maxLevel}`;
+}
+
+// Setup initial menus
+const mainMenu = document.getElementById('mainMenu');
+const optionsEl = document.getElementById('options');
+const creditsEl = document.getElementById('credits');
+document.getElementById('optionsBtn').onclick = ()=>{ mainMenu.style.display='none'; optionsEl.style.display='block'; };
+document.getElementById('backFromOptions').onclick = ()=>{ optionsEl.style.display='none'; mainMenu.style.display='block'; };
+document.getElementById('creditsBtn').onclick = ()=>{ mainMenu.style.display='none'; creditsEl.style.display='block'; };
+document.getElementById('backFromCredits').onclick = ()=>{ creditsEl.style.display='none'; mainMenu.style.display='block'; };
+
+document.getElementById('sensRange').oninput = (e)=>{
+  GAME.sensitivity = parseFloat(e.target.value); document.getElementById('sensVal').innerText = GAME.sensitivity.toFixed(1);
+};
+document.getElementById('soundSelect').onchange = e=> GAME.sound = (e.target.value === 'on');
+document.getElementById('gfxSelect').onchange = e=> GAME.gfx = e.target.value;
+
+document.getElementById('startBtn').onclick = ()=>{
+  const mode = document.getElementById('modeSelect').value;
+  GAME.coop = (mode === 'coop');
+  const cls = document.getElementById('classSelect').value;
+  const col = parseInt(document.getElementById('colorPicker').value.replace('#','0x'),16);
+  startGame(cls, col);
+  mainMenu.style.display = 'none';
+};
+
+// Pause
+document.getElementById('pauseBtn').onclick = ()=> togglePause();
+
+function togglePause(){
+  GAME.paused = !GAME.paused;
+  document.getElementById('pauseBtn').innerText = GAME.paused ? 'Fortsetzen' : 'Pause';
+}
+
+// Start game flow
+function startGame(classKey, color){
+  // reset
+  GAME.running = true; GAME.level = 1; GAME.enemies = []; GAME.bullets = []; GAME.players = [];
+  // spawn player(s)
+  const p1 = spawnPlayer(1, new THREE.Vector3(0,0,0), classKey, color);
+  // add second player for coop (local)
+  if(GAME.coop){
+    const p2 = spawnPlayer(2, new THREE.Vector3(1.6,0,0), 'support', 0xff7a00);
+  }
+  // place camera target
+  camTarget.position.copy(p1.group.position);
+  // spawn level
+  spawnEnemiesForLevel(GAME.level);
+  // hide cursor and capture mouse
+  canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock;
+  try{ canvas.requestPointerLock(); } catch(e){}
+}
+
+// Input handling
+let mouseDX=0, mouseDY=0;
+let isPointerLocked = false;
+document.addEventListener('pointerlockchange', ()=>{ isPointerLocked = (document.pointerLockElement === canvas);});
+canvas.onclick = ()=>{ if(!isPointerLocked) canvas.requestPointerLock(); };
+window.addEventListener('mousemove', (ev)=>{
+  if(!isPointerLocked) return;
+  mouseDX += ev.movementX;
+  mouseDY += ev.movementY;
+}, false);
+
+// Keyboard
+const keyState = {};
+window.addEventListener('keydown', (e)=>{
+  keyState[e.code] = true;
+  if(e.code === 'Escape'){ // exit pointerlock
+    document.exitPointerLock();
+  }
+});
+window.addEventListener('keyup', (e)=>{ keyState[e.code] = false; });
+
+// Map keyboard to controls each frame
+function applyInputToPlayers(){
+  // player1: WASD + mouse + LMB
+  const p1 = GAME.players[0];
+  if(p1){
+    p1.controls.forward = keyState['KeyW'];
+    p1.controls.back = keyState['KeyS'];
+    p1.controls.left = keyState['KeyA'];
+    p1.controls.right = keyState['KeyD'];
+    p1.controls.shoot = mouseDown;
+  }
+  if(GAME.coop && GAME.players[1]){
+    const p2 = GAME.players[1];
+    p2.controls.forward = keyState['ArrowUp'];
+    p2.controls.back = keyState['ArrowDown'];
+    p2.controls.left = keyState['ArrowLeft'];
+    p2.controls.right = keyState['ArrowRight'];
+    // shoot key: Numpad0 or Slash
+    p2.controls.shoot = keyState['Numpad0'] || keyState['Slash'];
+  }
+}
+
+// Mouse down
+let mouseDown = false;
+window.addEventListener('mousedown', (e)=>{ if(e.button===0) mouseDown = true; });
+window.addEventListener('mouseup', (e)=>{ if(e.button===0) mouseDown = false; });
+
+// Main update loop
+function update(){
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+  if(!GAME.running){ renderer.render(scene, camera); requestAnimationFrame(update); return; }
+  if(!GAME.paused){
+    // camera rotation based on mouse
+    const yaw = -mouseDX * 0.002 * GAME.sensitivity;
+    const pitch = -mouseDY * 0.002 * GAME.sensitivity;
+    camera.rotation.y += yaw;
+    camera.rotation.x += pitch;
+    camera.rotation.x = Math.max(-1.2, Math.min(0.6, camera.rotation.x));
+    mouseDX = 0; mouseDY = 0;
+    // apply keyboard to players
+    applyInputToPlayers();
+    // update players
+    GAME.players.forEach(p=>p.update(dt, t));
+    // update enemies
+    GAME.enemies.forEach(e=>e.update(dt));
+    // update bullets
+    for(let i=GAME.bullets.length-1;i>=0;i--){
+      const b = GAME.bullets[i];
+      b.pos.addScaledVector(b.vel, dt);
+      b.mesh.position.copy(b.pos);
+      // check lifetime / range
+      if(b.pos.length() > 200){ scene.remove(b.mesh); GAME.bullets.splice(i,1); continue; }
+      // collision with enemies
+      for(let j=GAME.enemies.length-1;j>=0;j--){
+        const en = GAME.enemies[j];
+        if(!en.isAlive) continue;
+        const d = b.pos.distanceTo(en.group.position);
+        if(d < 0.8){
+          en.takeDamage(b.damage);
+          // remove bullet
+          scene.remove(b.mesh); GAME.bullets.splice(i,1);
+          break;
+        }
+      }
+    }
+    // collision of enemies to players handled in enemy.update
+
+    // remove dead enemies and count score
+    for(let i=GAME.enemies.length-1;i>=0;i--){
+      if(!GAME.enemies[i].isAlive) { GAME.enemies.splice(i,1); }
+    }
+
+    // Level complete check
+    if(GAME.enemies.length === 0){
+      GAME.level++;
+      if(GAME.level > GAME.maxLevel){
+        onWin();
+      } else {
+        // Respawn players near origin and spawn next wave
+        GAME.players.forEach((p, idx)=>{ p.group.position.set(idx*1.6,0,0); p.hp = p.maxHp; p.isAlive = true; });
+        spawnEnemiesForLevel(GAME.level);
+      }
+    }
+
+    // camera third person follow first player
+    const p0 = GAME.players[0];
+    if(p0){
+      const desiredPos = p0.group.position.clone().add(new THREE.Vector3(0,2,-6).applyEuler(camera.rotation));
+      camera.position.lerp(desiredPos, 0.18);
+      camera.lookAt(p0.group.position.clone().add(new THREE.Vector3(0,1.2,0)));
+    }
+  }
+
+  // Update HUD
+  const hpEl = document.getElementById('hpStat');
+  const ammoEl = document.getElementById('ammoStat');
+  const p0 = GAME.players[0];
+  if(p0) hpEl.innerText = `HP: ${Math.max(0,Math.round(p0.hp))}`;
+  ammoEl.innerText = `Ammo: ∞`;
+  document.getElementById('levelStat').innerText = `Level: ${GAME.level} / ${GAME.maxLevel}`;
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(update);
+}
+
+function onWin(){
+  GAME.running = false;
+  alert('Glückwunsch — alle Level abgeschlossen! (Prototyp)');
+  location.reload();
+}
+
+// Allow outfit color to update before start (preview on placeholder)
+document.getElementById('colorPicker').addEventListener('input', (e)=>{
+  // if there's a preview player in menu, apply. We'll create a temporary preview avatar
+  // For simplicity, if players exist (during testing in-game) update first player
+  if(GAME.players.length>0){
+    const colorHex = parseInt(e.target.value.replace('#','0x'),16);
+    GAME.players[0].setColor(colorHex);
+  }
+});
+
+// Resize handling
+window.addEventListener('resize', ()=>{ renderer.setSize(window.innerWidth, window.innerHeight); camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); });
+
+// spawn a few environment props
+function createProps(){
+  for(let i=0;i<30;i++){
+    const g = new THREE.BoxGeometry(rand(0.6,2), rand(0.6,3), rand(0.6,2));
+    const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color: new THREE.Color().setHSL(Math.random()*0.1,0.2,0.08)}));
+    m.position.set(rand(-30,30), g.parameters.height/2 - 0.3, rand(-30,30));
+    scene.add(m);
+  }
+}
+createProps();
+
+// Start rendering loop
+update();
+
+// Basic debug spawn control (not shown in UI)
+window.spawnDebugEnemy = ()=> spawnEnemiesForLevel(GAME.level);
+
+// Small accessibility: auto-focus canvas to get key events more reliably
+canvas.tabIndex = 1000;
+canvas.style.outline = "none";
+canvas.focus();
+
+</script>
+</body>
+</html>
 
   <h2>Kontakt</h2>
 <div class="content" id="contact">
