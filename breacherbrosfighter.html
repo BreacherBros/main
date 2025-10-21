@@ -18,7 +18,7 @@
     canvas{display:block; position:absolute; top:0; left:0; z-index:0}
 
     /* UI */
-    #ui{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none; z-index:10}
+    #ui{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:auto; z-index:10}
     .panel{position:absolute;background:var(--panel);backdrop-filter:blur(6px);border-radius:14px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,0.6);color:var(--text);pointer-events:auto}
     #startScreen{width:640px;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;padding:28px;border-radius:16px;
                  background: radial-gradient(circle at 30% 10%, rgba(255,59,59,0.12), rgba(0,0,0,0.7));border:2px solid rgba(255,59,59,0.18);
@@ -120,16 +120,21 @@
     const levelNum=document.getElementById('levelNum');
 
     // Klassenbuttons generieren
-    classes.forEach(c=>{
-      const btn=document.createElement('button'); btn.className='classBtn'; btn.innerHTML=`
-        <div class="classIcon" style="background:#${c.color.toString(16).padStart(6,'0')}">${c.id[0].toUpperCase()}</div>
-        <div>
-          <div><b>${c.name}</b></div>
-          <div style="font-size:12px;opacity:0.8">${c.desc}</div>
-        </div>`;
-      btn.addEventListener('click',()=>{ selectClass(c,btn); });
-      classSelect.appendChild(btn);
-    });
+  classes.forEach(c => {
+  const btn = document.createElement('button');
+  btn.className = 'classBtn';
+  const colorHex = '#'+c.color.toString(16).padStart(6,'0'); // Sicherstellen, dass Hex korrekt ist
+  btn.innerHTML = `
+    <div class="classIcon" style="background:${colorHex}">${c.id[0].toUpperCase()}</div>
+    <div>
+      <div><b>${c.name}</b></div>
+      <div style="font-size:12px;opacity:0.8">${c.desc}</div>
+    </div>
+  `;
+  btn.addEventListener('click', () => selectClass(c, btn));
+  classSelect.appendChild(btn);
+});
+
 
     function selectClass(c,btn){
       player.selectedClass=c;
