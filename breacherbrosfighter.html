@@ -2,245 +2,137 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>BreacherBrosFighter</title>
+  <title>FPS Grundgerüst</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { margin: 0; overflow: hidden; background: #000; color: white; font-family: Arial, sans-serif; }
-    #hud {
+    body { margin: 0; overflow: hidden; background: #000; }
+    #overlay {
       position: absolute; top: 10px; left: 10px;
-      z-index: 10; background: rgba(0,0,0,0.4);
-      padding: 10px 15px; border-radius: 5px;
+      color: white; z-index: 10;
     }
-    #hud span { display: block; margin-bottom: 5px; }
-    #pauseMenu {
-      position: absolute; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.8);
+    #startBtn {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px 40px;
+      font-size: 24px;
+      cursor: pointer;
+      background: rgba(50,50,50,0.8);
       color: white;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      z-index: 20;
+      border: none;
     }
-    button {
-      background: linear-gradient(90deg, #ff7b00, #00bfff);
-      border: none; color: white;
-      padding: 10px 20px; margin-top: 15px;
-      font-size: 18px; cursor: pointer;
-      border-radius: 6px;
-    }
-    button:hover { opacity: 0.8; }
   </style>
 </head>
 <body>
+  <div id="overlay">Klicke, um zu starten. WASD bewegt, Maus dreht.</div>
+  <button id="startBtn">Start</button>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+    import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
 
-<div id="hud">
-  <span>🎯 Kills: <span id="kills">0</span></span>
-  <span>❤️ Leben: <span id="health">100</span></span>
-  <span>🔫 Level: <span id="level">1</span></span>
-  <span>⏸️ Pause: [ESC]</span>
-</div>
+    let scene, camera, renderer, controls;
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+    const velocity = new THREE.Vector3();
+    const direction = new THREE.Vector3();
 
-<div id="pauseMenu">
-  <h1>Pause</h1>
-  <button id="resumeBtn">Weiter</button>
-  <button onclick="location.reload()">Neustart</button>
-</div>
+    init();
+    animate();
 
-<script type="module">
-  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
-  import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x202020);
 
-  let scene, camera, renderer, controls;
-  let player, bullets = [], enemies = [];
-  let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
-  let canShoot = true;
-  let health = 100, kills = 0, level = 1;
-  let paused = false;
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 1.6, 5);
 
-  const clock = new THREE.Clock();
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      document.body.appendChild(renderer.domElement);
 
-  init();
-  animate();
+      // Licht
+      const ambient = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+      ambient.position.set(0, 1, 0);
+      scene.add(ambient);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      dirLight.position.set(5, 10, 7);
+      scene.add(dirLight);
 
-  function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0c0c0c);
-    scene.fog = new THREE.FogExp2(0x0c0c0c, 0.002);
+      // Boden
+      const floorGeo = new THREE.PlaneGeometry(200, 200);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.set(0,2,5);
+      // Controls
+      controls = new PointerLockControls(camera, document.body);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.body.appendChild(renderer.domElement);
-
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-    hemiLight.position.set(0, 50, 0);
-    scene.add(hemiLight);
-
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    dirLight.position.set(-10, 20, 10);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.near = 1;
-    dirLight.shadow.camera.far = 100;
-    dirLight.shadow.camera.left = -30;
-    dirLight.shadow.camera.right = 30;
-    dirLight.shadow.camera.top = 30;
-    dirLight.shadow.camera.bottom = -30;
-    scene.add(dirLight);
-
-    const textureLoader = new THREE.TextureLoader();
-    const groundTex = textureLoader.load(
-      'textures/grass.jpg',
-      undefined,
-      undefined,
-      err => console.error('Fehler beim Laden der Textur:', err)
-    );
-    groundTex.wrapS = groundTex.wrapT = THREE.RepeatWrapping;
-    groundTex.repeat.set(100,100);
-    groundTex.anisotropy = 16;
-    const groundMat = new THREE.MeshStandardMaterial({ map: groundTex, roughness:0.8, metalness:0.2 });
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000,2000), groundMat);
-    ground.rotation.x = -Math.PI/2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    const loader = new GLTFLoader();
-    loader.load(
-      'models/Soldier.glb',
-      gltf => {
-        player = gltf.scene;
-        player.scale.set(1.5,1.5,1.5);
-        player.position.set(0,0,0);
-        player.traverse(n => {
-          if (n.isMesh) {
-            n.castShadow = true;
-            n.receiveShadow = true;
-            if (n.material) {
-              n.material.roughness = 0.6;
-              n.material.metalness = 0.3;
-            }
-          }
-        });
-        scene.add(player);
-      },
-      undefined,
-      err => {
-        console.error('Fehler beim Laden des Modells Soldier.glb:', err);
-      }
-    );
-
-    controls = new PointerLockControls(camera, document.body);
-    scene.add(controls.getObject());
-    controls.getObject().position.set(0,1.6,0);
-
-    document.body.addEventListener('click', () => controls.lock());
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('keyup', onKeyUp);
-    document.addEventListener('click', shoot);
-    window.addEventListener('resize', onWindowResize);
-    document.getElementById("resumeBtn").addEventListener('click', togglePause);
-
-    spawnEnemies(5);
-  }
-
-  function onKeyDown(e) {
-    if (e.code === 'KeyW') moveForward = true;
-    if (e.code === 'KeyS') moveBackward = true;
-    if (e.code === 'KeyA') moveLeft = true;
-    if (e.code === 'KeyD') moveRight = true;
-    if (e.code === 'Escape') togglePause();
-  }
-  function onKeyUp(e) {
-    if (e.code === 'KeyW') moveForward = false;
-    if (e.code === 'KeyS') moveBackward = false;
-    if (e.code === 'KeyA') moveLeft = false;
-    if (e.code === 'KeyD') moveRight = false;
-  }
-
-  function shoot() {
-    if (!canShoot || paused) return;
-    const bulletGeo = new THREE.SphereGeometry(0.1,12,12);
-    const bulletMat = new THREE.MeshStandardMaterial({ color: 0xffa500, roughness:0.4, metalness:0.1 });
-    const bullet = new THREE.Mesh(bulletGeo, bulletMat);
-    const dir = new THREE.Vector3();
-    camera.getWorldDirection(dir);
-    bullet.position.copy(controls.getObject().position);
-    bullet.position.y += 1.5;
-    bullet.userData.velocity = dir.multiplyScalar(40);
-    bullet.castShadow = true;
-    scene.add(bullet);
-    bullets.push(bullet);
-    canShoot = false;
-    setTimeout(() => canShoot = true, 200);
-  }
-
-  function spawnEnemies(count) {
-    for (let i = 0; i < count; i++) {
-      const geo = new THREE.BoxGeometry(1,2,1);
-      const mat = new THREE.MeshStandardMaterial({ color: 0x2222ff, roughness:0.7, metalness:0.1 });
-      const enemy = new THREE.Mesh(geo, mat);
-      enemy.position.set((Math.random()-0.5)*100, 1, (Math.random()-0.5)*100);
-      enemy.castShadow = true;
-      enemy.receiveShadow = true;
-      scene.add(enemy);
-      enemies.push(enemy);
-    }
-  }
-
-  function togglePause() {
-    paused = !paused;
-    document.getElementById("pauseMenu").style.display = paused ? "flex" : "none";
-  }
-
-  function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  function animate() {
-    requestAnimationFrame(animate);
-    if (paused) return;
-    const delta = clock.getDelta();
-    const speed = 10 * delta;
-    if (controls.isLocked) {
-      if (moveForward) controls.moveForward(speed);
-      if (moveBackward) controls.moveForward(-speed);
-      if (moveLeft) controls.moveRight(-speed);
-      if (moveRight) controls.moveRight(speed);
-    }
-    bullets.forEach((b, i) => {
-      b.position.addScaledVector(b.userData.velocity, delta);
-      enemies.forEach((e, ei) => {
-        if (b.position.distanceTo(e.position) < 1) {
-          scene.remove(e);
-          enemies.splice(ei,1);
-          kills++;
-          document.getElementById("kills").innerText = kills;
-        }
+      const startBtn = document.getElementById('startBtn');
+      startBtn.addEventListener('click', () => {
+        controls.lock();
       });
-      if (b.position.length() > 500) {
-        scene.remove(b);
-        bullets.splice(i,1);
-      }
-    });
-    if (enemies.length === 0) {
-      level++;
-      document.getElementById("level").innerText = level;
-      spawnEnemies(level * 2);
-    }
-    renderer.render(scene, camera);
-  }
-</script>
 
+      controls.addEventListener('lock', () => {
+        document.getElementById('overlay').style.display = 'none';
+        startBtn.style.display = 'none';
+      });
+      controls.addEventListener('unlock', () => {
+        document.getElementById('overlay').style.display = 'block';
+        startBtn.style.display = 'block';
+      });
+
+      document.addEventListener('keydown', onKeyDown);
+      document.addEventListener('keyup', onKeyUp);
+      window.addEventListener('resize', onWindowResize);
+    }
+
+    function onKeyDown(event) {
+      switch (event.code) {
+        case 'KeyW': moveForward = true; break;
+        case 'KeyS': moveBackward = true; break;
+        case 'KeyA': moveLeft = true; break;
+        case 'KeyD': moveRight = true; break;
+      }
+    }
+    function onKeyUp(event) {
+      switch (event.code) {
+        case 'KeyW': moveForward = false; break;
+        case 'KeyS': moveBackward = false; break;
+        case 'KeyA': moveLeft = false; break;
+        case 'KeyD': moveRight = false; break;
+      }
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (controls.isLocked) {
+        const delta = 0.1;  // fixe Zeitschritt (du kannst mit clock arbeiten)
+
+        velocity.x -= velocity.x * 10.0 * delta;
+        velocity.z -= velocity.z * 10.0 * delta;
+
+        direction.z = (moveForward ? 1 : 0) - (moveBackward ? 1 : 0);
+        direction.x = (moveRight ? 1 : 0) - (moveLeft ? 1 : 0);
+        direction.normalize();
+
+        if (moveForward || moveBackward) velocity.z -= direction.z * 50.0 * delta;
+        if (moveLeft || moveRight) velocity.x -= direction.x * 50.0 * delta;
+
+        controls.moveRight(- velocity.x * delta);
+        controls.moveForward(- velocity.z * delta);
+      }
+
+      renderer.render(scene, camera);
+    }
+  </script>
 </body>
 </html>
