@@ -25,49 +25,7 @@
                  box-shadow:0 12px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02)}
     .logoTitle{font-size:42px;letter-spacing:2px;margin:6px 0;font-weight:800; color:var(--accent)}
     .logoSub{opacity:0.9;margin-bottom:10px;color:var(--text)}
-    #classSelect{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:stretch}
-    .classBtn{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));transition:transform .12s ease, box-shadow .12s;display:flex;align-items:center;gap:12px}
-    .classBtn:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(0,0,0,0.6)}
-    .classIcon{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#08101a}
-    .startLarge{margin-top:14px;padding:14px 20px;font-size:18px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#ff7b7b);color:#08101a;border:none;cursor:pointer; font-weight:700}
-    .startLarge[disabled]{opacity:0.45; cursor:not-allowed}
-    .selectedClass{box-shadow:0 0 26px rgba(255,59,59,0.25); transform:translateY(-4px)}
-
-    /* HUD */
-    #hudTop{left:12px;top:12px}
-    #hudBottom{left:12px;bottom:12px}
-    .hudItem{margin-bottom:8px;padding:8px 12px;border-radius:8px;background:var(--glass);display:inline-block}
-
-    /* Center crosshair */
-    #crosshair{position:absolute;left:50%;top:50%;width:24px;height:24px;margin-left:-12px;margin-top:-12px;pointer-events:none}
-    #crosshair:before,#crosshair:after{content:'';position:absolute;background:var(--accent);opacity:0.95}
-    #crosshair:before{left:11px;top:0;width:2px;height:24px}
-    #crosshair:after{top:11px;left:0;height:2px;width:24px}
-
-    /* Small message */
-    #message{position:absolute;right:12px;top:12px;padding:10px 14px;border-radius:10px;background:rgba(0,0,0,0.45)}
-
-    /* Level panel */
-    #levelPanel{position:absolute;right:12px;bottom:12px;padding:14px 18px;border-radius:12px}
-
-    /* Responsive */
-    @media (max-width:800px){
-      #startScreen{width:94%}
-      .logoTitle{font-size:30px}
-      #classSelect{flex-direction:column}
-    }
-  </style>
-</head>
-<body>
-  <div id="ui">
-    <div id="startScreen" class="panel">
-      <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:20px;">
-        <div style="text-align:left">
-          <div class="logoTitle">BREACHERBROS</div>
-          <div class="logoSub">Wähle eine Klasse & starte die Mission</div>
-        </div>
-      </div>
-     <head>
+   <head>
   <style>
     /* andere CSS-Regeln ... */
 
@@ -108,6 +66,45 @@
   </style>
 </head>
 
+    .startLarge{margin-top:14px;padding:14px 20px;font-size:18px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#ff7b7b);color:#08101a;border:none;cursor:pointer; font-weight:700}
+    .startLarge[disabled]{opacity:0.45; cursor:not-allowed}
+    .selectedClass{box-shadow:0 0 26px rgba(255,59,59,0.25); transform:translateY(-4px)}
+
+    /* HUD */
+    #hudTop{left:12px;top:12px}
+    #hudBottom{left:12px;bottom:12px}
+    .hudItem{margin-bottom:8px;padding:8px 12px;border-radius:8px;background:var(--glass);display:inline-block}
+
+    /* Center crosshair */
+    #crosshair{position:absolute;left:50%;top:50%;width:24px;height:24px;margin-left:-12px;margin-top:-12px;pointer-events:none}
+    #crosshair:before,#crosshair:after{content:'';position:absolute;background:var(--accent);opacity:0.95}
+    #crosshair:before{left:11px;top:0;width:2px;height:24px}
+    #crosshair:after{top:11px;left:0;height:2px;width:24px}
+
+    /* Small message */
+    #message{position:absolute;right:12px;top:12px;padding:10px 14px;border-radius:10px;background:rgba(0,0,0,0.45)}
+
+    /* Level panel */
+    #levelPanel{position:absolute;right:12px;bottom:12px;padding:14px 18px;border-radius:12px}
+
+    /* Responsive */
+    @media (max-width:800px){
+      #startScreen{width:94%}
+      .logoTitle{font-size:30px}
+      #classSelect{flex-direction:column}
+    }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <div id="startScreen" class="panel">
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:20px;">
+        <div style="text-align:left">
+          <div class="logoTitle">BREACHERBROS</div>
+          <div class="logoSub">Solo FPS — Wähle eine Klasse & starte die Mission</div>
+        </div>
+      </div>
+      <div id="classSelect" aria-label="Klassen Auswahl"></div>
       <button id="startGame" class="startLarge" disabled>Start Mission</button>
       <div style="margin-top:12px;font-size:13px;opacity:0.9">Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
     </div>
