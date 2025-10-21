@@ -553,6 +553,7 @@ function populateClassUI(){
     const btn=document.createElement('div');
     btn.className='classBtn';
     btn.tabIndex=0;
+    btn.style.pointerEvents='auto'; // wichtig: Buttons reagieren auf Klicks
     btn.innerHTML=`
       <div class='classIcon' style='background:linear-gradient(135deg, ${toHex(c.color)}, #222); border:2px solid rgba(255,255,255,0.04)'>
         ${c.name[0]}
@@ -578,19 +579,32 @@ function selectClass(idx,btn){
   player.magSize=c.mag;
   player.ammo=c.mag;
   player.reloadTime=c.reload;
+  
   document.getElementById('className').innerText=c.name;
   document.getElementById('hpVal').innerText=Math.round(player.health);
   document.getElementById('ammoVal').innerText=player.ammo;
   document.getElementById('magSize').innerText=player.magSize;
 
-  // Highlight der ausgewählten Klasse
-  Array.from(document.getElementById('classSelect').children).forEach(ch=>ch.classList.remove('selectedClass'));
+  Array.from(document.getElementById('classSelect').children)
+       .forEach(ch=>ch.classList.remove('selectedClass'));
   btn.classList.add('selectedClass');
 
-  // Start-Button aktivieren
-  document.getElementById('startGame').disabled=false;
+  const startBtn=document.getElementById('startGame');
+  startBtn.disabled=false; // erst nach Auswahl aktivieren
   document.getElementById('message').innerText=`${c.name} ausgewählt — Klick auf "Start Mission"`;
 }
+
+// Startbutton-Logik
+const startBtn=document.getElementById('startGame');
+startBtn.addEventListener('click',()=>{
+  if(!player.selectedClass){
+    document.getElementById('message').innerText='Wähle zuerst eine Klasse!';
+    return;
+  }
+  startMission();
+  if(AudioCtx.state==='suspended') AudioCtx.resume();
+  controls.lock();
+});
 
 function toHex(num){ return '#'+(num.toString(16).padStart(6,'0').slice(-6)); }
 
