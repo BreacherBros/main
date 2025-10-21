@@ -51,6 +51,18 @@
     /* Responsive minor */
     @media (max-width:640px){#startScreen{width:94%;left:50%;top:50%}}
   </style>
+  #startScreen {
+  background: radial-gradient(circle at top, rgba(255,59,59,0.15), rgba(0,0,0,0.8));
+  border: 2px solid rgba(255,59,59,0.3);
+  text-align: center;
+  animation: pulseLogo 4s ease-in-out infinite;
+  box-shadow: 0 0 40px rgba(255,59,59,0.25);
+}
+@keyframes pulseLogo {
+  0%,100% { box-shadow: 0 0 40px rgba(255,59,59,0.25); transform:translate(-50%,-50%) scale(1);}
+  50% { box-shadow: 0 0 60px rgba(255,59,59,0.45); transform:translate(-50%,-50%) scale(1.03);}
+}
+
 </head>
 <body>
   <div id="ui">
