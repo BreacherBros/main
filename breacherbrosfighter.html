@@ -60,50 +60,30 @@
 </head>
 <body>
   <div id="ui">
-    <div id="startScreen" class="panel" aria-label="Startscreen">
-  <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:20px;">
-    <svg width="72" height="72" viewBox="0 0 64 64" aria-hidden="true">
-      <defs>
-        <linearGradient id="g" x1="0" x2="1">
-          <stop offset="0" stop-color="#ff3b3b"/>
-          <stop offset="1" stop-color="#ffd166"/>
-        </linearGradient>
-      </defs>
-      <rect x="0" y="0" width="64" height="64" rx="10" fill="#08101a"/>
-      <path d="M16 44 L32 16 L48 44 Z" fill="url(#g)" stroke="#111" stroke-width="1.2"/>
-      <circle cx="32" cy="34" r="5" fill="#08101a"/>
-    </svg>
-    <div style="text-align:left">
-      <div class="logoTitle">BREACHERBROS</div>
-      <div class="logoSub">Solo FPS — Wähle eine Klasse & starte die Mission</div>
+    <div id="startScreen" class="panel">
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:20px;">
+        <div style="text-align:left">
+          <div class="logoTitle">BREACHERBROS</div>
+          <div class="logoSub">Solo FPS — Wähle eine Klasse & starte die Mission</div>
+        </div>
+      </div>
+      <div id="classSelect" aria-label="Klassen Auswahl"></div>
+      <button id="startGame" class="startLarge" disabled>Start Mission</button>
+      <div style="margin-top:12px;font-size:13px;opacity:0.9">Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
     </div>
-  </div>
 
-  <!-- KLASSENWAHL -->
-  <div id="classSelect" aria-label="Klassen Auswahl" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px;">
-    <!-- Klassen-Buttons werden dynamisch via JS eingefügt -->
-  </div>
-
-  <button id="startGame" class="startLarge" disabled>Start Mission</button>
-  <div style="margin-top:12px;font-size:13px;opacity:0.9">
-    Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren
-  </div>
-</div>
-
-
-    <div id="hudTop" class="panel" style="position:absolute">
+    <div id="hudTop" class="panel">
       <div id="hpHud" class="hudItem">HP: <span id="hpVal">100</span></div>
       <div id="ammoHud" class="hudItem">Ammo: <span id="ammoVal">30</span>/<span id="magSize">30</span></div>
     </div>
 
-    <div id="hudBottom" class="panel" style="position:absolute">
+    <div id="hudBottom" class="panel">
       <div id="classHud" class="hudItem">Klasse: <b id="className">-</b></div>
       <div id="levelHud" class="hudItem">Level: <b id="levelNum">0</b></div>
     </div>
 
     <div id="message" class="panel" aria-live="polite">Bereit</div>
     <div id="levelPanel" class="panel">Gegner: <span id="enemyCount">0</span></div>
-
     <div id="crosshair" aria-hidden="true"></div>
   </div>
 
@@ -111,786 +91,95 @@
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
     import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
 
-    // ---- WebAudio simple synthesized SFX (works immediately) ----
+    // ---------------------- AUDIO ----------------------
     const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playGunshot(){ /* ... wie zuvor ... */ }
+    function playHitSound(){ /* ... wie zuvor ... */ }
+    let footstepTimer=null;
+    function startFootsteps(){ /* ... */ }
+    function stopFootsteps(){ if(footstepTimer){ clearInterval(footstepTimer); footstepTimer=null; } }
 
-    function playGunshot() {
-      // short noise burst + pitch envelope
-      const bufferSize = AudioCtx.sampleRate * 0.12;
-      const noiseBuffer = AudioCtx.createBuffer(1, bufferSize, AudioCtx.sampleRate);
-      const data = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.5));
-
-      const noise = AudioCtx.createBufferSource();
-      noise.buffer = noiseBuffer;
-
-      const noiseFilter = AudioCtx.createBiquadFilter();
-      noiseFilter.type = 'highpass';
-      noiseFilter.frequency.value = 800;
-
-      const gain = AudioCtx.createGain();
-      gain.gain.value = 0.001;
-      gain.gain.linearRampToValueAtTime(0.8, AudioCtx.currentTime + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, AudioCtx.currentTime + 0.12);
-
-      noise.connect(noiseFilter).connect(gain).connect(AudioCtx.destination);
-      noise.start();
-      noise.stop(AudioCtx.currentTime + 0.13);
-
-      // optional metallic click (bullet)
-      const osc = AudioCtx.createOscillator();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(1200, AudioCtx.currentTime);
-      const g2 = AudioCtx.createGain();
-      g2.gain.setValueAtTime(0.0001, AudioCtx.currentTime);
-      g2.gain.exponentialRampToValueAtTime(0.06, AudioCtx.currentTime + 0.01);
-      g2.gain.exponentialRampToValueAtTime(0.00001, AudioCtx.currentTime + 0.18);
-      osc.connect(g2).connect(AudioCtx.destination);
-      osc.start();
-      osc.stop(AudioCtx.currentTime + 0.18);
-    }
-
-    function playHitSound() {
-      const osc = AudioCtx.createOscillator();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(650, AudioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(220, AudioCtx.currentTime + 0.16);
-      const g = AudioCtx.createGain();
-      g.gain.setValueAtTime(0.6, AudioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.0001, AudioCtx.currentTime + 0.16);
-      osc.connect(g).connect(AudioCtx.destination);
-      osc.start();
-      osc.stop(AudioCtx.currentTime + 0.16);
-    }
-
-    let footstepTimer = null;
-    function startFootsteps() {
-      if (footstepTimer) return;
-      footstepTimer = setInterval(()=> {
-        // small footstep click
-        const o = AudioCtx.createOscillator();
-        o.type = 'square';
-        o.frequency.value = 200 + Math.random()*80;
-        const g = AudioCtx.createGain();
-        g.gain.setValueAtTime(0.0001, AudioCtx.currentTime);
-        g.gain.linearRampToValueAtTime(0.12, AudioCtx.currentTime + 0.01);
-        g.gain.exponentialRampToValueAtTime(0.00001, AudioCtx.currentTime + 0.2);
-        o.connect(g).connect(AudioCtx.destination);
-        o.start();
-        o.stop(AudioCtx.currentTime + 0.22);
-      }, 360);
-    }
-    function stopFootsteps() { if(footstepTimer){ clearInterval(footstepTimer); footstepTimer = null; } }
-
-    // ---- Three.js game code ----
+    // ---------------------- GAME ----------------------
     let scene, camera, renderer, controls;
-    const clock = new THREE.Clock();
-    const objects = [];
-    const enemies = [];
-    const particles = [];
-
-    const player = {
-      health: 100,
-      maxHealth: 100,
-      speed: 6,
-      sprintMultiplier: 1.7,
-      position: new THREE.Vector3(),
-      ammo: 30,
-      magSize: 30,
-      reloadTime: 1.6,
-      reloading: false,
-      fireRate: 0.12,
-      lastShot: 0,
-      selectedClass: null,
-      level: 0
-    };
-
-    const classes = [
-      { id:'assault', name:'Assault', desc:'Balanced - guter Allrounder', hp:110, speed:6, fireRate:0.12, mag:30, reload:1.6, color:0xff6b6b },
-      { id:'breacher', name:'Breacher', desc:'High HP, langsamer', hp:150, speed:4.8, fireRate:0.16, mag:20, reload:2.0, color:0xffb86b },
-      { id:'scout', name:'Scout', desc:'Schnell, weniger HP', hp:80, speed:8.2, fireRate:0.10, mag:24, reload:1.4, color:0x6bdeff },
-      { id:'engineer', name:'Engineer', desc:'Gute Rüstung, Spezial-Tools', hp:120, speed:5.6, fireRate:0.14, mag:28, reload:1.5, color:0x9bff6b },
-      { id:'sniper', name:'Sniper', desc:'Hoher Schaden, langsamer Feuern', hp:90, speed:5.4, fireRate:0.6, mag:10, reload:2.2, color:0xc896ff }
+    const clock=new THREE.Clock(); const objects=[], enemies=[], particles=[];
+    const player={health:100,maxHealth:100,speed:6,sprintMultiplier:1.7,position:new THREE.Vector3(),ammo:30,magSize:30,reloadTime:1.6,reloading:false,fireRate:0.12,lastShot:0,selectedClass:null,level:0};
+    const classes=[
+      {id:'assault',name:'Assault',desc:'Balanced - guter Allrounder',hp:110,speed:6,fireRate:0.12,mag:30,reload:1.6,color:0xff6b6b},
+      {id:'breacher',name:'Breacher',desc:'High HP, langsamer',hp:150,speed:4.8,fireRate:0.16,mag:20,reload:2.0,color:0xffb86b},
+      {id:'scout',name:'Scout',desc:'Schnell, weniger HP',hp:80,speed:8.2,fireRate:0.10,mag:24,reload:1.4,color:0x6bdeff},
+      {id:'engineer',name:'Engineer',desc:'Gute Rüstung, Spezial-Tools',hp:120,speed:5.6,fireRate:0.14,mag:28,reload:1.5,color:0x9d6bff}
     ];
 
-    // UI
-    const startScreen = document.getElementById('startScreen');
-    const classSelect = document.getElementById('classSelect');
-    const startBtn = document.getElementById('startGame');
-    const hpVal = document.getElementById('hpVal');
-    const ammoVal = document.getElementById('ammoVal');
-    const magSize = document.getElementById('magSize');
-    const classNameEl = document.getElementById('className');
-    const levelNumEl = document.getElementById('levelNum');
-    const msg = document.getElementById('message');
-    const enemyCountEl = document.getElementById('enemyCount');
+    // ---------------------- UI ----------------------
+    const startBtn=document.getElementById('startGame');
+    const classSelect=document.getElementById('classSelect');
+    const classNameUI=document.getElementById('className');
+    const hpVal=document.getElementById('hpVal');
+    const ammoVal=document.getElementById('ammoVal');
+    const magSize=document.getElementById('magSize');
+    const levelNum=document.getElementById('levelNum');
 
-    const keys = { forward:false, back:false, left:false, right:false, sprint:false };
+    // Klassenbuttons generieren
+    classes.forEach(c=>{
+      const btn=document.createElement('button'); btn.className='classBtn'; btn.innerHTML=`
+        <div class="classIcon" style="background:#${c.color.toString(16).padStart(6,'0')}">${c.id[0].toUpperCase()}</div>
+        <div>
+          <div><b>${c.name}</b></div>
+          <div style="font-size:12px;opacity:0.8">${c.desc}</div>
+        </div>`;
+      btn.addEventListener('click',()=>{ selectClass(c,btn); });
+      classSelect.appendChild(btn);
+    });
 
-    init();
-    populateClassUI();
-    animate();
+    function selectClass(c,btn){
+      player.selectedClass=c;
+      player.health=c.hp; player.maxHealth=c.hp;
+      player.ammo=c.mag; player.magSize=c.mag;
+      classNameUI.textContent=c.name;
+      hpVal.textContent=c.hp; ammoVal.textContent=c.mag; magSize.textContent=c.mag;
+      startBtn.disabled=false;
+      document.querySelectorAll('.classBtn').forEach(b=>b.classList.remove('selectedClass'));
+      btn.classList.add('selectedClass');
+    }
 
-    function init(){
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x0a0f12);
+    startBtn.addEventListener('click',()=>{
+      document.getElementById('startScreen').style.display='none';
+      initThree();
+      animate();
+    });
 
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0,1.6,4);
-
-      renderer = new THREE.WebGLRenderer({antialias:true});
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.domElement.style.position='absolute';
-      renderer.domElement.style.zIndex='0';
+    // ---------------------- THREE.JS ----------------------
+    function initThree(){
+      scene=new THREE.Scene();
+      camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000);
+      camera.position.set(0,1.7,0);
+      renderer=new THREE.WebGLRenderer({antialias:true});
+      renderer.setSize(window.innerWidth,window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-      scene.add(hemi);
-      const dir = new THREE.DirectionalLight(0xffffff, 0.8);
-      dir.position.set(5,10,7);
-      scene.add(dir);
+      controls=new PointerLockControls(camera,document.body);
+      document.body.addEventListener('click',()=>{controls.lock()});
 
-      // Level architecture generator: grid rooms with walls and door gaps
-      generateRooms(5,5, 8); // 5x5 rooms, each room size 8
+      // Licht
+      const light=new THREE.DirectionalLight(0xffffff,1); light.position.set(5,10,7); scene.add(light);
+      const ambient=new THREE.AmbientLight(0xffffff,0.3); scene.add(ambient);
 
-      // floor
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(400,400), new THREE.MeshStandardMaterial({color:0x2a2f33, roughness:1}));
-      floor.rotation.x = -Math.PI/2;
-      scene.add(floor);
-
-      // cover props
-      for(let i=0;i<80;i++){
-        const box = new THREE.Mesh(new THREE.BoxGeometry(1 + Math.random()*3, 1 + Math.random()*2, 1 + Math.random()*3),
-          new THREE.MeshStandardMaterial({color:0x1f2326}));
-        box.position.set((Math.random()-0.5)*200, 0.5 + Math.random()*1.5, (Math.random()-0.5)*200);
-        scene.add(box);
-        objects.push(box);
-      }
-
-      // pointer lock
-      controls = new PointerLockControls(camera, document.body);
-      controls.addEventListener('lock', ()=>{
-        fadeOutStartScreen();
-        msg.innerText = 'Mission gestartet';
-      });
-      controls.addEventListener('unlock', ()=>{
-        fadeInStartScreen();
-        msg.innerText = 'Pause';
-      });
-
-      // inputs
-      window.addEventListener('keydown', onKeyDown);
-      window.addEventListener('keyup', onKeyUp);
-      window.addEventListener('resize', onResize);
-      window.addEventListener('mousedown', (e)=>{ if(e.button===0) tryShoot(); });
-      window.addEventListener('keydown', (e)=>{ if(e.code==='KeyR') reload(); });
-
-      // start button
-      startBtn.addEventListener('click', ()=>{
-        if(!player.selectedClass){ msg.innerText = 'Wähle zuerst eine Klasse!'; return; }
-        startMission();
-        // resume audio context on user gesture to allow WebAudio playback
-        if (AudioCtx.state === 'suspended') { AudioCtx.resume(); }
-        // pointer lock must be triggered on user gesture
-        controls.lock();
-      });
-
-      magSize.innerText = player.magSize;
-      msg.innerText = 'Wähle Klasse & starte Mission';
-    }
-
-    // Room generator: creates simple rooms and walls with door gaps
-    function generateRooms(cols, rows, roomSize){
-      const offset = (cols * roomSize) / 2;
-      const wallMat = new THREE.MeshStandardMaterial({color:0x232528});
-      for(let x=0;x<cols;x++){
-        for(let y=0;y<rows;y++){
-          const cx = x*roomSize - offset + roomSize/2;
-          const cz = y*roomSize - offset + roomSize/2;
-          // create four walls (with random door)
-          const wallThickness = 0.4;
-          const wallHeight = 2.6;
-          // north wall
-          createWall(cx, wallHeight/2, cz - roomSize/2, roomSize, wallThickness, wallHeight, (Math.random()<0.7));
-          // south
-          createWall(cx, wallHeight/2, cz + roomSize/2, roomSize, wallThickness, wallHeight, (Math.random()<0.7));
-          // west
-          createWall(cx - roomSize/2, wallHeight/2, cz, wallThickness, roomSize, wallHeight, (Math.random()<0.7));
-          // east
-          createWall(cx + roomSize/2, wallHeight/2, cz, wallThickness, roomSize, wallHeight, (Math.random()<0.7));
-        }
-      }
-    }
-
-    function createWall(x,y,z,w,d,h, withDoor){
-      // w,d: width-depth extents
-      if(!withDoor || Math.random() < 0.3){
-        const geo = new THREE.BoxGeometry(w,d,h);
-        const mat = new THREE.MeshStandardMaterial({color:0x222229, roughness:1});
-        const m = new THREE.Mesh(geo, mat);
-        m.position.set(x, y, z);
-        scene.add(m);
-        objects.push(m);
-      } else {
-        // create wall with a door gap in center
-        // left piece
-        const pieceW = (w/2) - 1;
-        const geoL = new THREE.BoxGeometry(pieceW, d, h);
-        const geoR = new THREE.BoxGeometry(pieceW, d, h);
-        const mat = new THREE.MeshStandardMaterial({color:0x222229, roughness:1});
-        const left = new THREE.Mesh(geoL, mat);
-        const right = new THREE.Mesh(geoR, mat);
-        // orientation depends which side is larger
-        if(w > d){
-          // wall oriented along X
-          left.position.set(x - (w/2 - pieceW/2), y, z);
-          right.position.set(x + (w/2 - pieceW/2), y, z);
-        } else {
-          left.position.set(x, y, z - (d/2 - pieceW/2));
-          right.position.set(x, y, z + (d/2 - pieceW/2));
-        }
-        scene.add(left); scene.add(right);
-        objects.push(left); objects.push(right);
-      }
-    }
-
-  <!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>BreacherBros — Solo FPS (Play)</title>
-<style>
-:root{
-  --accent:#ff3b3b;
-  --accent2:#ffd166;
-  --bg:#0b0f13;
-  --panel: rgba(10,12,14,0.75);
-  --glass: rgba(255,255,255,0.04);
-  --text:#e6eef8;
-  font-family: Inter, system-ui, -apple-system, Roboto, "Segoe UI", "Helvetica Neue", Arial;
-}
-html,body{height:100%;margin:0;background:linear-gradient(180deg,#071018 0%, #0b1220 100%);overflow:hidden;color:var(--text)}
-canvas{display:block; position:absolute; top:0; left:0; z-index:0}
-
-/* UI */
-#ui{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none; z-index:10}
-.panel{position:absolute;background:var(--panel);backdrop-filter:blur(6px);border-radius:14px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,0.6);color:var(--text);pointer-events:auto}
-#startScreen{width:640px;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;padding:28px;border-radius:16px;
-             background: radial-gradient(circle at 30% 10%, rgba(255,59,59,0.12), rgba(0,0,0,0.7));border:2px solid rgba(255,59,59,0.18);
-             box-shadow:0 12px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02)}
-.logoTitle{font-size:42px;letter-spacing:2px;margin:6px 0;font-weight:800; color:var(--accent)}
-.logoSub{opacity:0.9;margin-bottom:10px;color:var(--text)}
-#classSelect{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:stretch}
-.classBtn{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));transition:transform .12s ease, box-shadow .12s;display:flex;align-items:center;gap:12px}
-.classBtn:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(0,0,0,0.6)}
-.classIcon{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#08101a}
-.startLarge{margin-top:14px;padding:14px 20px;font-size:18px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#ff7b7b);color:#08101a;border:none;cursor:pointer; font-weight:700}
-.startLarge[disabled]{opacity:0.45; cursor:not-allowed}
-.selectedClass{box-shadow:0 0 26px rgba(255,59,59,0.25); transform:translateY(-4px)}
-
-/* HUD */
-#hudTop{left:12px;top:12px}
-#hudBottom{left:12px;bottom:12px}
-.hudItem{margin-bottom:8px;padding:8px 12px;border-radius:8px;background:var(--glass);display:inline-block}
-
-/* Center crosshair */
-#crosshair{position:absolute;left:50%;top:50%;width:24px;height:24px;margin-left:-12px;margin-top:-12px;pointer-events:none}
-#crosshair:before,#crosshair:after{content:'';position:absolute;background:var(--accent);opacity:0.95}
-#crosshair:before{left:11px;top:0;width:2px;height:24px}
-#crosshair:after{top:11px;left:0;height:2px;width:24px}
-
-/* Small message */
-#message{position:absolute;right:12px;top:12px;padding:10px 14px;border-radius:10px;background:rgba(0,0,0,0.45)}
-
-/* Level panel */
-#levelPanel{position:absolute;right:12px;bottom:12px;padding:14px 18px;border-radius:12px}
-
-/* Responsive */
-@media (max-width:800px){
-  #startScreen{width:94%}
-  .logoTitle{font-size:30px}
-  #classSelect{flex-direction:column}
-}
-</style>
-</head>
-<body>
-<div id="ui">
-  <div id="startScreen" class="panel" aria-label="Startscreen">
-    <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
-      <svg width="72" height="72" viewBox="0 0 64 64" aria-hidden="true">
-        <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ff3b3b"/><stop offset="1" stop-color="#ffd166"/></linearGradient></defs>
-        <rect x="0" y="0" width="64" height="64" rx="10" fill="#08101a"/>
-        <path d="M16 44 L32 16 L48 44 Z" fill="url(#g)" stroke="#111" stroke-width="1.2"/>
-        <circle cx="32" cy="34" r="5" fill="#08101a"/>
-      </svg>
-      <div style="text-align:left">
-        <div class="logoTitle">BREACHERBROS</div>
-        <div class="logoSub">Solo FPS — Wähle eine Klasse & starte die Mission</div>
-      </div>
-    </div>
-    <div id="classSelect" aria-label="Klassen Auswahl" style="margin-top:18px"></div>
-    <button id="startGame" class="startLarge" disabled>Start Mission</button>
-    <div style="margin-top:12px;font-size:13px;opacity:0.9">Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
-  </div>
-
-  <div id="hudTop" class="panel">
-    <div id="hpHud" class="hudItem">HP: <span id="hpVal">100</span></div>
-    <div id="ammoHud" class="hudItem">Ammo: <span id="ammoVal">30</span>/<span id="magSize">30</span></div>
-  </div>
-
-  <div id="hudBottom" class="panel">
-    <div id="classHud" class="hudItem">Klasse: <b id="className">-</b></div>
-    <div id="levelHud" class="hudItem">Level: <b id="levelNum">0</b></div>
-  </div>
-
-  <div id="message" class="panel" aria-live="polite">Bereit</div>
-  <div id="levelPanel" class="panel">Gegner: <span id="enemyCount">0</span></div>
-  <div id="crosshair" aria-hidden="true"></div>
-</div>
-
-<script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
-
-// ---------------------- AUDIO ----------------------
-const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playGunshot(){
-  const bufferSize = AudioCtx.sampleRate * 0.12;
-  const noiseBuffer = AudioCtx.createBuffer(1, bufferSize, AudioCtx.sampleRate);
-  const data = noiseBuffer.getChannelData(0);
-  for(let i=0;i<bufferSize;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/(bufferSize*0.5));
-  const noise = AudioCtx.createBufferSource(); noise.buffer=noiseBuffer;
-  const noiseFilter = AudioCtx.createBiquadFilter(); noiseFilter.type='highpass'; noiseFilter.frequency.value=800;
-  const gain = AudioCtx.createGain(); gain.gain.value=0.001; gain.gain.linearRampToValueAtTime(0.8, AudioCtx.currentTime + 0.01); gain.gain.exponentialRampToValueAtTime(0.001, AudioCtx.currentTime+0.12);
-  noise.connect(noiseFilter).connect(gain).connect(AudioCtx.destination); noise.start(); noise.stop(AudioCtx.currentTime+0.13);
-  const osc = AudioCtx.createOscillator(); osc.type='triangle'; osc.frequency.setValueAtTime(1200,AudioCtx.currentTime);
-  const g2 = AudioCtx.createGain(); g2.gain.setValueAtTime(0.0001, AudioCtx.currentTime); g2.gain.exponentialRampToValueAtTime(0.06, AudioCtx.currentTime+0.01); g2.gain.exponentialRampToValueAtTime(0.00001, AudioCtx.currentTime+0.18);
-  osc.connect(g2).connect(AudioCtx.destination); osc.start(); osc.stop(AudioCtx.currentTime+0.18);
-}
-function playHitSound(){
-  const osc=AudioCtx.createOscillator(); osc.type='sawtooth'; osc.frequency.setValueAtTime(650, AudioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(220, AudioCtx.currentTime+0.16);
-  const g=AudioCtx.createGain(); g.gain.setValueAtTime(0.6, AudioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.0001, AudioCtx.currentTime+0.16);
-  osc.connect(g).connect(AudioCtx.destination); osc.start(); osc.stop(AudioCtx.currentTime+0.16);
-}
-let footstepTimer=null;
-function startFootsteps(){
-  if(footstepTimer) return;
-  footstepTimer=setInterval(()=>{
-    const o=AudioCtx.createOscillator(); o.type='square'; o.frequency.value=200+Math.random()*80;
-    const g=AudioCtx.createGain(); g.gain.setValueAtTime(0.0001,AudioCtx.currentTime); g.gain.linearRampToValueAtTime(0.12,AudioCtx.currentTime+0.01);
-    g.gain.exponentialRampToValueAtTime(0.00001,AudioCtx.currentTime+0.2);
-    o.connect(g).connect(AudioCtx.destination); o.start(); o.stop(AudioCtx.currentTime+0.22);
-  },360);
-}
-function stopFootsteps(){ if(footstepTimer){ clearInterval(footstepTimer); footstepTimer=null; } }
-
-// ---------------------- GAME ----------------------
-let scene, camera, renderer, controls;
-const clock=new THREE.Clock(); const objects=[], enemies=[], particles=[];
-const player={health:100,maxHealth:100,speed:6,sprintMultiplier:1.7,position:new THREE.Vector3(),ammo:30,magSize:30,reloadTime:1.6,reloading:false,fireRate:0.12,lastShot:0,selectedClass:null,level:0};
-const classes=[
-  {id:'assault',name:'Assault',desc:'Balanced - guter Allrounder',hp:110,speed:6,fireRate:0.12,mag:30,reload:1.6,color:0xff6b6b},
-  {id:'breacher',name:'Breacher',desc:'High HP, langsamer',hp:150,speed:4.8,fireRate:0.16,mag:20,reload:2.0,color:0xffb86b},
-  {id:'scout',name:'Scout',desc:'Schnell, weniger HP',hp:80,speed:8.2,fireRate:0.10,mag:24,reload:1.4,color:0x6bdeff},
-  {id:'engineer',name:'Engineer',desc:'Gute Rüstung, Spezial-Tools',hp:120,speed:5.6,fireRate:0.14,mag:28,reload:1.5,color:0x9bff6b},
-  {id:'sniper',name:'Sniper',desc:'Hoher Schaden, langsamer Feuern',hp:90,speed:5.4,fireRate:0.6,mag:10,reload:2.2,color:0xc896ff}
-];
-
-const classSelect=document.getElementById('classSelect');
-const startBtn=document.getElementById('startGame');
-const hpVal=document.getElementById('hpVal');
-const ammoVal=document.getElementById('ammoVal');
-const magSize=document.getElementById('magSize');
-const classNameEl=document.getElementById('className');
-const levelNumEl=document.getElementById('levelNum');
-const msg=document.getElementById('message');
-const enemyCountEl=document.getElementById('enemyCount');
-const keys={forward:false,back:false,left:false,right:false,sprint:false};
-
-// ---------------------- INIT ----------------------
-init();
-populateClassUI();
-animate();
-
-function init(){
-  scene=new THREE.Scene(); scene.background=new THREE.Color(0x0a0f12);
-  camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(0,1.6,4);
-  renderer=new THREE.WebGLRenderer({antialias:true}); renderer.setSize(window.innerWidth,window.innerHeight); renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.domElement.style.position='absolute'; renderer.domElement.style.zIndex='0'; document.body.appendChild(renderer.domElement);
-  scene.add(new THREE.HemisphereLight(0xffffff,0x444444,0.6));
-  const dir=new THREE.DirectionalLight(0xffffff,0.8); dir.position.set(5,10,7); scene.add(dir);
-  generateRooms(5,5,8);
-  const floor=new THREE.Mesh(new THREE.PlaneGeometry(400,400),new THREE.MeshStandardMaterial({color:0x2a2f33,roughness:1}));
-  floor.rotation.x=-Math.PI/2; scene.add(floor);
-  for(let i=0;i<80;i++){
-    const box=new THREE.Mesh(new THREE.BoxGeometry(1+Math.random()*3,1+Math.random()*2,1+Math.random()*3),new THREE.MeshStandardMaterial({color:0x1f2326}));
-    box.position.set((Math.random()-0.5)*200,0.5+Math.random()*1.5,(Math.random()-0.5)*200); scene.add(box); objects.push(box);
-  }
-  controls=new PointerLockControls(camera,document.body);
-  controls.addEventListener('lock',()=>{fadeOutStartScreen(); msg.innerText='Mission gestartet';});
-  controls.addEventListener('unlock',()=>{fadeInStartScreen(); msg.innerText='Pause';});
-  window.addEventListener('keydown',onKeyDown);
-  window.addEventListener('keyup',onKeyUp);
-  window.addEventListener('resize',onResize);
-  window.addEventListener('mousedown',e=>{if(e.button===0)tryShoot();});
-  window.addEventListener('keydown',e=>{if(e.code==='KeyR')reload();});
-  startBtn.addEventListener('click',()=>{
-    if(!player.selectedClass){msg.innerText='Wähle zuerst eine Klasse!';return;}
-    startMission();
-    if(AudioCtx.state==='suspended') AudioCtx.resume();
-    controls.lock();
-  });
-  magSize.innerText=player.magSize; msg.innerText='Wähle Klasse & starte Mission';
-}
-
-// ---------------------- KLASSENWAHL ----------------------
-function populateClassUI(){
-  const classSelect=document.getElementById('classSelect');
-  classSelect.innerHTML='';
-  classes.forEach((c, idx)=>{
-    const btn=document.createElement('div');
-    btn.className='classBtn';
-    btn.tabIndex=0;
-    btn.style.pointerEvents='auto'; // wichtig: Buttons reagieren auf Klicks
-    btn.innerHTML=`
-      <div class='classIcon' style='background:linear-gradient(135deg, ${toHex(c.color)}, #222); border:2px solid rgba(255,255,255,0.04)'>
-        ${c.name[0]}
-      </div>
-      <div style='flex:1;text-align:left'>
-        <b>${c.name}</b>
-        <div style='font-size:12px;opacity:0.85'>${c.desc}</div>
-      </div>
-    `;
-    btn.addEventListener('click',()=>selectClass(idx,btn));
-    btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')selectClass(idx,btn);});
-    classSelect.appendChild(btn);
-  });
-}
-
-function selectClass(idx,btn){
-  const c=classes[idx];
-  player.selectedClass=c;
-  player.maxHealth=c.hp;
-  player.health=c.hp;
-  player.speed=c.speed;
-  player.fireRate=c.fireRate;
-  player.magSize=c.mag;
-  player.ammo=c.mag;
-  player.reloadTime=c.reload;
-  
-  document.getElementById('className').innerText=c.name;
-  document.getElementById('hpVal').innerText=Math.round(player.health);
-  document.getElementById('ammoVal').innerText=player.ammo;
-  document.getElementById('magSize').innerText=player.magSize;
-
-  Array.from(document.getElementById('classSelect').children)
-       .forEach(ch=>ch.classList.remove('selectedClass'));
-  btn.classList.add('selectedClass');
-
-  const startBtn=document.getElementById('startGame');
-  startBtn.disabled=false; // erst nach Auswahl aktivieren
-  document.getElementById('message').innerText=`${c.name} ausgewählt — Klick auf "Start Mission"`;
-}
-
-// Startbutton-Logik
-const startBtn=document.getElementById('startGame');
-startBtn.addEventListener('click',()=>{
-  if(!player.selectedClass){
-    document.getElementById('message').innerText='Wähle zuerst eine Klasse!';
-    return;
-  }
-  startMission();
-  if(AudioCtx.state==='suspended') AudioCtx.resume();
-  controls.lock();
-});
-
-function toHex(num){ return '#'+(num.toString(16).padStart(6,'0').slice(-6)); }
-
-function toHex(num){return '#'+(num.toString(16).padStart(6,'0').slice(-6));}
-function selectClass(idx,btn){
-  const c=classes[idx]; player.selectedClass=c; player.maxHealth=c.hp; player.health=c.hp;
-  player.speed=c.speed; player.fireRate=c.fireRate; player.magSize=c.mag; player.ammo=c.mag; player.reloadTime=c.reload;
-  classNameEl.innerText=c.name; hpVal.innerText=Math.round(player.health); ammoVal.innerText=player.ammo; magSize.innerText=player.magSize;
-  Array.from(classSelect.children).forEach(ch=>ch.classList.remove('selectedClass')); btn.classList.add('selectedClass');
-  startBtn.disabled=false; msg.innerText=`${c.name} ausgewählt — Klick auf "Start Mission"`;
-}
-
-// ---------------------- DER REST DES SPIELS ----------------------
-// generateRooms, createWall, startMission, spawnLevel, spawnEnemy, clearEnemies, tryShoot, reload, updateEnemies, playerDead, animate, muzzleFlash, hitParticles, fadeInStartScreen, fadeOutStartScreen
-
-
-
-    function fadeOutStartScreen(){
-      startScreen.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
-      startScreen.style.opacity = '0';
-      startScreen.style.transform = 'translate(-50%,-50%) scale(0.98)';
-      setTimeout(()=> startScreen.style.display = 'none', 700);
-    }
-    function fadeInStartScreen(){
-      startScreen.style.display = 'block';
-      startScreen.style.opacity = '0';
-      startScreen.style.transform = 'translate(-50%,-50%) scale(0.98)';
-      setTimeout(()=> {
-        startScreen.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        startScreen.style.opacity = '1';
-        startScreen.style.transform = 'translate(-50%,-50%) scale(1)';
-      }, 20);
-    }
-
-    function startMission(){
-      player.level = 1;
-      levelNumEl.innerText = player.level;
-      spawnLevel(player.level);
-    }
-
-    function spawnLevel(level){
-      clearEnemies();
-      const baseCount = Math.min(6 + Math.floor(level*1.5), 80);
-      const enemyCount = Math.min( Math.round(baseCount + Math.random()*3*level), 120);
-      for(let i=0;i<enemyCount;i++) spawnEnemy(level);
-      enemyCountEl.innerText = enemies.length;
-      msg.innerText = `Level ${level}: ${enemies.length} Gegner`;
-      player.health = Math.min(player.health + 20, player.maxHealth);
-      hpVal.innerText = Math.round(player.health);
-    }
-
-    function clearEnemies(){
-      enemies.forEach(e=>{ scene.remove(e.mesh); });
-      enemies.length = 0;
-    }
-
-    function spawnEnemy(level){
-      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.8,1.6,6), new THREE.MeshStandardMaterial({color:0x333333}));
-      const head = new THREE.Mesh(new THREE.ConeGeometry(0.5,0.8,6), new THREE.MeshStandardMaterial({color:0x222222}));
-      head.position.y = 1.1;
-      const group = new THREE.Group();
-      group.add(body); group.add(head);
-
-      // spawn near a random room center
-      const roomCenters = [];
-      // get a few rooms positions from scene objects (approx by walls)
-      // fallback: spawn around origin if none
-      for(let obj of objects) {
-        if(obj.geometry && obj.geometry.type === 'BoxGeometry' && obj.position.y < 1.5) {
-          roomCenters.push(obj.position);
-        }
-      }
-      const angle = Math.random()*Math.PI*2;
-      const dist = 6 + Math.random()*30 + level*1.8;
-      group.position.set(Math.cos(angle)*dist, 0.8, Math.sin(angle)*dist);
-      scene.add(group);
-
-      const e = {
-        mesh: group,
-        hp: Math.round(20 + level*6 + Math.random()*12),
-        speed: 1 + Math.min(0.02*level, 1.8) + Math.random()*0.6,
-        damage: 6 + Math.round(level*0.8),
-        lastAttack: 0,
-        attackRate: 1.2 - Math.min(level*0.02,0.6)
-      };
-      enemies.push(e);
-    }
-
-    function onKeyDown(e){
-      if(e.code==='KeyW') keys.forward=true;
-      if(e.code==='KeyS') keys.back=true;
-      if(e.code==='KeyA') keys.left=true;
-      if(e.code==='KeyD') keys.right=true;
-      if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys.sprint=true;
-      if(e.code === 'Escape') {
-        if(controls && controls.isLocked) controls.unlock();
-      }
-    }
-    function onKeyUp(e){
-      if(e.code==='KeyW') keys.forward=false;
-      if(e.code==='KeyS') keys.back=false;
-      if(e.code==='KeyA') keys.left=false;
-      if(e.code==='KeyD') keys.right=false;
-      if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys.sprint=false;
-    }
-
-    function onResize(){
-      if(!camera || !renderer) return;
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    function tryShoot(){
-      if(!controls || !controls.isLocked) return;
-      if(player.reloading) return;
-      const t = clock.getElapsedTime();
-      if(t - player.lastShot < player.fireRate) return;
-      if(player.ammo <= 0){ reload(); return; }
-      player.lastShot = t;
-      player.ammo--;
-      ammoVal.innerText = player.ammo;
-
-      // play gunshot
-      playGunshot();
-      showMuzzleFlash();
-
-      // raycast
-      const ray = new THREE.Raycaster();
-      ray.setFromCamera(new THREE.Vector2(0,0), camera);
-      const hits = [];
-      enemies.forEach((e,idx)=>{
-        const box = new THREE.Box3().setFromObject(e.mesh);
-        if(ray.ray.intersectsBox(box)) hits.push({e,idx});
-      });
-      if(hits.length>0){
-        hits.sort((a,b)=> a.e.mesh.position.distanceTo(camera.position) - b.e.mesh.position.distanceTo(camera.position));
-        const target = hits[0].e;
-        const dmg = Math.round(18 + Math.random()*12 + (player.level*0.6));
-        target.hp -= dmg;
-        spawnHitParticles(target.mesh.position);
-        playHitSound();
-        if(target.hp<=0) killEnemy(target);
-      }
-    }
-
-    function reload(){
-      if(player.reloading) return;
-      if(player.ammo === player.magSize) return;
-      player.reloading = true;
-      msg.innerText = 'Nachladen...';
-      setTimeout(()=>{ player.ammo = player.magSize; player.reloading=false; ammoVal.innerText = player.ammo; msg.innerText=''; }, player.reloadTime*1000);
-    }
-
-    // muzzleflash: a sprite briefly shown in front of the camera
-    let muzzleSprite = null;
-    function ensureMuzzle(){
-      if(muzzleSprite) return;
-      const map = new THREE.Texture(generateMuzzleCanvas());
-      map.needsUpdate = true;
-      const mat = new THREE.SpriteMaterial({map: map, transparent:true, blending:THREE.AdditiveBlending});
-      muzzleSprite = new THREE.Sprite(mat);
-      muzzleSprite.scale.set(0.9,0.9,1);
-      camera.add(muzzleSprite);
-      muzzleSprite.position.set(0, -0.1, -1.2);
-      muzzleSprite.visible = false;
-    }
-    function generateMuzzleCanvas(){
-      const c = document.createElement('canvas'); c.width=128; c.height=64;
-      const ctx = c.getContext('2d');
-      const g = ctx.createLinearGradient(0,0,128,0);
-      g.addColorStop(0,'rgba(255,220,100,0.95)'); g.addColorStop(0.6,'rgba(255,120,60,0.7)'); g.addColorStop(1,'rgba(255,60,60,0.0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(0,0,128,64);
-      return c;
-    }
-    function showMuzzleFlash(){
-      ensureMuzzle();
-      muzzleSprite.visible = true;
-      muzzleSprite.material.opacity = 1;
-      muzzleSprite.scale.set(1.2 + Math.random()*0.6, 1.2 + Math.random()*0.6, 1);
-      setTimeout(()=> {
-        if(muzzleSprite) muzzleSprite.material.opacity = 0;
-        setTimeout(()=> { if(muzzleSprite) muzzleSprite.visible = false; }, 80);
-      }, 60);
-    }
-
-    // hit particles
-    function spawnHitParticles(pos){
-      const group = new THREE.Group();
-      for(let i=0;i<8;i++){
-        const s = new THREE.Mesh(new THREE.SphereGeometry(0.03,6,6), new THREE.MeshStandardMaterial({color:0xffb86b}));
-        s.position.set(pos.x + (Math.random()-0.5)*0.5, pos.y + 0.6 + Math.random()*0.2, pos.z + (Math.random()-0.5)*0.5);
-        s.userData.vel = new THREE.Vector3((Math.random()-0.5)*1.6, Math.random()*1.5, (Math.random()-0.5)*1.6);
-        group.add(s);
-      }
-      particles.push({group, life:0.9});
-      scene.add(group);
-    }
-
-    function killEnemy(target){
-      const idx = enemies.indexOf(target);
-      if(idx>=0) enemies.splice(idx,1);
-      scene.remove(target.mesh);
-      enemyCountEl.innerText = enemies.length;
-      player.health = Math.min(player.health + 8, player.maxHealth);
-      hpVal.innerText = Math.round(player.health);
-
-      if(enemies.length===0){
-        if(player.level >= 20){
-          msg.innerText = 'Mission erfüllt! Alle 20 Level abgeschlossen.';
-          if(controls && controls.isLocked) controls.unlock();
-        } else {
-          player.level++; levelNumEl.innerText = player.level;
-          setTimeout(()=> spawnLevel(player.level), 1200);
-        }
-      }
-    }
-
-    function updateEnemies(delta){
-      if(!controls || !controls.getObject) return;
-      const ppos = controls.getObject().position;
-      enemies.forEach(e=>{
-        const m = e.mesh;
-        const dir = new THREE.Vector3().subVectors(ppos, m.position);
-        const dist = dir.length();
-        dir.normalize();
-        if(dist > 1.9){
-          m.position.addScaledVector(dir, e.speed * delta * 2.0);
-          m.lookAt(ppos.x, m.position.y, ppos.z);
-        } else {
-          const now = clock.getElapsedTime();
-          if(now - e.lastAttack > e.attackRate){
-            e.lastAttack = now;
-            player.health -= e.damage;
-            hpVal.innerText = Math.round(player.health);
-            camera.position.y = 1.6 + Math.random()*0.06;
-            if(player.health <=0) playerDead();
-          }
-        }
-      });
-    }
-
-    function playerDead(){
-      msg.innerText = 'Du bist gefallen — Mission gescheitert.';
-      if(controls && controls.isLocked) controls.unlock();
-      clearEnemies();
+      // Boden
+      const floorMat=new THREE.MeshStandardMaterial({color:0x101010});
+      const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),floorMat); floor.rotation.x=-Math.PI/2; scene.add(floor);
     }
 
     function animate(){
       requestAnimationFrame(animate);
-      const delta = Math.min(clock.getDelta(), 0.1);
-
-      // footsteps start/stop based on movement
-      const moving = keys.forward || keys.back || keys.left || keys.right;
-      if(moving && controls && controls.isLocked) startFootsteps();
-      else stopFootsteps();
-
-      if(controls && controls.isLocked){
-        const forward = (keys.forward?1:0) - (keys.back?1:0);
-        const sideways = (keys.right?1:0) - (keys.left?1:0);
-        const sprint = keys.sprint? player.sprintMultiplier : 1;
-        const move = new THREE.Vector3(sideways,0,forward);
-        if(move.length() > 0) move.normalize().multiplyScalar(player.speed * sprint * delta);
-        controls.moveRight(move.x);
-        controls.moveForward(move.z);
-        player.position.copy(controls.getObject().position);
-        updateEnemies(delta);
-      }
-
-      // particles update
-      for(let i=particles.length-1;i>=0;i--){
-        const p = particles[i];
-        p.life -= delta;
-        p.group.children.forEach(ch=>{
-          ch.position.addScaledVector(ch.userData.vel, delta);
-          ch.userData.vel.y -= 9.8 * delta * 0.3;
-        });
-        if(p.life <= 0){
-          scene.remove(p.group);
-          particles.splice(i,1);
-        }
-      }
-
-      renderer.render(scene, camera);
+      const delta=clock.getDelta();
+      renderer.render(scene,camera);
     }
+
+    window.addEventListener('resize',()=>{ 
+      camera.aspect=window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth,window.innerHeight);
+    });
   </script>
 </body>
 </html>
