@@ -363,27 +363,39 @@
     function toHex(num){
       return '#' + (num.toString(16).padStart(6,'0')).slice(-6);
     }
+function populateClassUI(){
+  classSelect.innerHTML = '';
+  classes.forEach((c, idx) => {
+    const btn = document.createElement('div');
+    btn.className = 'classBtn';
+    btn.innerHTML = `<div class='classIcon' style='background:linear-gradient(135deg, ${toHex(c.color)}, #222)'>${c.name[0]}</div>
+                     <div style='flex:1;text-align:left'><b>${c.name}</b><div style='font-size:12px;opacity:0.85'>${c.desc}</div></div>`;
+    btn.addEventListener('click', ()=> selectClass(idx, btn));
+    classSelect.appendChild(btn);
+  });
+}
 
-    function selectClass(idx, btn){
-      const c = classes[idx];
-      player.selectedClass = c;
-      player.maxHealth = c.hp;
-      player.health = c.hp;
-      player.speed = c.speed;
-      player.fireRate = c.fireRate;
-      player.magSize = c.mag;
-      player.ammo = c.mag;
-      player.reloadTime = c.reload;
-      classNameEl.innerText = c.name;
-      hpVal.innerText = Math.round(player.health);
-      ammoVal.innerText = player.ammo;
-      magSize.innerText = player.magSize;
+function selectClass(idx, btn){
+  const c = classes[idx];
+  player.selectedClass = c;
+  player.maxHealth = c.hp;
+  player.health = c.hp;
+  player.speed = c.speed;
+  player.fireRate = c.fireRate;
+  player.magSize = c.mag;
+  player.ammo = c.mag;
+  player.reloadTime = c.reload;
+  classNameEl.innerText = c.name;
+  hpVal.innerText = Math.round(player.health);
+  ammoVal.innerText = player.ammo;
+  magSize.innerText = player.magSize;
 
-      Array.from(classSelect.children).forEach(ch => { ch.classList.remove('selectedClass'); });
-      btn.classList.add('selectedClass');
-      startBtn.disabled = false;
-      msg.innerText = `${c.name} ausgewählt — Klick auf "Start Mission"`;
-    }
+  Array.from(classSelect.children).forEach(ch => { ch.classList.remove('selectedClass'); });
+  btn.classList.add('selectedClass');
+  startBtn.disabled = false;
+  msg.innerText = `${c.name} ausgewählt — Klick auf "Start Mission"`;
+}
+
 
     function fadeOutStartScreen(){
       startScreen.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
