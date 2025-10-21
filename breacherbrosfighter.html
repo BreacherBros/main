@@ -64,10 +64,50 @@
       <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:20px;">
         <div style="text-align:left">
           <div class="logoTitle">BREACHERBROS</div>
-          <div class="logoSub">Solo FPS — Wähle eine Klasse & starte die Mission</div>
+          <div class="logoSub">Wähle eine Klasse & starte die Mission</div>
         </div>
       </div>
-      <div id="classSelect" aria-label="Klassen Auswahl"></div>
+     <head>
+  <style>
+    /* andere CSS-Regeln ... */
+
+    /* NEUER CODE für die Klassen-Auswahl */
+    #classSelect {
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      justify-content:flex-start;
+      align-items:flex-start;
+    }
+    .classBtn {
+      flex:0 0 auto;
+      min-width:120px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.06);
+      cursor:pointer;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      transition:transform .12s ease, box-shadow .12s;
+    }
+    .classIcon {
+      width:56px;
+      height:56px;
+      border-radius:8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      color:#08101a;
+      flex-shrink:0;
+    }
+
+    /* andere CSS-Regeln ... */
+  </style>
+</head>
+
       <button id="startGame" class="startLarge" disabled>Start Mission</button>
       <div style="margin-top:12px;font-size:13px;opacity:0.9">Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
     </div>
