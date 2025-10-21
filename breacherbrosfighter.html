@@ -8,7 +8,7 @@
     body { margin: 0; overflow: hidden; background: #000; color: white; font-family: Arial, sans-serif; }
     #hud {
       position: absolute; top: 10px; left: 10px;
-      z‑index: 10; background: rgba(0,0,0,0.4);
+      z-index: 10; background: rgba(0,0,0,0.4);
       padding: 10px 15px; border-radius: 5px;
     }
     #hud span { display: block; margin-bottom: 5px; }
@@ -67,12 +67,11 @@
 
   function init() {
     scene = new THREE.Scene();
-    // Atmosphäre / Nebel
     scene.background = new THREE.Color(0x0c0c0c);
-    scene.fog = new THREE.FogExp2(0x0c0c0c, 0.0025);
+    scene.fog = new THREE.FogExp2(0x0c0c0c, 0.002);
 
     camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 2, 5);
+    camera.position.set(0,2,5);
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -81,7 +80,6 @@
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
-    // Licht
     const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
     hemiLight.position.set(0, 50, 0);
     scene.add(hemiLight);
@@ -99,31 +97,33 @@
     dirLight.shadow.camera.bottom = -30;
     scene.add(dirLight);
 
-    // Boden
     const textureLoader = new THREE.TextureLoader();
-    const groundTex = textureLoader.load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/terrain/grasslight-big.jpg');
+    const groundTex = textureLoader.load(
+      'textures/grass.jpg',
+      undefined,
+      undefined,
+      err => console.error('Fehler beim Laden der Textur:', err)
+    );
     groundTex.wrapS = groundTex.wrapT = THREE.RepeatWrapping;
-    groundTex.repeat.set(100, 100);
+    groundTex.repeat.set(100,100);
     groundTex.anisotropy = 16;
-    const groundMat = new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.8, metalness: 0.2 });
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), groundMat);
+    const groundMat = new THREE.MeshStandardMaterial({ map: groundTex, roughness:0.8, metalness:0.2 });
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(2000,2000), groundMat);
     ground.rotation.x = -Math.PI/2;
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Spieler‑Modell
     const loader = new GLTFLoader();
     loader.load(
-      'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF‑Sample‑Models/2.0/Soldier/glTF/Soldier.glb',
+      'models/Soldier.glb',
       gltf => {
         player = gltf.scene;
-        player.scale.set(1.5, 1.5, 1.5);
-        player.position.set(0, 0, 0);
+        player.scale.set(1.5,1.5,1.5);
+        player.position.set(0,0,0);
         player.traverse(n => {
           if (n.isMesh) {
             n.castShadow = true;
             n.receiveShadow = true;
-            // Material verfeinern
             if (n.material) {
               n.material.roughness = 0.6;
               n.material.metalness = 0.3;
@@ -133,47 +133,40 @@
         scene.add(player);
       },
       undefined,
-      err => console.error('Fehler beim Laden des Spieler‑Modells:', err)
+      err => {
+        console.error('Fehler beim Laden des Modells Soldier.glb:', err);
+      }
     );
 
-    // Kamera Steuerung
     controls = new PointerLockControls(camera, document.body);
     scene.add(controls.getObject());
     controls.getObject().position.set(0,1.6,0);
 
-    document.body.addEventListener('click', () => {
-      controls.lock();
-    });
-
+    document.body.addEventListener('click', () => controls.lock());
     document.addEventListener('keydown', onKeyDown);
     document.addEventListener('keyup', onKeyUp);
     document.addEventListener('click', shoot);
     window.addEventListener('resize', onWindowResize);
     document.getElementById("resumeBtn").addEventListener('click', togglePause);
 
-    // Gegner spawnen
     spawnEnemies(5);
   }
 
-  function onKeyDown(e){
-    switch(e.code){
-      case 'KeyW': moveForward=true; break;
-      case 'KeyS': moveBackward=true; break;
-      case 'KeyA': moveLeft=true; break;
-      case 'KeyD': moveRight=true; break;
-      case 'Escape': togglePause(); break;
-    }
+  function onKeyDown(e) {
+    if (e.code === 'KeyW') moveForward = true;
+    if (e.code === 'KeyS') moveBackward = true;
+    if (e.code === 'KeyA') moveLeft = true;
+    if (e.code === 'KeyD') moveRight = true;
+    if (e.code === 'Escape') togglePause();
   }
-  function onKeyUp(e){
-    switch(e.code){
-      case 'KeyW': moveForward=false; break;
-      case 'KeyS': moveBackward=false; break;
-      case 'KeyA': moveLeft=false; break;
-      case 'KeyD': moveRight=false; break;
-    }
+  function onKeyUp(e) {
+    if (e.code === 'KeyW') moveForward = false;
+    if (e.code === 'KeyS') moveBackward = false;
+    if (e.code === 'KeyA') moveLeft = false;
+    if (e.code === 'KeyD') moveRight = false;
   }
 
-  function shoot(){
+  function shoot() {
     if (!canShoot || paused) return;
     const bulletGeo = new THREE.SphereGeometry(0.1,12,12);
     const bulletMat = new THREE.MeshStandardMaterial({ color: 0xffa500, roughness:0.4, metalness:0.1 });
@@ -187,15 +180,15 @@
     scene.add(bullet);
     bullets.push(bullet);
     canShoot = false;
-    setTimeout(()=>canShoot=true, 200);
+    setTimeout(() => canShoot = true, 200);
   }
 
-  function spawnEnemies(count){
-    for(let i=0; i<count; i++){
+  function spawnEnemies(count) {
+    for (let i = 0; i < count; i++) {
       const geo = new THREE.BoxGeometry(1,2,1);
       const mat = new THREE.MeshStandardMaterial({ color: 0x2222ff, roughness:0.7, metalness:0.1 });
       const enemy = new THREE.Mesh(geo, mat);
-      enemy.position.set((Math.random()-0.5)*100,1,(Math.random()-0.5)*100);
+      enemy.position.set((Math.random()-0.5)*100, 1, (Math.random()-0.5)*100);
       enemy.castShadow = true;
       enemy.receiveShadow = true;
       scene.add(enemy);
@@ -203,33 +196,31 @@
     }
   }
 
-  function togglePause(){
+  function togglePause() {
     paused = !paused;
     document.getElementById("pauseMenu").style.display = paused ? "flex" : "none";
   }
 
-  function onWindowResize(){
+  function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
-  function animate(){
+  function animate() {
     requestAnimationFrame(animate);
     if (paused) return;
     const delta = clock.getDelta();
-
     const speed = 10 * delta;
-    if (controls.isLocked === true) {
+    if (controls.isLocked) {
       if (moveForward) controls.moveForward(speed);
       if (moveBackward) controls.moveForward(-speed);
       if (moveLeft) controls.moveRight(-speed);
       if (moveRight) controls.moveRight(speed);
     }
-
-    bullets.forEach((b,i)=>{
+    bullets.forEach((b, i) => {
       b.position.addScaledVector(b.userData.velocity, delta);
-      enemies.forEach((e,ei)=>{
+      enemies.forEach((e, ei) => {
         if (b.position.distanceTo(e.position) < 1) {
           scene.remove(e);
           enemies.splice(ei,1);
@@ -242,13 +233,11 @@
         bullets.splice(i,1);
       }
     });
-
     if (enemies.length === 0) {
       level++;
       document.getElementById("level").innerText = level;
       spawnEnemies(level * 2);
     }
-
     renderer.render(scene, camera);
   }
 </script>
