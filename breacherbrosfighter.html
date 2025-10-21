@@ -3,30 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BreacherBros — Solo FPS (Prototype)</title>
+  <title>BreacherBros — Solo FPS (Play)</title>
   <style>
     :root{
       --accent:#ff3b3b;
       --accent2:#ffd166;
       --bg:#0b0f13;
-      --panel: rgba(10,12,14,0.6);
+      --panel: rgba(10,12,14,0.75);
       --glass: rgba(255,255,255,0.04);
       --text:#e6eef8;
       font-family: Inter, system-ui, -apple-system, Roboto, "Segoe UI", "Helvetica Neue", Arial;
     }
     html,body{height:100%;margin:0;background:linear-gradient(180deg,#071018 0%, #0b1220 100%);overflow:hidden;color:var(--text)}
-    canvas{display:block}
+    /* canvas must be behind the UI */
+    canvas{display:block; position:absolute; top:0; left:0; z-index:0}
 
     /* UI */
-    #ui{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none}
-    .panel{position:absolute;background:var(--panel);backdrop-filter:blur(6px);border-radius:12px;padding:14px;box-shadow:0 6px 24px rgba(0,0,0,0.6);color:var(--text);pointer-events:auto}
-
-    #startScreen{width:520px;left:50%;top:50%;transform:translate(-50%,-50%);}
-    #classSelect{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    #ui{position:absolute;left:0;right:0;top:0;bottom:0;pointer-events:none; z-index:10}
+    .panel{position:absolute;background:var(--panel);backdrop-filter:blur(6px);border-radius:14px;padding:14px;box-shadow:0 8px 30px rgba(0,0,0,0.6);color:var(--text);pointer-events:auto}
+    /* Startscreen / Logo */
+    #startScreen{width:640px;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;padding:28px;border-radius:16px;
+                 background: radial-gradient(circle at 30% 10%, rgba(255,59,59,0.12), rgba(0,0,0,0.7));border:2px solid rgba(255,59,59,0.18);
+                 box-shadow:0 12px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02)}
+    .logoTitle{font-size:42px;letter-spacing:2px;margin:6px 0;font-weight:800; color:var(--accent)}
+    .logoSub{opacity:0.9;margin-bottom:10px;color:var(--text)}
+    #classSelect{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:stretch}
     .classBtn{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));transition:transform .12s ease, box-shadow .12s;display:flex;align-items:center;gap:12px}
-    .classBtn:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+    .classBtn:hover{transform:translateY(-4px);box-shadow:0 14px 36px rgba(0,0,0,0.6)}
     .classIcon{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#08101a}
-    .startLarge{margin-top:14px;padding:14px 20px;font-size:18px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#ff7b7b);color:#08101a;border:none;cursor:pointer}
+    .startLarge{margin-top:14px;padding:14px 20px;font-size:18px;border-radius:12px;background:linear-gradient(90deg,var(--accent),#ff7b7b);color:#08101a;border:none;cursor:pointer; font-weight:700}
+    .startLarge[disabled]{opacity:0.45; cursor:not-allowed}
+    .selectedClass{box-shadow:0 0 26px rgba(255,59,59,0.25); transform:translateY(-4px)}
 
     /* HUD */
     #hudTop{left:12px;top:12px}
@@ -35,7 +42,7 @@
 
     /* Center crosshair */
     #crosshair{position:absolute;left:50%;top:50%;width:24px;height:24px;margin-left:-12px;margin-top:-12px;pointer-events:none}
-    #crosshair:before,#crosshair:after{content:'';position:absolute;background:var(--accent);opacity:0.9}
+    #crosshair:before,#crosshair:after{content:'';position:absolute;background:var(--accent);opacity:0.95}
     #crosshair:before{left:11px;top:0;width:2px;height:24px}
     #crosshair:after{top:11px;left:0;height:2px;width:24px}
 
@@ -48,30 +55,38 @@
     /* Buttons fancy */
     .btnSmall{padding:8px 12px;border-radius:8px;border:none;background:linear-gradient(180deg,#121417,#0b0d10);color:var(--text);cursor:pointer}
 
-    /* Responsive minor */
-    @media (max-width:640px){#startScreen{width:94%;left:50%;top:50%}}
+    /* Responsive */
+    @media (max-width:800px){
+      #startScreen{width:94%}
+      .logoTitle{font-size:30px}
+      #classSelect{flex-direction:column}
+    }
   </style>
-  #startScreen {
-  background: radial-gradient(circle at top, rgba(255,59,59,0.15), rgba(0,0,0,0.8));
-  border: 2px solid rgba(255,59,59,0.3);
-  text-align: center;
-  animation: pulseLogo 4s ease-in-out infinite;
-  box-shadow: 0 0 40px rgba(255,59,59,0.25);
-}
-@keyframes pulseLogo {
-  0%,100% { box-shadow: 0 0 40px rgba(255,59,59,0.25); transform:translate(-50%,-50%) scale(1);}
-  50% { box-shadow: 0 0 60px rgba(255,59,59,0.45); transform:translate(-50%,-50%) scale(1.03);}
-}
-
 </head>
 <body>
   <div id="ui">
-    <div id="startScreen" class="panel">
-      <h2 style="margin:0">BreacherBros — Solo Prototype</h2>
-      <p style="opacity:0.9">Wähle eine Klasse, dann Start — 20 Level, Prozeduraler Aufbau, härter werdend.</p>
-      <div id="classSelect"></div>
-      <button id="startGame" class="startLarge">Start Mission</button>
-      <div style="margin-top:12px;font-size:13px;opacity:0.8">Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint</div>
+    <div id="startScreen" class="panel" aria-label="Startscreen">
+      <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+        <!-- Simplified SVG-Logo (BreacherB-like mark) -->
+        <svg width="72" height="72" viewBox="0 0 64 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ff3b3b"/><stop offset="1" stop-color="#ffd166"/></linearGradient>
+          </defs>
+          <rect x="0" y="0" width="64" height="64" rx="10" fill="#08101a"/>
+          <path d="M16 44 L32 16 L48 44 Z" fill="url(#g)" stroke="#111" stroke-width="1.2"/>
+          <circle cx="32" cy="34" r="5" fill="#08101a"/>
+        </svg>
+        <div style="text-align:left">
+          <div class="logoTitle">BREACHERBROS</div>
+          <div class="logoSub">Solo FPS — Wähle eine Klasse & starte die Mission</div>
+        </div>
+      </div>
+
+      <div id="classSelect" aria-label="Klassen Auswahl" style="margin-top:18px"></div>
+
+      <button id="startGame" class="startLarge" disabled>Start Mission</button>
+
+      <div style="margin-top:12px;font-size:13px;opacity:0.9">Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
     </div>
 
     <div id="hudTop" class="panel" style="position:absolute">
@@ -84,10 +99,10 @@
       <div id="levelHud" class="hudItem">Level: <b id="levelNum">0</b></div>
     </div>
 
-    <div id="message" class="panel">Bereit</div>
+    <div id="message" class="panel" aria-live="polite">Bereit</div>
     <div id="levelPanel" class="panel">Gegner: <span id="enemyCount">0</span></div>
 
-    <div id="crosshair"></div>
+    <div id="crosshair" aria-hidden="true"></div>
   </div>
 
   <script type="module">
@@ -96,7 +111,7 @@
 
     // ----- Globals -----
     let scene, camera, renderer, controls;
-    let clock = new THREE.Clock();
+    const clock = new THREE.Clock();
     const objects = [];
     const enemies = [];
 
@@ -143,11 +158,12 @@
     // movement state
     const keys = { forward:false, back:false, left:false, right:false, sprint:false };
 
-    // init
-    init();
+    // --- Initialize scene + UI (but keep canvas behind UI) ---
+    initScene();
+    populateClassUI();
     animate();
 
-    function init(){
+    function initScene(){
       // scene + camera
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0a0f12);
@@ -159,6 +175,11 @@
       renderer = new THREE.WebGLRenderer({antialias:true});
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
+      // ensure canvas is behind UI
+      renderer.domElement.style.position = 'absolute';
+      renderer.domElement.style.top = '0';
+      renderer.domElement.style.left = '0';
+      renderer.domElement.style.zIndex = '0';
       document.body.appendChild(renderer.domElement);
 
       // lights
@@ -168,83 +189,125 @@
       dir.position.set(5,10,7);
       scene.add(dir);
 
-      // floor (simple R6-like low-poly vibe)
-      const floorMat = new THREE.MeshStandardMaterial({color:0x2a2f33, roughness:0.9});
+      // floor
+      const floorMat = new THREE.MeshStandardMaterial({color:0x2a2f33, roughness:0.95});
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(300,300), floorMat);
       floor.rotation.x = -Math.PI/2;
       scene.add(floor);
       objects.push(floor);
 
-      // simple cover pieces
+      // cover blocks
       for(let i=0;i<60;i++){
-        const box = new THREE.Mesh(new THREE.BoxGeometry(2 + Math.random()*4, 1 + Math.random()*2, 2 + Math.random()*4), new THREE.MeshStandardMaterial({color:0x1f2326}));
+        const box = new THREE.Mesh(new THREE.BoxGeometry(2 + Math.random()*4, 1 + Math.random()*2, 2 + Math.random()*4),
+          new THREE.MeshStandardMaterial({color:0x1f2326}));
         box.position.set((Math.random()-0.5)*160, 0.5 + Math.random()*1.5, (Math.random()-0.5)*160);
         scene.add(box);
         objects.push(box);
       }
 
-      // skybox-ish fog & ambient
+      // fog
       scene.fog = new THREE.FogExp2(0x0b1013, 0.002);
 
       // pointer controls
       controls = new PointerLockControls(camera, document.body);
-      document.addEventListener('click', ()=>{ if(!controls.isLocked && player.selectedClass) controls.lock(); });
-      controls.addEventListener('lock', ()=>{ startScreen.style.display='none'; msg.innerText='Ziel: Räume räumen'; });
-      controls.addEventListener('unlock', ()=>{ startScreen.style.display='block'; msg.innerText='Pause'; });
-
-      // populate class UI
-      classes.forEach((c,idx)=>{
-        const btn = document.createElement('div');
-        btn.className='classBtn';
-        btn.innerHTML = `<div class='classIcon' style='background:linear-gradient(135deg, #000, #222);border:2px solid rgba(255,255,255,0.04)'>${c.name[0]}</div><div style='flex:1'><b>${c.name}</b><div style='font-size:12px;opacity:0.8'>${c.desc}</div></div>`;
-        btn.addEventListener('click', ()=>{ selectClass(idx, btn); });
-        classSelect.appendChild(btn);
+      controls.addEventListener('lock', ()=>{
+        fadeOutStartScreen();
+        msg.innerText = 'Mission gestartet';
+      });
+      controls.addEventListener('unlock', ()=>{
+        fadeInStartScreen();
+        msg.innerText = 'Pause';
       });
 
       // input
       window.addEventListener('keydown', onKeyDown);
       window.addEventListener('keyup', onKeyUp);
       window.addEventListener('resize', onResize);
-
-      // mouse shoot
       window.addEventListener('mousedown', (e)=>{ if(e.button===0) tryShoot(); });
-      // reload
       window.addEventListener('keydown', (e)=>{ if(e.code==='KeyR') reload(); });
 
-      // start button
-      startBtn.addEventListener('click', ()=>{ if(!player.selectedClass){ msg.innerText='Wähle zuerst eine Klasse.'; return;} startMission(); controls.lock(); });
+      // start button: only enabled after selection
+      startBtn.addEventListener('click', ()=>{
+        if(!player.selectedClass){ msg.innerText = 'Wähle zuerst eine Klasse!'; return; }
+        // start mission logic first (spawning, HUD update)
+        startMission();
+        // then trigger pointer lock — must be direct user gesture (we are inside click handler)
+        controls.lock();
+      });
 
-      // update HUD base
       magSize.innerText = player.magSize;
+      msg.innerText = 'Wähle Klasse & starte Mission';
+    }
 
-      // create directional ambient detail
-      const hemi2 = new THREE.AmbientLight(0xffffff, 0.06);
-      scene.add(hemi2);
+    function populateClassUI(){
+      classSelect.innerHTML = '';
+      classes.forEach((c, idx) => {
+        const btn = document.createElement('div');
+        btn.className = 'classBtn';
+        btn.setAttribute('role','button');
+        btn.tabIndex = 0;
+        btn.innerHTML = `<div class='classIcon' style='background:linear-gradient(135deg, ${toHex(c.color)}, #222);border:2px solid rgba(255,255,255,0.04)'>${c.name[0]}</div>
+                         <div style='flex:1;text-align:left'><b>${c.name}</b><div style='font-size:12px;opacity:0.85'>${c.desc}</div></div>`;
+        btn.addEventListener('click', ()=> selectClass(idx, btn));
+        btn.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') selectClass(idx, btn); });
+        classSelect.appendChild(btn);
+      });
+    }
 
-      // quick initial message
-      msg.innerText='Wähle Klasse & Start';
+    function toHex(num){
+      // convert number like 0xff6b6b to #ff6b6b
+      return '#' + (num.toString(16).padStart(6,'0')).slice(-6);
     }
 
     function selectClass(idx, btn){
       const c = classes[idx];
       player.selectedClass = c;
-      player.maxHealth = c.hp; player.health = c.hp; player.speed = c.speed; player.fireRate = c.fireRate; player.magSize = c.mag; player.ammo = c.mag; player.reloadTime = c.reload;
+      player.maxHealth = c.hp;
+      player.health = c.hp;
+      player.speed = c.speed;
+      player.fireRate = c.fireRate;
+      player.magSize = c.mag;
+      player.ammo = c.mag;
+      player.reloadTime = c.reload;
       classNameEl.innerText = c.name;
       hpVal.innerText = Math.round(player.health);
       ammoVal.innerText = player.ammo;
       magSize.innerText = player.magSize;
 
-      // highlight
-      Array.from(classSelect.children).forEach(ch=> ch.style.boxShadow='');
-      btn.style.boxShadow = '0 8px 28px rgba(0,0,0,0.6)';
-      msg.innerText = `${c.name} ausgewählt`;
+      Array.from(classSelect.children).forEach(ch => {
+        ch.classList.remove('selectedClass');
+      });
+      btn.classList.add('selectedClass');
+
+      // enable start
+      startBtn.disabled = false;
+      msg.innerText = `${c.name} ausgewählt — Klick auf "Start Mission"`;
     }
 
+    function fadeOutStartScreen(){
+      startScreen.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+      startScreen.style.opacity = '0';
+      startScreen.style.transform = 'translate(-50%,-50%) scale(0.98)';
+      setTimeout(()=> startScreen.style.display = 'none', 700);
+    }
+    function fadeInStartScreen(){
+      startScreen.style.display = 'block';
+      startScreen.style.opacity = '0';
+      startScreen.style.transform = 'translate(-50%,-50%) scale(0.98)';
+      setTimeout(()=> {
+        startScreen.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        startScreen.style.opacity = '1';
+        startScreen.style.transform = 'translate(-50%,-50%) scale(1)';
+      }, 20);
+    }
+
+    // Gameplay functions (spawn, AI, shooting, etc.)
     function startMission(){
-      player.level = 1; levelNumEl.innerText = player.level; spawnLevel(player.level);
+      player.level = 1;
+      levelNumEl.innerText = player.level;
+      spawnLevel(player.level);
     }
 
-    // level spawning - 20 levels
     function spawnLevel(level){
       clearEnemies();
       const baseCount = Math.min(6 + Math.floor(level*1.5), 80);
@@ -253,7 +316,7 @@
       enemyCountEl.innerText = enemies.length;
       msg.innerText = `Level ${level}: ${enemies.length} Gegner`;
 
-      // give small buff per level
+      // small heal between levels
       player.health = Math.min(player.health + 20, player.maxHealth);
       hpVal.innerText = Math.round(player.health);
     }
@@ -264,14 +327,12 @@
     }
 
     function spawnEnemy(level){
-      // simple lowpoly 'BreacherBros' style bot: cylinder body + flat head + color
       const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.8,1.6,6), new THREE.MeshStandardMaterial({color:0x333333}));
       const head = new THREE.Mesh(new THREE.ConeGeometry(0.5,0.8,6), new THREE.MeshStandardMaterial({color:0x222222}));
       head.position.y = 1.1;
       const group = new THREE.Group();
       group.add(body); group.add(head);
 
-      // position around player in ring, distance increases with level
       const angle = Math.random()*Math.PI*2;
       const dist = 12 + Math.random()*40 + level*2;
       group.position.set(Math.cos(angle)*dist, 0.8, Math.sin(angle)*dist);
@@ -293,25 +354,29 @@
       if(e.code==='KeyS') keys.back=true;
       if(e.code==='KeyA') keys.left=true;
       if(e.code==='KeyD') keys.right=true;
-      if(e.code==='ShiftLeft') keys.sprint=true;
+      if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys.sprint=true;
+      if(e.code === 'Escape') {
+        // unlock (pause)
+        if(controls && controls.isLocked) controls.unlock();
+      }
     }
     function onKeyUp(e){
       if(e.code==='KeyW') keys.forward=false;
       if(e.code==='KeyS') keys.back=false;
       if(e.code==='KeyA') keys.left=false;
       if(e.code==='KeyD') keys.right=false;
-      if(e.code==='ShiftLeft') keys.sprint=false;
+      if(e.code==='ShiftLeft' || e.code==='ShiftRight') keys.sprint=false;
     }
 
     function onResize(){
+      if(!camera || !renderer) return;
       camera.aspect = window.innerWidth/window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    // shooting
     function tryShoot(){
-      if(!controls.isLocked) return;
+      if(!controls || !controls.isLocked) return;
       if(player.reloading) return;
       const t = clock.getElapsedTime();
       if(t - player.lastShot < player.fireRate) return;
@@ -320,7 +385,6 @@
       player.ammo--;
       ammoVal.innerText = player.ammo;
 
-      // raycast
       const ray = new THREE.Raycaster();
       ray.setFromCamera(new THREE.Vector2(0,0), camera);
       const hits = [];
@@ -329,7 +393,6 @@
         if(ray.ray.intersectsBox(box)) hits.push({e,idx});
       });
       if(hits.length>0){
-        // hit closest
         hits.sort((a,b)=> a.e.mesh.position.distanceTo(camera.position) - b.e.mesh.position.distanceTo(camera.position));
         const target = hits[0].e;
         const dmg = Math.round(18 + Math.random()*12 + (player.level*0.6));
@@ -337,7 +400,6 @@
         flashHit(target.mesh.position);
         if(target.hp<=0) killEnemy(target);
       }
-
     }
 
     function reload(){
@@ -349,7 +411,6 @@
     }
 
     function flashHit(pos){
-      // small visual pop
       const s = new THREE.Mesh(new THREE.SphereGeometry(0.15,8,8), new THREE.MeshBasicMaterial({color:0xffdd66}));
       s.position.copy(pos);
       scene.add(s);
@@ -361,15 +422,13 @@
       if(idx>=0) enemies.splice(idx,1);
       scene.remove(target.mesh);
       enemyCountEl.innerText = enemies.length;
-      // xp/score etc (simple heal)
       player.health = Math.min(player.health + 8, player.maxHealth);
       hpVal.innerText = Math.round(player.health);
 
-      // level complete?
       if(enemies.length===0){
         if(player.level >= 20){
           msg.innerText = 'Mission erfüllt! Alle 20 Level abgeschlossen.';
-          controls.unlock();
+          if(controls && controls.isLocked) controls.unlock();
         } else {
           player.level++; levelNumEl.innerText = player.level;
           setTimeout(()=> spawnLevel(player.level), 1200);
@@ -377,27 +436,24 @@
       }
     }
 
-    // enemy AI simple: move toward player, attack if close
     function updateEnemies(delta){
+      // if controls not yet available, skip
+      if(!controls || !controls.getObject) return;
       const ppos = controls.getObject().position;
       enemies.forEach(e=>{
         const m = e.mesh;
         const dir = new THREE.Vector3().subVectors(ppos, m.position);
         const dist = dir.length();
         dir.normalize();
-        // move
         if(dist > 1.9){
           m.position.addScaledVector(dir, e.speed * delta * 2.0);
           m.lookAt(ppos.x, m.position.y, ppos.z);
         } else {
-          // attack
           const now = clock.getElapsedTime();
           if(now - e.lastAttack > e.attackRate){
             e.lastAttack = now;
-            // damage player
             player.health -= e.damage;
             hpVal.innerText = Math.round(player.health);
-            // camera shake effect
             camera.position.y = 1.6 + Math.random()*0.06;
             if(player.health <=0) playerDead();
           }
@@ -407,44 +463,31 @@
 
     function playerDead(){
       msg.innerText = 'Du bist gefallen — Mission gescheitert.';
-      controls.unlock();
+      if(controls && controls.isLocked) controls.unlock();
       clearEnemies();
     }
 
-    // simple HUD hit feedback
-    function screenShake(amount=0.03){
-      camera.position.x += (Math.random()-0.5)*amount;
-      camera.position.y += (Math.random()-0.5)*amount;
-    }
-
-    // animation loop
     function animate(){
       requestAnimationFrame(animate);
       const delta = Math.min(clock.getDelta(), 0.1);
 
       if(controls && controls.isLocked){
-        // movement
         const forward = (keys.forward?1:0) - (keys.back?1:0);
         const sideways = (keys.right?1:0) - (keys.left?1:0);
         const sprint = keys.sprint? player.sprintMultiplier : 1;
-        const move = new THREE.Vector3(sideways,0,forward).normalize().multiplyScalar(player.speed * sprint * delta);
+        const move = new THREE.Vector3(sideways,0,forward);
+        if(move.length() > 0) move.normalize().multiplyScalar(player.speed * sprint * delta);
         controls.moveRight(move.x);
         controls.moveForward(move.z);
 
-        // update player pos
         player.position.copy(controls.getObject().position);
-
-        // enemy AI
         updateEnemies(delta);
-
-        // small ambient effects
-        if(Math.random() < 0.002) camera.position.y += (Math.random()-0.5)*0.02;
       }
 
       renderer.render(scene, camera);
     }
 
+    // End of script
   </script>
 </body>
 </html>
-
