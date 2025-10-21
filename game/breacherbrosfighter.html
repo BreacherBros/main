@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>BreacherBrosFighter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; color: white; font-family: Arial, sans-serif; }
+    #hud {
+      position: absolute; top: 10px; left: 10px;
+      z-index: 10; background: rgba(0,0,0,0.4);
+      padding: 10px 15px; border-radius: 5px;
+    }
+    #hud span { display: block; margin-bottom: 5px; }
+    #pauseMenu {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 20;
+    }
+    button {
+      background: linear-gradient(90deg, #ff7b00, #00bfff);
+      border: none; color: white;
+      padding: 10px 20px; margin-top: 15px;
+      font-size: 18px; cursor: pointer;
+      border-radius: 6px;
+    }
+    button:hover { opacity: 0.8; }
+  </style>
+</head>
+<body>
+
+<div id="hud">
+  <span>🎯 Kills: <span id="kills">0</span></span>
+  <span>❤️ Leben: <span id="health">100</span></span>
+  <span>🔫 Level: <span id="level">1</span></span>
+  <span>⏸️ Pause: [ESC]</span>
+</div>
+
+<div id="pauseMenu">
+  <h1>Pause</h1>
+  <button id="resumeBtn">Weiter</button>
+  <button onclick="location.reload()">Neustart</button>
+</div>
+
+<script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+  import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+  import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
+
+  let scene, camera, renderer, controls;
+  let player, bullets = [], enemies = [];
+  let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
+  let canShoot = true;
+  let health = 100, kills = 0, level = 1;
+  let paused = false;
+
+  const clock = new THREE.Clock();
+
+  init();
+  animate();
+
+  function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050505);
+
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 2000);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    // Licht
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x404040, 1.5);
+    scene.add(hemiLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(10, 20, 10);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    // Urbaner Boden
+    const groundTex = new THREE.TextureLoader().load('https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/terrain/grasslight-big.jpg');
+    groundTex.wrapS = groundTex.wrapT = THREE.RepeatWrapping;
+    groundTex.repeat.set(50, 50);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), new THREE.MeshStandardMaterial({ map: groundTex }));
+    ground.rotation.x = -Math.PI/2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Spieler
+    const loader = new GLTFLoader();
+    loader.load(
+      'https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models/2.0/Soldier/glTF/Soldier.glb',
+      gltf => {
+        player = gltf.scene;
+        player.scale.set(1.2, 1.2, 1.2);
+        player.position.set(0, 0, 0);
+        player.traverse(n => {
+          if (n.isMesh) {
+            n.castShadow = true;
+            n.material.color.setHex(0xff7b00); // Orange
+            n.material.emissive = new THREE.Color(0x00bfff); // Blau
+            n.material.emissiveIntensity = 0.2;
+          }
+        });
+        scene.add(player);
+      }
+    );
+
+    // Steuerung
+    controls = new PointerLockControls(camera, document.body);
+    document.body.addEventListener('click', () => controls.lock());
+    controls.getObject().position.y = 2;
+    scene.add(controls.getObject());
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+    document.addEventListener('click', shoot);
+    window.addEventListener('resize', onWindowResize);
+    document.getElementById("resumeBtn").addEventListener('click', togglePause);
+
+    spawnEnemies(5);
+  }
+
+  function onKeyDown(e){
+    switch(e.code){
+      case 'KeyW': moveForward=true; break;
+      case 'KeyS': moveBackward=true; break;
+      case 'KeyA': moveLeft=true; break;
+      case 'KeyD': moveRight=true; break;
+      case 'Escape': togglePause(); break;
+    }
+  }
+  function onKeyUp(e){
+    switch(e.code){
+      case 'KeyW': moveForward=false; break;
+      case 'KeyS': moveBackward=false; break;
+      case 'KeyA': moveLeft=false; break;
+      case 'KeyD': moveRight=false; break;
+    }
+  }
+
+  function shoot(){
+    if (!canShoot || paused) return;
+    const bulletGeo = new THREE.SphereGeometry(0.1,8,8);
+    const bulletMat = new THREE.MeshBasicMaterial({ color: 0xffa500 });
+    const bullet = new THREE.Mesh(bulletGeo, bulletMat);
+    const dir = new THREE.Vector3();
+    camera.getWorldDirection(dir);
+    bullet.position.copy(controls.getObject().position);
+    bullet.position.y += 1.5;
+    bullet.userData.velocity = dir.multiplyScalar(2);
+    scene.add(bullet);
+    bullets.push(bullet);
+    canShoot = false;
+    setTimeout(()=>canShoot=true, 200);
+  }
+
+  function spawnEnemies(count){
+    for(let i=0; i<count; i++){
+      const geo = new THREE.BoxGeometry(1,2,1);
+      const mat = new THREE.MeshStandardMaterial({ color: 0x2222ff });
+      const enemy = new THREE.Mesh(geo, mat);
+      enemy.position.set((Math.random()-0.5)*100,1,(Math.random()-0.5)*100);
+      enemy.castShadow = true;
+      scene.add(enemy);
+      enemies.push(enemy);
+    }
+  }
+
+  function togglePause(){
+    paused = !paused;
+    document.getElementById("pauseMenu").style.display = paused ? "flex" : "none";
+  }
+
+  function onWindowResize(){
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if (paused) return;
+    const delta = clock.getDelta();
+
+    const speed = 20 * delta;
+    const dir = new THREE.Vector3();
+    controls.getObject().getWorldDirection(dir);
+
+    if (moveForward) controls.moveForward(speed);
+    if (moveBackward) controls.moveForward(-speed);
+    if (moveLeft) controls.moveRight(-speed);
+    if (moveRight) controls.moveRight(speed);
+
+    bullets.forEach((b,i)=>{
+      b.position.add(b.userData.velocity);
+      enemies.forEach((e,ei)=>{
+        if (b.position.distanceTo(e.position)<1){
+          scene.remove(e); enemies.splice(ei,1);
+          kills++; document.getElementById("kills").innerText=kills;
+        }
+      });
+      if (b.position.length()>500){ scene.remove(b); bullets.splice(i,1); }
+    });
+
+    if(enemies.length===0){
+      level++; document.getElementById("level").innerText=level;
+      spawnEnemies(level*2);
+    }
+
+    renderer.render(scene, camera);
+  }
+</script>
+</body>
+</html>
