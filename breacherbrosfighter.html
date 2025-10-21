@@ -61,25 +61,35 @@
 <body>
   <div id="ui">
     <div id="startScreen" class="panel" aria-label="Startscreen">
-      <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
-        <svg width="72" height="72" viewBox="0 0 64 64" aria-hidden="true">
-          <defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#ff3b3b"/><stop offset="1" stop-color="#ffd166"/></linearGradient></defs>
-          <rect x="0" y="0" width="64" height="64" rx="10" fill="#08101a"/>
-          <path d="M16 44 L32 16 L48 44 Z" fill="url(#g)" stroke="#111" stroke-width="1.2"/>
-          <circle cx="32" cy="34" r="5" fill="#08101a"/>
-        </svg>
-        <div style="text-align:left">
-          <div class="logoTitle">BREACHERBROS</div>
-          <div class="logoSub">Solo FPS — Wähle eine Klasse & starte die Mission</div>
-        </div>
-      </div>
-
-      <div id="classSelect" aria-label="Klassen Auswahl" style="margin-top:18px"></div>
-
-      <button id="startGame" class="startLarge" disabled>Start Mission</button>
-
-      <div style="margin-top:12px;font-size:13px;opacity:0.9">Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
+  <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:20px;">
+    <svg width="72" height="72" viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="g" x1="0" x2="1">
+          <stop offset="0" stop-color="#ff3b3b"/>
+          <stop offset="1" stop-color="#ffd166"/>
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="64" height="64" rx="10" fill="#08101a"/>
+      <path d="M16 44 L32 16 L48 44 Z" fill="url(#g)" stroke="#111" stroke-width="1.2"/>
+      <circle cx="32" cy="34" r="5" fill="#08101a"/>
+    </svg>
+    <div style="text-align:left">
+      <div class="logoTitle">BREACHERBROS</div>
+      <div class="logoSub">Solo FPS — Wähle eine Klasse & starte die Mission</div>
     </div>
+  </div>
+
+  <!-- KLASSENWAHL -->
+  <div id="classSelect" aria-label="Klassen Auswahl" style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:20px;">
+    <!-- Klassen-Buttons werden dynamisch via JS eingefügt -->
+  </div>
+
+  <button id="startGame" class="startLarge" disabled>Start Mission</button>
+  <div style="margin-top:12px;font-size:13px;opacity:0.9">
+    Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren
+  </div>
+</div>
+
 
     <div id="hudTop" class="panel" style="position:absolute">
       <div id="hpHud" class="hudItem">HP: <span id="hpVal">100</span></div>
@@ -537,16 +547,53 @@ function init(){
 
 // ---------------------- KLASSENWAHL ----------------------
 function populateClassUI(){
+  const classSelect=document.getElementById('classSelect');
   classSelect.innerHTML='';
   classes.forEach((c, idx)=>{
-    const btn=document.createElement('div'); btn.className='classBtn'; btn.tabIndex=0;
-    btn.innerHTML=`<div class='classIcon' style='background:linear-gradient(135deg, ${toHex(c.color)}, #222); border:2px solid rgba(255,255,255,0.04)'>${c.name[0]}</div>
-                   <div style='flex:1;text-align:left'><b>${c.name}</b><div style='font-size:12px;opacity:0.85'>${c.desc}</div></div>`;
+    const btn=document.createElement('div');
+    btn.className='classBtn';
+    btn.tabIndex=0;
+    btn.innerHTML=`
+      <div class='classIcon' style='background:linear-gradient(135deg, ${toHex(c.color)}, #222); border:2px solid rgba(255,255,255,0.04)'>
+        ${c.name[0]}
+      </div>
+      <div style='flex:1;text-align:left'>
+        <b>${c.name}</b>
+        <div style='font-size:12px;opacity:0.85'>${c.desc}</div>
+      </div>
+    `;
     btn.addEventListener('click',()=>selectClass(idx,btn));
     btn.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')selectClass(idx,btn);});
     classSelect.appendChild(btn);
   });
 }
+
+function selectClass(idx,btn){
+  const c=classes[idx];
+  player.selectedClass=c;
+  player.maxHealth=c.hp;
+  player.health=c.hp;
+  player.speed=c.speed;
+  player.fireRate=c.fireRate;
+  player.magSize=c.mag;
+  player.ammo=c.mag;
+  player.reloadTime=c.reload;
+  document.getElementById('className').innerText=c.name;
+  document.getElementById('hpVal').innerText=Math.round(player.health);
+  document.getElementById('ammoVal').innerText=player.ammo;
+  document.getElementById('magSize').innerText=player.magSize;
+
+  // Highlight der ausgewählten Klasse
+  Array.from(document.getElementById('classSelect').children).forEach(ch=>ch.classList.remove('selectedClass'));
+  btn.classList.add('selectedClass');
+
+  // Start-Button aktivieren
+  document.getElementById('startGame').disabled=false;
+  document.getElementById('message').innerText=`${c.name} ausgewählt — Klick auf "Start Mission"`;
+}
+
+function toHex(num){ return '#'+(num.toString(16).padStart(6,'0').slice(-6)); }
+
 function toHex(num){return '#'+(num.toString(16).padStart(6,'0').slice(-6));}
 function selectClass(idx,btn){
   const c=classes[idx]; player.selectedClass=c; player.maxHealth=c.hp; player.health=c.hp;
