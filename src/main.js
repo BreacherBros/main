@@ -86,6 +86,72 @@ import { Projectile } from './physics.js';
 import { EnemyAI } from './enemyAI.js';
 import { AudioManager } from './audio.js';
 
+// HUD Update Funktion erweitern
+function updateHUD(){
+    healthEl.innerText = `Leben: ${Math.max(player.health,0)}`;
+    ammoEl.innerText = player.weapon.reloading
+        ? "Nachladen..."
+        : `Munition: ${player.weapon.ammo}/${player.weapon.maxAmmo}`;
+    abilityEl.innerText = `Fähigkeit: ${player.ability} (${Math.max(player.abilityObj.cooldown.toFixed(1),0)}s)`;
+    levelEl.innerText = `Level: ${levelManager.level}`;
+}
+
+// Animation: Gegner stirbt
+function removeEnemy(enemy){
+    const mesh = enemy.mesh;
+    const tween = { y: mesh.position.y };
+    const interval = setInterval(()=>{
+        tween.y -= 0.1;
+        mesh.position.y = tween.y;
+        if(mesh.position.y<0){
+            clearInterval(interval);
+            scene.remove(mesh);
+        }
+    },16);
+}
+
+// LevelManager initialisieren
+const levelManager = new LevelManager(scene, gameMap, player);
+levelManager.startLevel();
+
+// Gegner-KI für alle Gegner
+let enemyAIs = levelManager.enemies.map(e=>new EnemyAI(e, gameMap, player));
+
+// Im animate-Loop:
+function animate(){
+    requestAnimationFrame(animate);
+    const time = performance.now();
+    const delta = (time-prevTime)/1000;
+    prevTime = time;
+
+    if(controls.isLocked){
+        playerMovement(delta);
+
+        // Gegner-KI
+        enemyAIs.forEach(ai=>ai.update(delta));
+
+        // Projectiles
+        projectiles.forEach(p=>p.update(delta, levelManager.enemies));
+
+        // Prüfe ob alle Gegner tot
+        if(levelManager.enemies.length===0){
+            setTimeout(()=>levelManager.nextLevel(), 1000);
+        }
+
+        // HUD
+        updateHUD();
+    }
+
+    renderer.render(scene, camera);
+}
+
+// Nach jedem Level
+localStorage.setItem('breacherLevel', levelManager.level);
+
+// Beim Start
+const savedLevel = parseInt(localStorage.getItem('breacherLevel'));
+if(savedLevel) levelManager.level = savedLevel;
+
 const listener = new THREE.AudioListener();
 camera.add(listener);
 const audioManager = new AudioManager(listener);
@@ -204,6 +270,100 @@ function initScene() {
   );
   camera.position.set(0, 2, 5);
 
+  // Umgebungslicht
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+scene.add(ambientLight);
+
+// Richtungslicht (Schatten)
+const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+dirLight.position.set(50,50,50);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
+dirLight.shadow.camera.near = 0.1;
+dirLight.shadow.camera.far = 200;
+scene.add(dirLight);
+
+// Aktivieren für Boden und Wände
+floor.receiveShadow = true;
+gameMap.walls.forEach(w => w.castShadow = true);
+gameMap.walls.forEach(w => w.receiveShadow = true);
+player.mesh.castShadow = true;
+
+  import { TextureLoader } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
+
+const loader = new TextureLoader();
+const floorTexture = loader.load('./assets/textures/floor.jpg');
+floor.material.map = floorTexture;
+
+gameMap.walls.forEach(w => {
+    w.material.map = loader.load('./assets/textures/wall.jpg');
+});
+gameMap.cover.forEach(c => {
+    c.material.map = loader.load('./assets/textures/cover.jpg');
+});
+
+  import { Points, PointsMaterial, BufferGeometry, Float32BufferAttribute } from 'three';
+
+export function createExplosion(scene, position){
+    const particles = new BufferGeometry();
+    const count = 50;
+    const positions = [];
+    for(let i=0;i<count;i++){
+        positions.push(position.x, position.y, position.z);
+    }
+    particles.setAttribute('position', new Float32BufferAttribute(positions, 3));
+    const material = new PointsMaterial({color:0xffaa00, size:0.2});
+    const points = new Points(particles, material);
+    scene.add(points);
+
+    // Explosion animieren
+    let frame = 0;
+    const interval = setInterval(()=>{
+        const posAttr = points.geometry.attributes.position.array;
+        for(let i=0;i<posAttr.length;i+=3){
+            posAttr[i] += (Math.random()-0.5)*0.5;
+            posAttr[i+1] += (Math.random()-0.5)*0.5;
+            posAttr[i+2] += (Math.random()-0.5)*0.5;
+        }
+        points.geometry.attributes.position.needsUpdate = true;
+        frame++;
+        if(frame>20){
+            scene.remove(points);
+            clearInterval(interval);
+        }
+    },16);
+}
+
+  setTimeout(()=>{
+    createExplosion(this.scene, this.player.position.clone());
+    enemies.forEach(e=>{
+        const dist = e.mesh.position.distanceTo(this.player.position);
+        if(dist<10) e.health -= 80;
+    });
+    this.scene.remove(sphere);
+},1000);
+
+  // Dynamisches Spotlicht für Spieler
+const spotLight = new THREE.SpotLight(0xffffff, 0.7);
+spotLight.position.set(0,10,0);
+spotLight.target = player.mesh;
+spotLight.castShadow = true;
+scene.add(spotLight);
+scene.add(spotLight.target);
+
+  function hitFlash(mesh){
+    const originalColor = mesh.material.color.getHex();
+    mesh.material.color.set(0xffff00);
+    setTimeout(()=>{mesh.material.color.set(originalColor)},100);
+}
+
+// Bei Projektil-Treffer oder Granate:
+enemy.health -= damage;
+hitFlash(enemy.mesh);
+if(enemy.health<=0) removeEnemy(enemy);
+
+      
   // === Licht ===
   const ambient = new THREE.AmbientLight(0xffffff, 0.3);
   scene.add(ambient);
