@@ -155,24 +155,34 @@
       });
     });
 
-    // Start Game
-    startButton.addEventListener('click', () => {
-      const cls = classes[selectedClass];
-      player.health = cls.health;
-      player.maxHealth = cls.health;
-      player.speed = cls.speed;
-      player.ammo = cls.ammo;
-      player.maxAmmo = cls.ammo;
-      player.reloadTime = cls.reloadTime;
-      player.abilityNextUse = 0;
-      updateHUD();
-      briefing.style.display = 'none';
-      initGame();
-      // Request pointer lock on body click
-      document.body.addEventListener('click', () => {
-        if (!controls.isLocked) controls.lock();
-      }, { once: true });
-    });
+  startButton.addEventListener('click', () => {
+  const cls = classes[selectedClass];
+  player.health = cls.health;
+  player.maxHealth = cls.health;
+  player.speed = cls.speed;
+  player.ammo = cls.ammo;
+  player.maxAmmo = cls.ammo;
+  player.reloadTime = cls.reloadTime;
+  player.abilityNextUse = 0;
+  updateHUD();
+  briefing.style.display = 'none';
+  
+  // Jetzt: Spiel initialisieren
+  initGame();
+
+  // Sofort PointerLock aktivieren
+  document.body.requestPointerLock = 
+    document.body.requestPointerLock ||
+    document.body.mozRequestPointerLock ||
+    document.body.webkitRequestPointerLock;
+    
+  document.body.requestPointerLock();
+
+  // Falls der Browser Interaktion verlangt, klick nochmal:
+  document.body.addEventListener('click', () => {
+    if (!controls.isLocked) controls.lock();
+  });
+});
 
     // ----------------------------
     // Init Game (Three.js Szene)
