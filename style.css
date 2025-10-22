@@ -1,93 +1,178 @@
-html, body {
-  margin: 0; padding: 0;
-  width: 100%; height: 100%;
-  overflow: hidden;
-  background: #000;
-  font-family: 'Arial', sans-serif;
-  color: #fff;
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
+import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/PointerLockControls.js';
+
+// ======== Klassen ========
+const classes = {
+  "Stürmer":    { health: 120, speed: 1.2, ammo: 30, reloadTime: 1.5, ability: "Granate" },
+  "Verteidiger":{ health: 180, speed: 0.9, ammo: 40, reloadTime: 2.0, ability: "Schild" },
+  "Sanitäter":  { health: 150, speed: 1.0, ammo: 25, reloadTime: 1.2, ability: "Heilung" },
+  "Techniker":  { health: 130, speed: 1.1, ammo: 35, reloadTime: 1.6, ability: "Turret" },
+  "Späher":     { health: 100, speed: 1.4, ammo: 20, reloadTime: 1.0, ability: "Tarnung" }
+};
+
+let selectedClass = null;
+let player = {};
+let move = { forward: false, backward: false, left: false, right: false };
+let prevTime = performance.now();
+
+// ======== HTML ========
+const menu = document.getElementById('menu');
+const briefing = document.getElementById('briefing');
+const classBtns = document.querySelectorAll('.class-btn');
+const hud = document.getElementById('hud');
+const healthEl = document.getElementById('health');
+const ammoEl = document.getElementById('ammo');
+const abilityEl = document.getElementById('ability');
+const levelEl = document.getElementById('level');
+const canvas = document.getElementById('gameCanvas');
+
+// ======== Klassenwahl ========
+classBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedClass = btn.dataset.class;
+    const cls = classes[selectedClass];
+    menu.style.display = 'none';
+    briefing.style.display = 'block';
+    briefing.innerHTML = `
+      <h2>${selectedClass}</h2>
+      <p><strong>Fähigkeit:</strong> ${cls.ability}</p>
+      <p><strong>Gesundheit:</strong> ${cls.health}</p>
+      <p><strong>Tempo:</strong> ${cls.speed}</p>
+      <p><strong>Munition:</strong> ${cls.ammo}</p>
+      <button id="startGame">Los geht's!</button>
+    `;
+    const startBtn = document.getElementById('startGame');
+    startBtn.addEventListener('click', () => startGame(selectedClass));
+  });
+});
+
+// ======== Spielstart ========
+let scene, camera, renderer, controls;
+
+function startGame(clsName){
+  const cls = classes[clsName];
+  player = {
+    ...cls,
+    position: new THREE.Vector3(0,2,5),
+    velocity: new THREE.Vector3(),
+    canJump: true
+  };
+
+  briefing.style.display = 'none';
+  hud.style.display = 'block';
+
+  initScene();
+  animate();
+
+  // PointerLock erst aktivieren nach Start
+  document.body.addEventListener('click', () => {
+    controls.lock();
+  }, { once: true });
 }
 
-/* === Overlay-Menüs === */
-.overlay {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(10,10,10,0.8);
-  border: 2px solid rgba(255,255,255,0.2);
-  border-radius: 10px;
-  padding: 30px 50px;
-  text-align: center;
-  backdrop-filter: blur(5px);
+// ======== Scene initialisieren ========
+function initScene(){
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x101010);
+
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+  camera.position.copy(player.position);
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+
+  // Licht
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+  scene.add(ambientLight);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(50,100,50);
+  scene.add(dirLight);
+
+  // Boden
+  const floorGeo = new THREE.PlaneGeometry(200,200);
+  const floorMat = new THREE.MeshPhongMaterial({ color:0x333333 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI/2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  // Controls
+  controls = new PointerLockControls(camera, document.body);
+  scene.add(controls.getObject());
+
+  // Input
+  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keyup', onKeyUp);
+  window.addEventListener('resize', onWindowResize);
 }
 
-h1 {
-  margin-bottom: 20px;
-  font-size: 28px;
-  letter-spacing: 2px;
-  color: #ff8800;
-  text-shadow: 0 0 10px #ff8800;
+// ======== Input ========
+function onKeyDown(e){
+  switch(e.code){
+    case 'KeyW': move.forward = true; break;
+    case 'KeyA': move.left = true; break;
+    case 'KeyS': move.backward = true; break;
+    case 'KeyD': move.right = true; break;
+    case 'Space':
+      if(player.canJump){
+        player.velocity.y = 5;
+        player.canJump = false;
+      }
+      break;
+  }
+}
+function onKeyUp(e){
+  switch(e.code){
+    case 'KeyW': move.forward = false; break;
+    case 'KeyA': move.left = false; break;
+    case 'KeyS': move.backward = false; break;
+    case 'KeyD': move.right = false; break;
+  }
 }
 
-.button-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+// ======== Player Bewegung ========
+function playerMovement(delta){
+  const speed = 5 * player.speed;
+  const direction = new THREE.Vector3();
+  direction.z = Number(move.backward)-Number(move.forward);
+  direction.x = Number(move.right)-Number(move.left);
+  direction.normalize();
+
+  player.velocity.x -= direction.x * speed * delta;
+  player.velocity.z -= direction.z * speed * delta;
+
+  player.velocity.y -= 9.8 * delta;
+
+  controls.moveRight(-player.velocity.x*delta);
+  controls.moveForward(-player.velocity.z*delta);
+  controls.getObject().position.y += player.velocity.y*delta;
+
+  if(controls.getObject().position.y < 2){
+    player.velocity.y = 0;
+    controls.getObject().position.y = 2;
+    player.canJump = true;
+  }
 }
 
-.class-btn {
-  width: 220px;
-  margin: 8px;
-  padding: 12px;
-  font-size: 18px;
-  color: #fff;
-  background: rgba(255,136,0,0.2);
-  border: 1px solid #ff8800;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-.class-btn:hover {
-  background: rgba(255,136,0,0.5);
+// ======== Fenster resize ========
+function onWindowResize(){
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-/* === HUD === */
-#hud {
-  position: fixed;
-  top: 10px; left: 10px;
-  font-size: 18px;
-  text-shadow: 0 0 5px #000;
-}
-#hud div { margin-bottom: 4px; }
+// ======== Animate Loop ========
+function animate(){
+  requestAnimationFrame(animate);
+  const time = performance.now();
+  const delta = (time-prevTime)/1000;
+  prevTime = time;
 
-/* === Crosshair === */
-#crosshair {
-  position: fixed;
-  top: 50%; left: 50%;
-  width: 20px; height: 20px;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-#crosshair::before,
-#crosshair::after {
-  content: '';
-  position: absolute;
-  background: rgba(255,0,0,0.8);
-}
-#crosshair::before {
-  left: 50%; top: 0;
-  width: 2px; height: 100%;
-  transform: translateX(-50%);
-}
-#crosshair::after {
-  top: 50%; left: 0;
-  width: 100%; height: 2px;
-  transform: translateY(-50%);
-}
+  if(controls.isLocked){
+    playerMovement(delta);
+  }
 
-/* === Canvas === */
-#gameCanvas {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  display: block;
+  renderer.render(scene,camera);
 }
