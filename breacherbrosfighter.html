@@ -83,6 +83,55 @@
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.module.js';
     import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.148.0/examples/jsm/controls/PointerLockControls.js';
 
+    // === SPIEL-MENÜ UND BRIEFING ===
+
+const classes = {
+  "Stürmer": { health: 120, speed: 1.2, ammo: 30, reloadTime: 1.5, ability: "Granate" },
+  "Verteidiger": { health: 180, speed: 0.9, ammo: 40, reloadTime: 2.0, ability: "Schild" },
+  "Sanitäter": { health: 150, speed: 1.0, ammo: 25, reloadTime: 1.2, ability: "Heilung" },
+  "Techniker": { health: 130, speed: 1.1, ammo: 35, reloadTime: 1.6, ability: "Turret" },
+  "Späher": { health: 100, speed: 1.4, ammo: 20, reloadTime: 1.0, ability: "Tarnung" }
+};
+
+let selectedClass = null;
+
+// HTML-Referenzen
+const menu = document.getElementById('menu');
+const briefing = document.getElementById('briefing');
+const classButtons = document.querySelectorAll('.class-btn');
+
+// Wenn man eine Klasse auswählt
+classButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedClass = btn.dataset.class;
+    console.log(`Klasse gewählt: ${selectedClass}`);
+    menu.style.display = 'none';
+    briefing.style.display = 'block';
+    const cls = classes[selectedClass];
+    briefing.innerHTML = `
+      <h2>${selectedClass}</h2>
+      <p><strong>Fähigkeit:</strong> ${cls.ability}</p>
+      <p><strong>Gesundheit:</strong> ${cls.health}</p>
+      <p><strong>Tempo:</strong> ${cls.speed}</p>
+      <p><strong>Munition:</strong> ${cls.ammo}</p>
+      <button id="startGame">Los geht’s!</button>
+    `;
+
+    // Start-Button erzeugen
+    document.getElementById('startGame').addEventListener('click', () => {
+      startGame(selectedClass);
+    });
+  });
+});
+
+// Start des Spiels
+function startGame(clsName) {
+  const cls = classes[clsName];
+  briefing.style.display = 'none';
+  console.log(`Starte Spiel mit Klasse: ${clsName}`);
+  initGame(cls);
+}
+
     // ----------------------------
     // Klassen-Definitionen
     // ----------------------------
@@ -243,57 +292,6 @@
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
-    // === SPIEL-MENÜ UND BRIEFING ===
-
-// Beispiel-Daten für Klassen
-const classes = {
-  "Stürmer": { health: 120, speed: 1.2, ammo: 30, reloadTime: 1.5, ability: "Granate" },
-  "Verteidiger": { health: 180, speed: 0.9, ammo: 40, reloadTime: 2.0, ability: "Schild" },
-  "Sanitäter": { health: 150, speed: 1.0, ammo: 25, reloadTime: 1.2, ability: "Heilung" },
-  "Techniker": { health: 130, speed: 1.1, ammo: 35, reloadTime: 1.6, ability: "Turret" },
-  "Späher": { health: 100, speed: 1.4, ammo: 20, reloadTime: 1.0, ability: "Tarnung" }
-};
-
-let selectedClass = null;
-
-// HTML-Referenzen
-const menu = document.getElementById('menu');
-const briefing = document.getElementById('briefing');
-const classButtons = document.querySelectorAll('.class-btn');
-const startButton = document.getElementById('startGame');
-
-// Wenn man eine Klasse auswählt
-classButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    selectedClass = btn.dataset.class;
-    console.log(`Klasse gewählt: ${selectedClass}`);
-    menu.style.display = 'none';
-    briefing.style.display = 'block';
-    const cls = classes[selectedClass];
-    briefing.innerHTML = `
-      <h2>${selectedClass}</h2>
-      <p><strong>Fähigkeit:</strong> ${cls.ability}</p>
-      <p><strong>Gesundheit:</strong> ${cls.health}</p>
-      <p><strong>Tempo:</strong> ${cls.speed}</p>
-      <p><strong>Munition:</strong> ${cls.ammo}</p>
-      <button id="startGame">Los geht’s!</button>
-    `;
-
-    // EventListener für Startbutton direkt hier registrieren
-    document.getElementById('startGame').addEventListener('click', () => {
-      startGame(selectedClass);
-    });
-  });
-});
-
-// Start des Spiels
-function startGame(clsName) {
-  const cls = classes[clsName];
-  briefing.style.display = 'none';
-  console.log(`Starte Spiel mit Klasse: ${clsName}`);
-  // Hier wird das Spiel initialisiert:
-  initGame(cls);
-}
 
     // ----------------------------
     // Eingaben
