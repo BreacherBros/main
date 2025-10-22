@@ -66,27 +66,33 @@ function menuVisible(){ return menu.style.display!=='none' || briefing.style.dis
 // 3. Klassenauswahl Buttons
 // ==========================
 classBtns.forEach(btn=>{
-    btn.addEventListener('click', (e)=>{
+    btn.addEventListener('click', () => {
         selectedClass = btn.dataset.class;
         const cls = classes[selectedClass];
 
         menu.style.display = 'none';
         briefing.style.display = 'block';
         briefing.innerHTML = `
-          <h2>${selectedClass}</h2>
-          <p><strong>Fähigkeit:</strong> ${cls.ability}</p>
-          <p><strong>Gesundheit:</strong> ${cls.health}</p>
-          <p><strong>Tempo:</strong> ${cls.speed}</p>
-          <p><strong>Munition:</strong> ${cls.ammo}</p>
-          <button id="startGame">Los geht’s!</button>
+            <h2>${selectedClass}</h2>
+            <p><strong>Fähigkeit:</strong> ${cls.ability}</p>
+            <p><strong>Gesundheit:</strong> ${cls.health}</p>
+            <p><strong>Tempo:</strong> ${cls.speed}</p>
+            <p><strong>Munition:</strong> ${cls.ammo}</p>
+            <button id="startGame">Los geht’s!</button>
         `;
-
-        document.getElementById('startGame').addEventListener('click', (ev)=>{
-            ev.stopPropagation();
-            startGame(selectedClass);
-            initPointerLock();
-        });
     });
+});
+
+// ==========================
+// Event Delegation: Start-Button klick
+// ==========================
+document.body.addEventListener('click', e => {
+    if (e.target && e.target.id === 'startGame') {
+        briefing.style.display = 'none';
+        hud.style.display = 'block';
+        startGame(selectedClass);
+        initPointerLock();
+    }
 });
 
 // ==========================
@@ -115,9 +121,6 @@ function startGame(clsName){
         abilityObj:null,
         mesh:null
     };
-
-    briefing.style.display = 'none';
-    hud.style.display = 'block';
 
     initScene();
     initPlayer();
@@ -191,7 +194,6 @@ function playerMovement(delta){
     if(move.forward || move.backward) player.velocity.z -= direction.z*speed*delta;
     if(move.left || move.right) player.velocity.x -= direction.x*speed*delta;
 
-    // Gravitation
     player.velocity.y -= 9.8*10*delta;
 
     controls.moveRight(-player.velocity.x*delta);
@@ -204,7 +206,6 @@ function playerMovement(delta){
         player.canJump=true;
     }
 
-    // Spieler-Mesh synchronisieren
     player.mesh.position.copy(controls.getObject().position);
 }
 
@@ -220,16 +221,13 @@ function animate(){
     if(controls?.isLocked && !menuVisible()){
         playerMovement(delta);
 
-        // Gegner AI
         enemies.forEach(e=>{
             const ai = new EnemyAI(e,gameMap,player);
             ai.update(delta);
         });
 
-        // Projektile Update
         projectiles.forEach(p=>p.update?.(delta,enemies));
 
-        // Ability Cooldown
         player.abilityObj.updateCooldown(delta);
     }
 
