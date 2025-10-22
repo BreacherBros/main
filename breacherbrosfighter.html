@@ -2,576 +2,422 @@
 <html lang="de">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BreacherBros — Solo FPS (Play)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <style>
-    /* BreacherBros theme */
-    :root{
-      --orange:#FF6B00;
-      --turquoise:#00FFD5;
-      --violet:#8F00FF;
-      --bg-dark:#05060a;
-      --panel: rgba(12,13,17,0.78);
-      --glass: rgba(255,255,255,0.03);
-      --text:#e6eef8;
-      --muted: rgba(255,255,255,0.68);
+    /* --- Grund-Styles und Farbvariablen --- */
+    :root {
+      --accent: #ff3b3b;
+      --accent2: #ffd166;
+      --bg: #0b0f13;
+      --panel: rgba(10,12,14,0.75);
+      --glass: rgba(255,255,255,0.04);
+      --text: #e6eef8;
       font-family: Inter, system-ui, -apple-system, Roboto, "Segoe UI", "Helvetica Neue", Arial;
     }
-    html,body{height:100%;margin:0;background:
-      radial-gradient(800px 400px at 10% 10%, rgba(143,0,255,0.06) 0%, transparent 8%),
-      radial-gradient(1000px 500px at 90% 90%, rgba(0,255,213,0.03) 0%, transparent 12%),
-      linear-gradient(180deg,#020205 0%, #071018 50%, #0b1220 100%);
-      color:var(--text); overflow:hidden;
+    html, body {
+      height: 100%; margin: 0;
+      background: linear-gradient(180deg, #071018 0%, #0b1220 100%);
+      overflow: hidden; color: var(--text);
     }
-    canvas{position:absolute;top:0;left:0;display:block;z-index:0}
+    canvas { display: block; position: absolute; top: 0; left: 0; z-index: 0; }
 
-    /* UI overlay */
-    #ui{position:absolute;left:0;right:0;top:0;bottom:0;z-index:40;pointer-events:auto}
-    .panel{background:var(--panel);backdrop-filter:blur(6px);border-radius:14px;padding:12px;color:var(--text);box-shadow:0 12px 60px rgba(0,0,0,0.7)}
+    /* --- UI-Overlays --- */
+    #ui { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; pointer-events: auto; }
+    .panel {
+      position: absolute; background: var(--panel); backdrop-filter: blur(6px);
+      border-radius: 14px; padding: 14px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6); color: var(--text); pointer-events: auto;
+    }
+    #startScreen {
+      width: 640px; left: 50%; top: 50%; transform: translate(-50%,-50%);
+      text-align: center; padding: 28px; border-radius: 16px;
+      background: radial-gradient(circle at 30% 10%, rgba(255,59,59,0.12), rgba(0,0,0,0.7));
+      border: 2px solid rgba(255,59,59,0.18);
+      box-shadow: 0 12px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+    .logoTitle { font-size: 42px; letter-spacing:2px; margin:6px 0; font-weight:800; color: var(--accent); }
+    .logoSub { opacity:0.9; margin-bottom:10px; color: var(--text); }
 
-    /* Start screen */
-    #startScreen{width:820px;max-width:96%;left:50%;top:50%;transform:translate(-50%,-50%);position:absolute;padding:22px;border-radius:16px;border:1px solid rgba(255,255,255,0.03)}
-    #startTop{display:flex;gap:18px;align-items:center}
-    .logo{width:96px;height:96px;border-radius:14px;background:linear-gradient(135deg,var(--orange),var(--violet));display:flex;align-items:center;justify-content:center;font-weight:900;color:#08101a;font-size:26px;box-shadow:0 12px 36px rgba(143,0,255,0.12)}
-    .title{font-size:36px;color:var(--orange);font-weight:900;letter-spacing:2px}
-    .subtitle{color:var(--muted);margin-top:6px}
+    /* Neue Klassen-Auswahl-Buttons */
+    #classSelect { display: flex; flex-wrap: wrap; gap: 12px; }
+    .classBtn {
+      flex: 0 0 auto; min-width: 120px; display: flex; align-items: center; gap: 12px;
+      padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      transition: transform .12s ease, box-shadow .12s;
+    }
+    .classBtn:hover { transform: translateY(-2px); }
+    .classIcon {
+      width: 56px; height: 56px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: #08101a; flex-shrink: 0;
+    }
+    .selectedClass { box-shadow: 0 0 26px rgba(255,59,59,0.25); transform: translateY(-4px); }
 
-    #chooseWrap{display:flex;margin-top:18px;gap:18px;align-items:flex-start}
-    #classSelect{display:flex;flex-wrap:wrap;gap:12px;flex:1}
+    .startLarge {
+      margin-top: 14px; padding: 14px 20px; font-size: 18px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, var(--accent), #ff7b7b);
+      color: #08101a; border: none; cursor: pointer; font-weight:700;
+    }
+    .startLarge[disabled] { opacity: 0.45; cursor: not-allowed; }
 
-    .classBtn{display:flex;gap:12px;align-items:center;min-width:170px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));transition:transform .12s ease,box-shadow .12s}
-    .classBtn:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(0,0,0,0.5)}
-    .classIcon{width:64px;height:64px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#08101a;font-size:20px;box-shadow:inset 0 -6px 14px rgba(0,0,0,0.25)}
-    .classInfo b{display:block;font-size:15px}
-    .selectedClass{box-shadow:0 22px 70px rgba(0,0,0,0.6),0 0 28px rgba(255,107,0,0.12)!important;transform:translateY(-10px)!important;border:1px solid rgba(255,255,255,0.08)!important}
+    /* HUD (oben/unten) */
+    #hudTop { left: 12px; top: 12px; }
+    #hudBottom { left: 12px; bottom: 12px; }
+    .hudItem {
+      margin-bottom: 8px; padding: 8px 12px;
+      border-radius: 8px; background: var(--glass); display: inline-block;
+    }
 
-    #startControls{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:12px}
-    .startLarge{background:linear-gradient(90deg,var(--orange),var(--violet));color:#08101a;border:none;padding:12px 18px;border-radius:12px;cursor:pointer;font-weight:900;box-shadow:0 12px 40px rgba(255,107,0,0.08)}
-    .startLarge[disabled]{opacity:0.45;cursor:not-allowed}
+    /* Fadenkreuz */
+    #crosshair { position: absolute; left:50%; top:50%; width:24px; height:24px;
+      margin-left: -12px; margin-top: -12px; pointer-events:none;
+    }
+    #crosshair:before, #crosshair:after {
+      content: ''; position: absolute; background: var(--accent); opacity: 0.95;
+    }
+    #crosshair:before { left: 11px; top: 0; width:2px; height:24px; }
+    #crosshair:after { top: 11px; left: 0; height:2px; width:24px; }
 
-    #previewClass{min-width:260px;padding:10px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.006));font-size:14px;color:var(--muted)}
+    /* Nachrichtentext */
+    #message {
+      position: absolute; right:12px; top:12px;
+      padding: 10px 14px; border-radius: 10px;
+      background: rgba(0,0,0,0.45);
+    }
+    /* Level-Panel */
+    #levelPanel { position: absolute; right:12px; bottom:12px; padding: 14px 18px; border-radius: 12px; }
 
-    /* Briefing modal */
-    #briefing{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:640px;max-width:92%;padding:18px;border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,0.75),rgba(6,6,10,0.92));display:none;z-index:60;border:1px solid rgba(255,255,255,0.03)}
-    #briefTitle{font-size:22px;margin-bottom:6px}
-    #briefText{color:var(--muted);margin-bottom:12px}
-    .briefBtn{padding:10px 14px;border-radius:10px;border:none;font-weight:800;cursor:pointer}
-
-    /* HUD */
-    #hudTop{position:absolute;left:14px;top:14px;z-index:50;display:flex;flex-direction:column;gap:8px}
-    .hudItem{background:var(--glass);padding:8px 12px;border-radius:10px;font-weight:700;color:var(--text)}
-
-    #hudBottom{position:absolute;left:14px;bottom:14px;z-index:50;display:flex;flex-direction:column;gap:8px}
-
-    #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;margin-left:-13px;margin-top:-13px;z-index:48;pointer-events:none}
-    #crosshair:before,#crosshair:after{content:'';position:absolute;background:var(--turquoise);opacity:0.95}
-    #crosshair:before{left:12px;top:0;width:2px;height:26px}
-    #crosshair:after{top:12px;left:0;height:2px;width:26px}
-
-    #message{position:absolute;right:14px;top:14px;z-index:50;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.45)}
-
-    #levelPanel{position:absolute;right:14px;bottom:14px;z-index:50;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.45)}
-
-    @media (max-width:800px){
-      .title{font-size:24px}
-      .logo{width:72px;height:72px;font-size:20px}
-      #briefing{width:92%}
+    /* Responsive */
+    @media (max-width: 800px) {
+      #startScreen { width: 94%; }
+      .logoTitle { font-size: 30px; }
+      #classSelect { flex-direction: column; }
     }
   </style>
 </head>
 <body>
   <div id="ui">
-    <!-- Start Screen -->
-    <div id="startScreen" class="panel" role="dialog" aria-label="Startscreen">
-      <div id="startTop">
-        <div class="logo">BB</div>
-        <div>
-          <div class="title">BREACHERBROS</div>
-          <div class="subtitle">Solo FPS — Wähle Klasse, Briefing & starte Mission</div>
-          <div style="margin-top:8px;color:var(--muted)">Tasten: WASD · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
+    <!-- Startbildschirm / Menü -->
+    <div id="startScreen" class="panel">
+      <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:20px;">
+        <div style="text-align:left">
+          <div class="logoTitle">BREACHERBROS</div>
+          <div class="logoSub">Solo FPS – Wähle eine Klasse & starte die Mission</div>
         </div>
       </div>
-
-      <div id="chooseWrap">
-        <div id="classSelect" aria-label="Klassen Auswahl"></div>
-      </div>
-
-      <div id="startControls">
-        <div style="display:flex;gap:12px;align-items:center">
-          <button id="startGame" class="startLarge" disabled>Briefing</button>
-          <div id="previewClass">Keine Klasse gewählt</div>
-        </div>
-        <div style="color:var(--muted);font-size:13px">BreacherBros — Solo Campaign • 20 Levels</div>
+      <!-- Buttons für die Klasse -->
+      <div id="classSelect" aria-label="Klassen Auswahl"></div>
+      <button id="startGame" class="startLarge" disabled>Start Mission</button>
+      <div style="margin-top:12px; font-size:13px; opacity:0.9">
+        Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren
       </div>
     </div>
 
-    <!-- Briefing modal -->
-    <div id="briefing" role="dialog" aria-label="Briefing">
-      <div id="briefTitle"></div>
-      <div id="briefText"></div>
-      <div style="display:flex;gap:10px;justify-content:flex-end">
-        <button id="backToSelect" class="briefBtn" style="background:rgba(255,255,255,0.04);color:var(--text)">Zurück</button>
-        <button id="beginMission" class="briefBtn" style="background:linear-gradient(90deg,var(--turquoise),var(--violet));color:#08101a">Beginne Mission</button>
-      </div>
-    </div>
-
-    <!-- HUD -->
-    <div id="hudTop">
+    <!-- HUD oben (HP, Ammo) -->
+    <div id="hudTop" class="panel">
       <div id="hpHud" class="hudItem">HP: <span id="hpVal">100</span></div>
-      <div id="ammoHud" class="hudItem">Ammo: <span id="ammoVal">0</span>/<span id="magSize">0</span></div>
+      <div id="ammoHud" class="hudItem">Munition: <span id="ammoVal">30</span>/<span id="magSize">30</span></div>
     </div>
-
-    <div id="hudBottom">
+    <!-- HUD unten (Klasse, Level) -->
+    <div id="hudBottom" class="panel">
       <div id="classHud" class="hudItem">Klasse: <b id="className">-</b></div>
       <div id="levelHud" class="hudItem">Level: <b id="levelNum">0</b></div>
     </div>
-
-    <div id="message" class="panel">Bereit</div>
+    <!-- Nachricht / Status -->
+    <div id="message" class="panel" aria-live="polite">Bereit</div>
     <div id="levelPanel" class="panel">Gegner: <span id="enemyCount">0</span></div>
     <div id="crosshair" aria-hidden="true"></div>
   </div>
 
-  <!-- Three.js -->
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
     import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
 
-    /* ---------- AUDIO (WebAudio) ---------- */
-    const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    function playBeep(freq=880, time=0.08, when=0){
-      const o = AudioCtx.createOscillator();
-      const g = AudioCtx.createGain();
-      o.type = 'sine'; o.frequency.value = freq;
-      g.gain.value = 0.0001;
-      o.connect(g); g.connect(AudioCtx.destination);
-      const now = AudioCtx.currentTime + when;
-      g.gain.linearRampToValueAtTime(0.8, now + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + time);
-      o.start(now); o.stop(now + time + 0.01);
-    }
-
-    function playRadioCrackle(duration = 0.8){
-      // simple noise burst (brief)
-      const bufferSize = AudioCtx.sampleRate * duration;
-      const buffer = AudioCtx.createBuffer(1, bufferSize, AudioCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i=0;i<bufferSize;i++){
-        data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
-      }
-      const src = AudioCtx.createBufferSource();
-      src.buffer = buffer;
-      const g = AudioCtx.createGain(); g.gain.value = 0.5;
-      src.connect(g); g.connect(AudioCtx.destination);
-      src.start();
-      setTimeout(()=>{ try{ src.stop(); }catch(e){} }, duration*1000);
-    }
-
-    function playGunshot(){
-      // short noise with low pitch
-      const dur = 0.12;
-      const bufferSize = AudioCtx.sampleRate * dur;
-      const buffer = AudioCtx.createBuffer(1, bufferSize, AudioCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i=0;i<bufferSize;i++){
-        data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
-      }
-      const src = AudioCtx.createBufferSource(); src.buffer = buffer;
-      const g = AudioCtx.createGain(); g.gain.value = 0.8;
-      src.connect(g); g.connect(AudioCtx.destination);
-      src.start();
-      setTimeout(()=>{ try{ src.stop(); }catch(e){} }, dur*1000);
-    }
-
-    function playHitSound(){
-      playBeep(600,0.06);
-    }
-
-    function ensureAudioUnlocked(){
-      // Some browsers require resume on user gesture
-      if (AudioCtx.state === 'suspended') return AudioCtx.resume();
-      return Promise.resolve();
-    }
-
-    /* ---------- GAME STATE & UI refs ---------- */
-    const ui = {
-      startScreen: document.getElementById('startScreen'),
-      briefing: document.getElementById('briefing'),
-      briefTitle: document.getElementById('briefTitle'),
-      briefText: document.getElementById('briefText'),
-      backToSelect: document.getElementById('backToSelect'),
-      beginMission: document.getElementById('beginMission'),
-      startBtn: document.getElementById('startGame'),
-      preview: document.getElementById('previewClass'),
-      hpVal: document.getElementById('hpVal'),
-      ammoVal: document.getElementById('ammoVal'),
-      magSize: document.getElementById('magSize'),
-      className: document.getElementById('className'),
-      levelNum: document.getElementById('levelNum'),
-      enemyCount: document.getElementById('enemyCount'),
-      message: document.getElementById('message')
-    };
-
+    // ---------------------- SPIEL-SETS ----------------------
     let scene, camera, renderer, controls;
     const clock = new THREE.Clock();
-    let worldObjects = [];
-    let enemiesGroup;
-    let gameRunning = false;
-    let player = {
-      pos: new THREE.Vector3(),
-      health: 100, maxHealth: 100, speed: 6, sprintMultiplier: 1.7,
-      ammo: 0, magSize: 0, reloadTime: 1.6, fireRate: 0.12, lastShot: -9999, reloading: false,
-      selectedClass: null, level: 1
-    };
+    const enemies = [];
 
-    // class definitions with accent color for briefing
+    // Spielerzustand und Klassen-Definitionen
+    const player = {
+      health: 100, maxHealth: 100,
+      speed: 6, sprintMultiplier: 1.7,
+      ammo: 30, magSize: 30, reloadTime: 1.6,
+      reloading: false, fireRate: 0.12, lastShot: 0,
+      selectedClass: null, level: 0
+    };
     const classes = [
-      { id:'assault', name:'Assault', desc:'Vielseitig — stark in Nah- & Mittelbereich.', hp:110, speed:6.0, fireRate:0.12, mag:30, reload:1.6, color:'#FF6B00', briefing:'Stärke: Vielseitigkeit. Mission: Gebäude säubern.' },
-      { id:'breacher', name:'Breacher', desc:'Robust — ideal für Türdurchstöße.', hp:150, speed:4.9, fireRate:0.16, mag:20, reload:2.0, color:'#8F00FF', briefing:'Stärke: Panzerung. Mission: Türen knacken.' },
-      { id:'scout', name:'Scout', desc:'Schnell — ideal für Flanken & Späher.', hp:80, speed:8.2, fireRate:0.10, mag:24, reload:1.4, color:'#00FFD5', briefing:'Stärke: Geschwindigkeit. Mission: Aufklärung.' },
-      { id:'engineer', name:'Engineer', desc:'Spezialist — Gadgets & Verteidigung.', hp:120, speed:5.6, fireRate:0.14, mag:28, reload:1.5, color:'#4BC0C0', briefing:'Stärke: Tools. Mission: Systeme sichern.' },
-      { id:'sniper', name:'Sniper', desc:'Fernkampf-Experte — Präzision auf Distanz.', hp:90, speed:5.0, fireRate:0.18, mag:10, reload:2.2, color:'#6B8CFF', briefing:'Stärke: Distanz. Mission: Deckung geben.' }
+      { id:'assault',  name:'Assault',  desc:'Balanced – guter Allrounder',      hp:110, speed:6.0, fireRate:0.12, mag:30, reload:1.6, color:0xff6b6b },
+      { id:'breacher', name:'Breacher', desc:'Viel HP, langsamer',              hp:150, speed:4.8, fireRate:0.16, mag:20, reload:2.0, color:0xffb86b },
+      { id:'scout',    name:'Scout',    desc:'Schnell, weniger HP',              hp:80,  speed:8.2, fireRate:0.10, mag:24, reload:1.4, color:0x6bdeff },
+      { id:'engineer', name:'Engineer', desc:'Gute Rüstung, Spezial-Tools',      hp:120, speed:5.6, fireRate:0.14, mag:28, reload:1.5, color:0x9d6bff },
+      // 5. Klasse hinzufügen (z.B. "Sniper")
+      { id:'sniper',   name:'Sniper',   desc:'Fernkämpfer – hohe Präzision',    hp:90,  speed:5.0, fireRate:0.18, mag:10, reload:2.5, color:0x4bc0c0 }
     ];
 
-    // Fill class list UI (robust click handling)
+    // UI-Elemente
+    const startBtn = document.getElementById('startGame');
     const classSelect = document.getElementById('classSelect');
+    const classNameUI = document.getElementById('className');
+    const hpVal = document.getElementById('hpVal');
+    const ammoVal = document.getElementById('ammoVal');
+    const magSize = document.getElementById('magSize');
+    const levelNum = document.getElementById('levelNum');
+    const enemyCountUI = document.getElementById('enemyCount');
+    const messageUI = document.getElementById('message');
+
+    // --- Klassen-Auswahl-Buttons erstellen ---
     classes.forEach(c => {
       const btn = document.createElement('button');
       btn.className = 'classBtn';
-      btn.type = 'button';
-      btn.dataset.id = c.id;
+      const colorHex = '#'+c.color.toString(16).padStart(6,'0');
       btn.innerHTML = `
-        <div class="classIcon" style="background:${c.color}">${c.name.charAt(0)}</div>
-        <div style="text-align:left">
-          <div style="font-weight:800">${c.name}</div>
-          <div style="font-size:13px;color:var(--muted);margin-top:4px">${c.desc}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px">HP:${c.hp} · Mag:${c.mag} · Spd:${c.speed}</div>
-        </div>
+        <div class="classIcon" style="background:${colorHex}">${c.id[0].toUpperCase()}</div>
+        <div><div><b>${c.name}</b></div><div style="font-size:12px;opacity:0.8">${c.desc}</div></div>
       `;
-      btn.addEventListener('click', async (e) => {
-        await ensureAudioUnlocked();
-        applyClass(c, btn);
-      });
+      btn.addEventListener('click', () => selectClass(c, btn));
       classSelect.appendChild(btn);
     });
 
-    function applyClass(c, btn){
-      // visual
-      document.querySelectorAll('.classBtn').forEach(b => b.classList.remove('selectedClass'));
-      btn.classList.add('selectedClass');
-      // apply stats
+    function selectClass(c, btn) {
+      // Werte des Spielers an die Klasse anpassen
       player.selectedClass = c;
       player.health = player.maxHealth = c.hp;
       player.speed = c.speed;
       player.fireRate = c.fireRate;
       player.reloadTime = c.reload;
-      player.magSize = c.mag;
       player.ammo = c.mag;
-      // UI
-      ui.preview.innerHTML = `<div style="font-weight:800;color:${c.color}">${c.name}</div><div style="color:var(--muted);font-size:13px">${c.desc}</div>`;
-      ui.className.textContent = c.name;
-      ui.hpVal.textContent = Math.floor(player.health);
-      ui.ammoVal.textContent = player.ammo;
-      ui.magSize.textContent = player.magSize;
-      ui.startBtn.disabled = false;
-      ui.message.textContent = `Klasse ${c.name} ausgewählt`;
-      playBeep(1200,0.08);
-      setTimeout(()=>{ if (!gameRunning) ui.message.textContent = 'Bereit'; }, 1100);
+      player.magSize = c.mag;
+      // UI aktualisieren
+      classNameUI.textContent = c.name;
+      hpVal.textContent = c.hp;
+      ammoVal.textContent = c.mag;
+      magSize.textContent = c.mag;
+      startBtn.disabled = false;
+      // Selektierten Button hervorheben
+      document.querySelectorAll('.classBtn').forEach(b => b.classList.remove('selectedClass'));
+      btn.classList.add('selectedClass');
     }
 
-    /* Start -> show briefing modal */
-    ui.startBtn.addEventListener('click', async () => {
-      if (!player.selectedClass) { ui.message.textContent = 'Bitte zuerst eine Klasse wählen'; return; }
-      await ensureAudioUnlocked();
-      playRadioCrackle(0.6);
-      showBriefingForClass(player.selectedClass);
-    });
-
-    document.getElementById('backToSelect').addEventListener('click', () => {
-      ui.briefing.style.display = 'none';
-      ui.startScreen.style.display = 'block';
-      playBeep(720,0.06);
-    });
-
-    document.getElementById('beginMission').addEventListener('click', async () => {
-      ui.briefing.style.display = 'none';
-      ui.startScreen.style.display = 'none';
-      await ensureAudioUnlocked();
-      playBeep(880,0.08);
-      startGame(); // begins level 1
-    });
-
-    function showBriefingForClass(c){
-      ui.startScreen.style.display = 'none';
-      ui.briefing.style.display = 'block';
-      ui.briefTitle.textContent = `Mission 01 — ${c.name}`;
-      ui.briefText.innerHTML = `<div style="font-weight:700;color:${c.color}">${c.briefing}</div>
-        <div style="margin-top:8px;color:var(--muted)">Du beginnst auf Level 1. Ziele: Eliminieren oder Überleben. Nutze Deckung & Klassenfähigkeiten.</div>`;
-      // style briefing border accent
-      ui.briefing.style.boxShadow = `0 20px 80px ${hexToRgba(c.color,0.12)}`;
-    }
-
-    function hexToRgba(hex, alpha){
-      const c = hex.slice(1);
-      const r = parseInt(c.substr(0,2),16);
-      const g = parseInt(c.substr(2,2),16);
-      const b = parseInt(c.substr(4,2),16);
-      return `rgba(${r},${g},${b},${alpha})`;
-    }
-
-    /* ---------- CORE: init Three, spawns, controls ---------- */
-    function startGame(){
+    // --- Spielstart ---
+    startBtn.addEventListener('click', () => {
+      if (!player.selectedClass) return;
+      // UI ausblenden
+      document.getElementById('startScreen').style.display = 'none';
+      // Level 1 starten
       player.level = 1;
-      ui.levelNum.textContent = player.level;
-      ui.message.textContent = 'Starte Mission...';
+      levelNum.textContent = player.level;
       initThree();
-      spawnLevel(player.level);
-      gameRunning = true;
+      spawnEnemies();
       animate();
-    }
+    });
 
-    function initThree(){
+    // --- Drei.js Szenen-Setup ---
+    function initThree() {
       scene = new THREE.Scene();
-      scene.fog = new THREE.FogExp2(0x020205, 0.0025);
+      // Kamera und Renderer
       camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0,1.75,0);
-      renderer = new THREE.WebGLRenderer({antialias:true});
-      renderer.setSize(window.innerWidth,window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      camera.position.set(0, 1.7, 0);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // lights
-      const hemi = new THREE.HemisphereLight(0xffffff,0x080820,0.35); scene.add(hemi);
-      const dir = new THREE.DirectionalLight(0xffffff,0.9); dir.position.set(8,18,8); scene.add(dir);
-      const amb = new THREE.AmbientLight(0xffffff,0.08); scene.add(amb);
-
-      // floor PBR-ish
-      const floorMat = new THREE.MeshStandardMaterial({ color:0x0f1216, roughness:0.86, metalness:0.05 });
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(400,400), floorMat);
-      floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
-      worldObjects.push(floor);
-
-      // covers
-      const coverMat = new THREE.MeshStandardMaterial({ color:0x1b1f24, roughness:0.62, metalness:0.08 });
-      for (let i=0;i<16;i++){
-        const w = 1+Math.random()*6, h = 0.8+Math.random()*2, d = 1+Math.random()*6;
-        const box = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), coverMat);
-        box.position.set((Math.random()-0.5)*140, h/2, (Math.random()-0.5)*140);
-        scene.add(box); worldObjects.push(box);
-      }
-
-      // pointer lock controls - lock later after briefing Begin
+      // Pointer Lock Controls (FPS-Steuerung)
       controls = new PointerLockControls(camera, document.body);
-      scene.add(controls.getObject());
-      // we lock on user clicking BeginMission -> startGame then call lock on user gesture
-      // but also allow clicking canvas to lock if user desires (after mission started)
-      document.body.addEventListener('click', () => { try{ if (gameRunning && !controls.isLocked) controls.lock(); } catch(e){} });
+      // Mausklick sperrt Pointer
+      document.body.addEventListener('click', () => {
+        controls.lock();
+      });
+      controls.addEventListener('lock', () => messageUI.textContent = 'Feuer frei!');
+      controls.addEventListener('unlock', () => messageUI.textContent = 'Pausiert');
 
-      // enemy group
-      enemiesGroup = new THREE.Group(); scene.add(enemiesGroup);
+      // Lichtsetup (Direktlicht + Ambient + Himmelslicht für bessere Beleuchtung)
+      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+      dirLight.position.set(5,10,7);
+      scene.add(dirLight);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.3);
+      scene.add(ambient);
+      const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.4);
+      scene.add(hemi);
 
+      // Boden (PBR-Material möglich, hier einfach gefärbt)
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x101010, roughness: 0.8, metalness: 0.1 });
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), floorMat);
+      floor.rotation.x = -Math.PI/2;
+      scene.add(floor);
+      
+      // (Optional: weitere Objekte / Hindernisse können hier hinzugefügt werden)
+      // Beispiel: Großer Kubus als Deckung
+      const boxMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6, metalness: 0.2 });
+      const box = new THREE.Mesh(new THREE.BoxGeometry(3,3,3), boxMat);
+      box.position.set(5, 1.5, -5);
+      scene.add(box);
+
+      // Event-Listener: Fenstergröße anpassen
       window.addEventListener('resize', onWindowResize);
-      document.addEventListener('keydown', onKeyDown);
-      document.addEventListener('keyup', onKeyUp);
-      document.addEventListener('mousedown', onMouseDown);
-      document.addEventListener('keydown', onReloadKey);
-    }
-
-    function onWindowResize(){
-      if (!camera || !renderer) return;
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth,window.innerHeight);
-    }
-
-    /* ---------- Input & movement ---------- */
-    const moveState = { forward:false, back:false, left:false, right:false, sprint:false };
-    function onKeyDown(e){
-      if (e.code === 'KeyW') moveState.forward = true;
-      if (e.code === 'KeyS') moveState.back = true;
-      if (e.code === 'KeyA') moveState.left = true;
-      if (e.code === 'KeyD') moveState.right = true;
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') moveState.sprint = true;
-      if (e.code === 'Escape' && controls) controls.unlock();
-    }
-    function onKeyUp(e){
-      if (e.code === 'KeyW') moveState.forward = false;
-      if (e.code === 'KeyS') moveState.back = false;
-      if (e.code === 'KeyA') moveState.left = false;
-      if (e.code === 'KeyD') moveState.right = false;
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') moveState.sprint = false;
-    }
-
-    /* ---------- Shooting & audio ---------- */
-    const raycaster = new THREE.Raycaster();
-    function onMouseDown(e){
-      if (e.button !== 0) return;
-      shoot();
-    }
-    function shoot(){
-      if (!controls || !controls.isLocked) return;
-      if (player.reloading) return;
-      const t = clock.getElapsedTime();
-      if (t - player.lastShot < player.fireRate) return;
-      if (player.ammo <= 0){ ui.message.textContent = 'Leeres Magazin — R zum Nachladen'; return; }
-      player.lastShot = t; player.ammo--; ui.ammoVal.textContent = player.ammo;
-      playGunshot();
-
-      // muzzle flash ephemeral
-      const flash = new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6), new THREE.MeshBasicMaterial({color:0xFFD580}));
-      flash.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.6)).add(new THREE.Vector3(0,-0.12,0));
-      scene.add(flash); setTimeout(()=>scene.remove(flash),80);
-
-      // hit check
-      raycaster.set(camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
-      const hits = raycaster.intersectObjects(enemiesGroup.children, true);
-      if (hits.length > 0){
-        const hit = hits[0].object;
-        if (hit.userData && typeof hit.userData.hp === 'number'){
-          hit.userData.hp -= 60; // damage
-          if (hit.userData.hp <= 0){
-            spawnDeathPuff(hit.position);
-            enemiesGroup.remove(hit);
-            updateEnemyUI();
-            if (enemiesGroup.children.length === 0) onLevelCleared();
-          } else {
-            spawnHitMarker(hits[0].point);
-            playHitSound();
-          }
-        }
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
       }
+
+      // Event-Listener: Tastatursteuerung (Bewegung, Sprint, Nachladen)
+      initKeyboardControls();
+      // Maus-Klick: Schießen
+      document.addEventListener('mousedown', shoot);
     }
 
-    function spawnHitMarker(pos){
-      const ring = new THREE.Mesh(new THREE.RingGeometry(0.02,0.05,8), new THREE.MeshBasicMaterial({color:0xFF6B00, side:THREE.DoubleSide}));
-      ring.position.copy(pos); ring.lookAt(camera.position);
-      scene.add(ring); setTimeout(()=>scene.remove(ring),200);
-    }
-    function spawnDeathPuff(pos){
-      const geo = new THREE.SphereGeometry(0.5,8,8);
-      const m = new THREE.MeshStandardMaterial({color:0xBB2222, transparent:true, opacity:0.85});
-      const s = new THREE.Mesh(geo, m); s.position.copy(pos);
-      scene.add(s); setTimeout(()=>scene.remove(s),420);
-    }
-
-    function onReloadKey(e){
-      if (e.code !== 'KeyR') return;
-      if (player.reloading || player.ammo >= player.magSize) return;
-      player.reloading = true; ui.message.textContent = 'Nachladen...';
-      setTimeout(()=>{ player.ammo = player.magSize; ui.ammoVal.textContent = player.ammo; player.reloading=false; ui.message.textContent='Bereit'; playBeep(1000,0.06); }, Math.max(500, player.reloadTime*1000));
-    }
-
-    /* ---------- Enemy spawn & level progression ---------- */
-    function spawnLevel(level){
-      enemiesGroup.clear();
-      const base = 4 + Math.floor(level * 1.5);
-      const count = Math.min(50, base + Math.floor(level*0.5));
-      for (let i=0;i<count;i++) spawnEnemy(level);
-      updateEnemyUI(); ui.levelNum.textContent = level;
-      ui.message.textContent = `Level ${level} — Eliminieren!`;
-      setTimeout(()=>ui.message.textContent = '', 1400);
-    }
-    function spawnEnemy(level){
-      const size = 0.9 + Math.random()*0.8;
-      const geo = new THREE.BoxGeometry(0.8*size,1.6*size,0.6*size);
-      const mat = new THREE.MeshStandardMaterial({color:0x8f8f8f, roughness:0.7});
-      const enemy = new THREE.Mesh(geo, mat);
-      const angle = Math.random()*Math.PI*2;
-      const dist = 12 + Math.random()*(18 + level*2);
-      enemy.position.set(Math.cos(angle)*dist, 0.8, Math.sin(angle)*dist);
-      enemy.userData = { hp: 90 + Math.floor(level*10), speed: 1.0 + level*0.06 + Math.random()*0.6, lastAttack:0 };
-      enemiesGroup.add(enemy);
-    }
-    function updateEnemyUI(){ ui.enemyCount.textContent = enemiesGroup.children.length; }
-
-    function onLevelCleared(){
-      if (player.level >= 20){
-        ui.message.textContent = 'ALLE MISSIONEN ABSOLVIERT — GEWONNEN!';
-        controls.unlock(); gameRunning=false; return;
-      }
-      ui.message.textContent = `Level ${player.level} abgeschlossen! Nächste Mission...`;
-      setTimeout(()=>{ player.level++; spawnLevel(player.level); }, 1400);
-    }
-
-    /* ---------- Enemy AI step ---------- */
-    function enemyStep(delta){
-      controls.getObject().getWorldPosition(player.pos);
-      enemiesGroup.children.forEach(enemy => {
-        const dir = new THREE.Vector3().subVectors(player.pos, enemy.position);
-        const dist = dir.length();
-        dir.normalize();
-        // simplified LOS: raycast against worldObjects
-        const r = new THREE.Raycaster(enemy.position.clone().add(new THREE.Vector3(0,0.6,0)), dir, 0, dist);
-        const blockers = r.intersectObjects(worldObjects, true);
-        const sees = blockers.length === 0;
-        if (sees){
-          enemy.position.addScaledVector(dir, enemy.userData.speed * delta);
-        } else {
-          // small idle movement
-          enemy.position.x += Math.sin(performance.now()*0.0007 + enemy.id||0) * 0.02;
-          enemy.position.z += Math.cos(performance.now()*0.0006 + enemy.id||0) * 0.02;
+    // --- Tasten- und Mauskontrolle ---
+    let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false, sprint=false;
+    function initKeyboardControls() {
+      document.addEventListener('keydown', (event) => {
+        switch(event.code) {
+          case 'KeyW': moveForward = true; break;
+          case 'KeyS': moveBackward = true; break;
+          case 'KeyA': moveLeft = true; break;
+          case 'KeyD': moveRight = true; break;
+          case 'ShiftLeft': case 'ShiftRight': sprint = true; break;
+          case 'KeyR':
+            if (!player.reloading && player.ammo < player.magSize) {
+              // Nachladen initiieren
+              player.reloading = true;
+              messageUI.textContent = 'Nachladen...';
+              setTimeout(() => {
+                player.ammo = player.magSize;
+                ammoVal.textContent = player.ammo;
+                player.reloading = false;
+                messageUI.textContent = 'Bereit';
+              }, player.reloadTime * 1000);
+            }
+            break;
+          case 'Escape':
+            controls.unlock(); // Finger weg, Lock verlassen
+            break;
         }
-        if (enemy.position.distanceTo(player.pos) < 1.6){
-          const now = clock.getElapsedTime();
-          if (now - enemy.userData.lastAttack > 0.9){
-            enemy.userData.lastAttack = now;
-            player.health -= 8 + Math.floor(player.level*0.6);
-            player.health = Math.max(0, player.health);
-            ui.hpVal.textContent = Math.floor(player.health);
-            ui.message.textContent = 'Getroffen!';
-            setTimeout(()=>ui.message.textContent = '',900);
-            if (player.health <= 0) onPlayerDeath();
-          }
+      });
+      document.addEventListener('keyup', (event) => {
+        switch(event.code) {
+          case 'KeyW': moveForward = false; break;
+          case 'KeyS': moveBackward = false; break;
+          case 'KeyA': moveLeft = false; break;
+          case 'KeyD': moveRight = false; break;
+          case 'ShiftLeft': case 'ShiftRight': sprint = false; break;
         }
       });
     }
 
-    function onPlayerDeath(){
-      gameRunning=false; ui.message.textContent = 'Mission gescheitert — Du bist gefallen.';
-      controls.unlock();
+    // --- Schießen ---
+    function shoot() {
+      if (!controls.isLocked || player.reloading) return;
+      const now = performance.now();
+      if (player.ammo <= 0 || (now - player.lastShot) < player.fireRate*1000) return;
+      player.lastShot = now;
+      player.ammo--;
+      ammoVal.textContent = player.ammo;
+      playGunshot(); // optional: Sound
+      // Raycaster von Kamera-Richtung verwenden:contentReference[oaicite:11]{index=11}
+      const origin = new THREE.Vector3();
+      camera.getWorldPosition(origin);
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      const raycaster = new THREE.Raycaster(origin, direction);
+      const intersects = raycaster.intersectObjects(enemies, true);
+      if (intersects.length > 0) {
+        const hit = intersects[0].object;
+        // Gegner entfernen
+        scene.remove(hit);
+        const idx = enemies.indexOf(hit);
+        if (idx !== -1) enemies.splice(idx, 1);
+        enemyCountUI.textContent = enemies.length;
+        // Level-Fortschritt prüfen
+        if (enemies.length === 0) {
+          if (player.level < 20) {
+            messageUI.textContent = 'Level ' + player.level + ' abgeschlossen!';
+            setTimeout(nextLevel, 2000);
+          } else {
+            messageUI.textContent = 'Alle Missionen abgeschlossen! Bravo.';
+          }
+        }
+      }
     }
 
-    /* ---------- Main loop ---------- */
-    function animate(){
-      if (!gameRunning) return;
+    // (Platzhalter für Soundeffekte)
+    function playGunshot() { /* Sound-Effekt abspielen */ }
+    function playHitSound() { /* Sound bei Treffer */ }
+
+    // --- Gegner erzeugen ---
+    function spawnEnemies() {
+      const count = 5 + player.level * 2; // z.B. steigende Gegnerzahl
+      for (let i = 0; i < count; i++) {
+        const enemyMat = new THREE.MeshStandardMaterial({ color: 0x00cc00, roughness: 0.7, metalness: 0.3 });
+        const enemy = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), enemyMat);
+        // Zufällige Position um Spieler (aber nicht direkt daneben)
+        enemy.position.set(
+          (Math.random()-0.5)*40,
+          0.5,
+          (Math.random()-0.5)*40
+        );
+        enemies.push(enemy);
+        scene.add(enemy);
+      }
+      enemyCountUI.textContent = enemies.length;
+      messageUI.textContent = 'Level ' + player.level + ' – Eliminieren!';
+    }
+
+    function nextLevel() {
+      player.level++;
+      levelNum.textContent = player.level;
+      spawnEnemies();
+    }
+
+    // --- Animations-/Render-Schleife ---
+    function animate() {
       requestAnimationFrame(animate);
-      const delta = Math.min(0.05, clock.getDelta());
-      if (controls && controls.isLocked){
-        let spd = player.speed * (moveState.sprint ? player.sprintMultiplier : 1);
-        if (moveState.forward) controls.moveForward(spd * delta);
-        if (moveState.back) controls.moveForward(-spd * delta);
-        if (moveState.left) controls.moveRight(-spd * delta);
-        if (moveState.right) controls.moveRight(spd * delta);
-      }
-      if (enemiesGroup && enemiesGroup.children.length > 0) enemyStep(delta);
-      // small camera bob
-      if (controls && controls.isLocked){
-        camera.rotation.z = Math.sin(performance.now()*0.0018) * 0.002;
-      }
+      const delta = clock.getDelta();
+      // Spielerbewegung mit Federung (Bremse) und Geschwindigkeitsvektor
+      const velocity = new THREE.Vector3();
+      // Laufrichtung berechnen
+      const dir = new THREE.Vector3(
+        (moveRight?1:0) - (moveLeft?1:0),
+        0,
+        (moveBackward?1:0) - (moveForward?1:0)
+      ).normalize();
+      // Sprintfaktor
+      const currentSpeed = player.speed * (sprint ? player.sprintMultiplier : 1);
+      // Bewegung anwenden
+      if (dir.z !== 0) controls.moveForward(-dir.z * currentSpeed * delta);
+      if (dir.x !== 0) controls.moveRight(dir.x * currentSpeed * delta);
+
+      // Gegner-KI: auf Spieler zulaufen
+      enemies.forEach(e => {
+        const pos = new THREE.Vector3();
+        camera.getWorldPosition(pos);
+        const dirToPlayer = new THREE.Vector3().subVectors(pos, e.position).normalize();
+        e.position.addScaledVector(dirToPlayer, 2 * delta); // Gegner-Geschwindigkeit (z.B. 2 units/s)
+        // Kollisionsabfrage mit Spieler (KP: e.position.y ~ Spielerhöhe)
+        if (e.position.distanceTo(pos) < 1.2) {
+          // Spieler trifft Gegner: Schaden und entferne Gegner
+          player.health -= 15;
+          hpVal.textContent = player.health;
+          scene.remove(e);
+          enemies.splice(enemies.indexOf(e), 1);
+          enemyCountUI.textContent = enemies.length;
+          playHitSound();
+          if (player.health <= 0) {
+            messageUI.textContent = 'Tot. Mission gescheitert.';
+            controls.unlock();
+            return;
+          }
+        }
+      });
+
+      // Rendern
       renderer.render(scene, camera);
     }
-
-    /* ---------- small fx & util ---------- */
-    function playHitSound(){ playBeep(600,0.06); }
-    // helper to avoid stale UI
-    ui.hpVal.textContent = player.health;
-    ui.ammoVal.textContent = player.ammo;
-    ui.magSize.textContent = player.magSize;
-    ui.levelNum.textContent = player.level;
-    ui.enemyCount.textContent = 0;
-
-    // prevent selection while playing
-    document.addEventListener('selectstart', e => { if (gameRunning) e.preventDefault(); });
-
-    // expose small debug skip (L)
-    document.addEventListener('keydown', e => { if (!gameRunning) return; if (e.code === 'KeyL') { player.level++; spawnLevel(player.level); } });
-
-    // ensure canvas doesn't intercept start screen clicks: set renderer z-index below UI when created
-    // (renderer appended after UI, but canvas default z-index 0 keeps it behind UI which is z-index 40)
-
-    // initial message
-    ui.message.textContent = 'Wähle eine Klasse und öffne das Briefing';
-
   </script>
 </body>
 </html>
