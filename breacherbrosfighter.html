@@ -1,423 +1,298 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BreacherBros — Solo FPS (Play)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BreacherBros 3D Browsergame</title>
   <style>
-    /* --- Grund-Styles und Farbvariablen --- */
     :root {
-      --accent: #ff3b3b;
-      --accent2: #ffd166;
-      --bg: #0b0f13;
-      --panel: rgba(10,12,14,0.75);
-      --glass: rgba(255,255,255,0.04);
-      --text: #e6eef8;
-      font-family: Inter, system-ui, -apple-system, Roboto, "Segoe UI", "Helvetica Neue", Arial;
+      --color-orange: #FF6B00;
+      --color-turquoise: #00FFD5;
+      --color-purple: #8F00FF;
+      --bg-dark: #000000;
     }
-    html, body {
-      height: 100%; margin: 0;
-      background: linear-gradient(180deg, #071018 0%, #0b1220 100%);
-      overflow: hidden; color: var(--text);
+    body {
+      margin: 0; padding: 0;
+      background: var(--bg-dark);
+      color: #FFF;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
     }
-    canvas { display: block; position: absolute; top: 0; left: 0; z-index: 0; }
-
-    /* --- UI-Overlays --- */
-    #ui { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 10; pointer-events: auto; }
-    .panel {
-      position: absolute; background: var(--panel); backdrop-filter: blur(6px);
-      border-radius: 14px; padding: 14px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.6); color: var(--text); pointer-events: auto;
+    .neon {
+      color: #fff;
+      text-shadow:
+        0 0 5px currentColor,
+        0 0 10px currentColor,
+        0 0 20px currentColor;
     }
-    #startScreen {
-      width: 640px; left: 50%; top: 50%; transform: translate(-50%,-50%);
-      text-align: center; padding: 28px; border-radius: 16px;
-      background: radial-gradient(circle at 30% 10%, rgba(255,59,59,0.12), rgba(0,0,0,0.7));
-      border: 2px solid rgba(255,59,59,0.18);
-      box-shadow: 0 12px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    .screen {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      background: var(--bg-dark);
     }
-    .logoTitle { font-size: 42px; letter-spacing:2px; margin:6px 0; font-weight:800; color: var(--accent); }
-    .logoSub { opacity:0.9; margin-bottom:10px; color: var(--text); }
-
-    /* Neue Klassen-Auswahl-Buttons */
-    #classSelect { display: flex; flex-wrap: wrap; gap: 12px; }
-    .classBtn {
-      flex: 0 0 auto; min-width: 120px; display: flex; align-items: center; gap: 12px;
-      padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);
+    #briefing-screen, #game-screen {
+      display: none;
+    }
+    .class-option {
+      border: 2px solid #666;
+      border-radius: 8px;
+      padding: 10px;
+      margin: 5px;
+      width: 200px;
       cursor: pointer;
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      transition: transform .12s ease, box-shadow .12s;
+      background: rgba(255,255,255,0.1);
+      transition: background 0.3s, border-color 0.3s;
+      text-align: center;
     }
-    .classBtn:hover { transform: translateY(-2px); }
-    .classIcon {
-      width: 56px; height: 56px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; color: #08101a; flex-shrink: 0;
+    .class-option:hover { background: rgba(255,255,255,0.2); }
+    .class-option.selected {
+      border-color: #FFF;
+      background: rgba(255,255,255,0.2);
     }
-    .selectedClass { box-shadow: 0 0 26px rgba(255,59,59,0.25); transform: translateY(-4px); }
-
-    .startLarge {
-      margin-top: 14px; padding: 14px 20px; font-size: 18px;
-      border-radius: 12px;
-      background: linear-gradient(90deg, var(--accent), #ff7b7b);
-      color: #08101a; border: none; cursor: pointer; font-weight:700;
+    .class-option input { display: none; }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin: 10px;
+      cursor: pointer;
+      border: 2px solid #FFF;
+      background: transparent;
+      color: #FFF;
+      border-radius: 5px;
+      transition: background 0.3s;
     }
-    .startLarge[disabled] { opacity: 0.45; cursor: not-allowed; }
-
-    /* HUD (oben/unten) */
-    #hudTop { left: 12px; top: 12px; }
-    #hudBottom { left: 12px; bottom: 12px; }
-    .hudItem {
-      margin-bottom: 8px; padding: 8px 12px;
-      border-radius: 8px; background: var(--glass); display: inline-block;
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
-
-    /* Fadenkreuz */
-    #crosshair { position: absolute; left:50%; top:50%; width:24px; height:24px;
-      margin-left: -12px; margin-top: -12px; pointer-events:none;
+    button:hover:not(:disabled) {
+      background: rgba(255,255,255,0.2);
     }
-    #crosshair:before, #crosshair:after {
-      content: ''; position: absolute; background: var(--accent); opacity: 0.95;
+    #hud {
+      position: absolute; top: 10px; left: 10px;
+      font-size: 18px;
     }
-    #crosshair:before { left: 11px; top: 0; width:2px; height:24px; }
-    #crosshair:after { top: 11px; left: 0; height:2px; width:24px; }
-
-    /* Nachrichtentext */
-    #message {
-      position: absolute; right:12px; top:12px;
-      padding: 10px 14px; border-radius: 10px;
-      background: rgba(0,0,0,0.45);
-    }
-    /* Level-Panel */
-    #levelPanel { position: absolute; right:12px; bottom:12px; padding: 14px 18px; border-radius: 12px; }
-
-    /* Responsive */
-    @media (max-width: 800px) {
-      #startScreen { width: 94%; }
-      .logoTitle { font-size: 30px; }
-      #classSelect { flex-direction: column; }
-    }
+    canvas { display: block; }
   </style>
 </head>
 <body>
-  <div id="ui">
-    <!-- Startbildschirm / Menü -->
-    <div id="startScreen" class="panel">
-      <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:20px;">
-        <div style="text-align:left">
-          <div class="logoTitle">BREACHERBROS</div>
-          <div class="logoSub">Solo FPS – Wähle eine Klasse & starte die Mission</div>
-        </div>
-      </div>
-      <!-- Buttons für die Klasse -->
-      <div id="classSelect" aria-label="Klassen Auswahl"></div>
-      <button id="startGame" class="startLarge" disabled>Start Mission</button>
-      <div style="margin-top:12px; font-size:13px; opacity:0.9">
-        Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren
-      </div>
-    </div>
 
-    <!-- HUD oben (HP, Ammo) -->
-    <div id="hudTop" class="panel">
-      <div id="hpHud" class="hudItem">HP: <span id="hpVal">100</span></div>
-      <div id="ammoHud" class="hudItem">Munition: <span id="ammoVal">30</span>/<span id="magSize">30</span></div>
+  <!-- Startbildschirm -->
+  <div id="start-screen" class="screen">
+    <h1 class="neon">BreacherBros</h1>
+    <h2 class="neon">Wähle deine Klasse</h2>
+    <div id="class-options">
+      <label class="class-option" id="option-assault">
+        <input type="radio" name="class" value="Assault">
+        <h3>Assault (Allrounder)</h3>
+        <p>HP: 100, Speed: 5, Magazin: 30, Feuerrate: 0.20</p>
+      </label>
+      <label class="class-option" id="option-breacher">
+        <input type="radio" name="class" value="Breacher">
+        <h3>Breacher (Panzer)</h3>
+        <p>HP: 150, Speed: 3, Magazin: 30, Feuerrate: 0.15</p>
+      </label>
+      <label class="class-option" id="option-scout">
+        <input type="radio" name="class" value="Scout">
+        <h3>Scout (Speed)</h3>
+        <p>HP: 75, Speed: 8, Magazin: 20, Feuerrate: 0.30</p>
+      </label>
+      <label class="class-option" id="option-engineer">
+        <input type="radio" name="class" value="Engineer">
+        <h3>Engineer (Werkzeuge)</h3>
+        <p>HP: 100, Speed: 4, Magazin: 50, Feuerrate: 0.10</p>
+      </label>
+      <label class="class-option" id="option-sniper">
+        <input type="radio" name="class" value="Sniper">
+        <h3>Sniper (Reichweite)</h3>
+        <p>HP: 80, Speed: 3, Magazin: 10, Feuerrate: 0.50</p>
+      </label>
     </div>
-    <!-- HUD unten (Klasse, Level) -->
-    <div id="hudBottom" class="panel">
-      <div id="classHud" class="hudItem">Klasse: <b id="className">-</b></div>
-      <div id="levelHud" class="hudItem">Level: <b id="levelNum">0</b></div>
-    </div>
-    <!-- Nachricht / Status -->
-    <div id="message" class="panel" aria-live="polite">Bereit</div>
-    <div id="levelPanel" class="panel">Gegner: <span id="enemyCount">0</span></div>
-    <div id="crosshair" aria-hidden="true"></div>
+    <button id="start-button" disabled>Start Mission</button>
+  </div>
+
+  <!-- Briefing-Screen -->
+  <div id="briefing-screen" class="screen">
+    <h1 id="missionTitle">Mission Briefing</h1>
+    <p id="classIntro"></p>
+    <p id="missionDesc"></p>
+    <button id="go-button">Los geht's!</button>
+  </div>
+
+  <!-- 3D-Spiel-Screen -->
+  <div id="game-screen">
+    <canvas id="gameCanvas"></canvas>
+    <div id="hud"></div>
   </div>
 
   <script type="module">
-    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-    import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+    import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/controls/PointerLockControls.js';
 
-    // ---------------------- SPIEL-SETS ----------------------
-    let scene, camera, renderer, controls;
-    const clock = new THREE.Clock();
-    const enemies = [];
-
-    // Spielerzustand und Klassen-Definitionen
-    const player = {
-      health: 100, maxHealth: 100,
-      speed: 6, sprintMultiplier: 1.7,
-      ammo: 30, magSize: 30, reloadTime: 1.6,
-      reloading: false, fireRate: 0.12, lastShot: 0,
-      selectedClass: null, level: 0
+    // Klassen-Definitionen
+    const classes = {
+      Assault: { hp:100, speed:5,  mag:30, rate:0.20, color:'#FF6B00', intro:'Allrounder' },
+      Breacher: { hp:150, speed:3,  mag:30, rate:0.15, color:'#8F00FF', intro:'Panzer' },
+      Scout:   { hp:75,  speed:8,  mag:20, rate:0.30, color:'#00FFD5', intro:'Speed' },
+      Engineer:{ hp:100, speed:4,  mag:50, rate:0.10, color:'#00FFD5', intro:'Werkzeuge' },
+      Sniper:  { hp:80,  speed:3,  mag:10, rate:0.50, color:'#8F00FF', intro:'Reichweite' }
     };
-    const classes = [
-      { id:'assault',  name:'Assault',  desc:'Balanced – guter Allrounder',      hp:110, speed:6.0, fireRate:0.12, mag:30, reload:1.6, color:0xff6b6b },
-      { id:'breacher', name:'Breacher', desc:'Viel HP, langsamer',              hp:150, speed:4.8, fireRate:0.16, mag:20, reload:2.0, color:0xffb86b },
-      { id:'scout',    name:'Scout',    desc:'Schnell, weniger HP',              hp:80,  speed:8.2, fireRate:0.10, mag:24, reload:1.4, color:0x6bdeff },
-      { id:'engineer', name:'Engineer', desc:'Gute Rüstung, Spezial-Tools',      hp:120, speed:5.6, fireRate:0.14, mag:28, reload:1.5, color:0x9d6bff },
-      // 5. Klasse hinzufügen (z.B. "Sniper")
-      { id:'sniper',   name:'Sniper',   desc:'Fernkämpfer – hohe Präzision',    hp:90,  speed:5.0, fireRate:0.18, mag:10, reload:2.5, color:0x4bc0c0 }
-    ];
+    let selectedClass = null;
 
-    // UI-Elemente
-    const startBtn = document.getElementById('startGame');
-    const classSelect = document.getElementById('classSelect');
-    const classNameUI = document.getElementById('className');
-    const hpVal = document.getElementById('hpVal');
-    const ammoVal = document.getElementById('ammoVal');
-    const magSize = document.getElementById('magSize');
-    const levelNum = document.getElementById('levelNum');
-    const enemyCountUI = document.getElementById('enemyCount');
-    const messageUI = document.getElementById('message');
-
-    // --- Klassen-Auswahl-Buttons erstellen ---
-    classes.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = 'classBtn';
-      const colorHex = '#'+c.color.toString(16).padStart(6,'0');
-      btn.innerHTML = `
-        <div class="classIcon" style="background:${colorHex}">${c.id[0].toUpperCase()}</div>
-        <div><div><b>${c.name}</b></div><div style="font-size:12px;opacity:0.8">${c.desc}</div></div>
-      `;
-      btn.addEventListener('click', () => selectClass(c, btn));
-      classSelect.appendChild(btn);
+    // Klasse auswählen
+    const options = document.querySelectorAll('.class-option');
+    options.forEach(opt => {
+      opt.addEventListener('click', () => {
+        options.forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        opt.querySelector('input').checked = true;
+        selectedClass = opt.querySelector('input').value;
+        document.getElementById('start-button').disabled = false;
+      });
     });
 
-    function selectClass(c, btn) {
-      // Werte des Spielers an die Klasse anpassen
-      player.selectedClass = c;
-      player.health = player.maxHealth = c.hp;
-      player.speed = c.speed;
-      player.fireRate = c.fireRate;
-      player.reloadTime = c.reload;
-      player.ammo = c.mag;
-      player.magSize = c.mag;
-      // UI aktualisieren
-      classNameUI.textContent = c.name;
-      hpVal.textContent = c.hp;
-      ammoVal.textContent = c.mag;
-      magSize.textContent = c.mag;
-      startBtn.disabled = false;
-      // Selektierten Button hervorheben
-      document.querySelectorAll('.classBtn').forEach(b => b.classList.remove('selectedClass'));
-      btn.classList.add('selectedClass');
+    // Start Mission
+    document.getElementById('start-button').addEventListener('click', () => {
+      if(!selectedClass) return;
+      document.getElementById('start-screen').style.display = 'none';
+      const cls = classes[selectedClass];
+      // Briefing-Text einfügen
+      document.getElementById('classIntro').textContent =
+        `Du hast die Klasse ${selectedClass} (${cls.intro}) gewählt.`;
+      document.getElementById('classIntro').style.color = cls.color;
+      // Kurze Missionsbeschreibung
+      const missions = {
+        Assault: 'Ausgeglichenes Gefecht (Infiltration)',
+        Breacher: 'Starker Durchbruch',
+        Scout: 'Schnelle Vorhut',
+        Engineer: 'Technische Infiltration',
+        Sniper: 'Präzisionsschussmission'
+      };
+      document.getElementById('missionDesc').textContent = missions[selectedClass];
+      document.getElementById('missionDesc').style.color = cls.color;
+      document.getElementById('missionTitle').style.color = cls.color;
+      document.getElementById('briefing-screen').style.display = 'flex';
+    });
+
+    // Beep-Geräusch (kurzer Piepton):contentReference[oaicite:7]{index=7}
+    function playBeep() {
+      const audioCtx = new AudioContext();
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+      osc.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    // --- Spielstart ---
-    startBtn.addEventListener('click', () => {
-      if (!player.selectedClass) return;
-      // UI ausblenden
-      document.getElementById('startScreen').style.display = 'none';
-      // Level 1 starten
-      player.level = 1;
-      levelNum.textContent = player.level;
-      initThree();
-      spawnEnemies();
-      animate();
+    // 3D-Spiel starten
+    document.getElementById('go-button').addEventListener('click', () => {
+      document.getElementById('briefing-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+      playBeep();
+      initGame();
     });
 
-    // --- Drei.js Szenen-Setup ---
-    function initThree() {
-      scene = new THREE.Scene();
-      // Kamera und Renderer
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 1.7, 0);
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Three.js Szene initialisieren
+    let camera, scene, renderer, controls;
+    let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false;
+    const clock = new THREE.Clock();
+
+    function initGame() {
+      // Renderer und Szene
+      const canvas = document.getElementById('gameCanvas');
+      renderer = new THREE.WebGLRenderer({ canvas });
       renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x000000);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 2, 0);
 
-      // Pointer Lock Controls (FPS-Steuerung)
+      // Licht
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(0,10,0);
+      scene.add(light);
+
+      // Boden
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(100, 100),
+        new THREE.MeshStandardMaterial({ color: 0x333333 })
+      );
+      ground.rotation.x = -Math.PI/2;
+      scene.add(ground);
+
+      // Beispiel-Objekt (Würfel)
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(1,1,1),
+        new THREE.MeshStandardMaterial({ color: 0xFF0000 })
+      );
+      cube.position.set(0, 0.5, -5);
+      scene.add(cube);
+
+      // Pointer Lock Controls für First-Person-Steuerung:contentReference[oaicite:8]{index=8}
       controls = new PointerLockControls(camera, document.body);
-      // Mausklick sperrt Pointer
       document.body.addEventListener('click', () => {
-        controls.lock();
+        if (!controls.isLocked) controls.lock();
       });
-      controls.addEventListener('lock', () => messageUI.textContent = 'Feuer frei!');
-      controls.addEventListener('unlock', () => messageUI.textContent = 'Pausiert');
 
-      // Lichtsetup (Direktlicht + Ambient + Himmelslicht für bessere Beleuchtung)
-      const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-      dirLight.position.set(5,10,7);
-      scene.add(dirLight);
-      const ambient = new THREE.AmbientLight(0xffffff, 0.3);
-      scene.add(ambient);
-      const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 0.4);
-      scene.add(hemi);
+      // Tastatureingabe (WASD & Shift)
+      const onKeyDown = (e) => {
+        if (e.code === 'KeyW' || e.code === 'ArrowUp')    moveForward = true;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown')  moveBackward = true;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft')  moveLeft = true;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') moveRight = true;
+        if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+          classes[selectedClass].origSpeed = classes[selectedClass].speed;
+          classes[selectedClass].speed *= 2;
+        }
+      };
+      const onKeyUp = (e) => {
+        if (e.code === 'KeyW' || e.code === 'ArrowUp')    moveForward = false;
+        if (e.code === 'KeyS' || e.code === 'ArrowDown')  moveBackward = false;
+        if (e.code === 'KeyA' || e.code === 'ArrowLeft')  moveLeft = false;
+        if (e.code === 'KeyD' || e.code === 'ArrowRight') moveRight = false;
+        if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+          classes[selectedClass].speed = classes[selectedClass].origSpeed;
+        }
+      };
+      document.addEventListener('keydown', onKeyDown);
+      document.addEventListener('keyup', onKeyUp);
 
-      // Boden (PBR-Material möglich, hier einfach gefärbt)
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x101010, roughness: 0.8, metalness: 0.1 });
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), floorMat);
-      floor.rotation.x = -Math.PI/2;
-      scene.add(floor);
-      
-      // (Optional: weitere Objekte / Hindernisse können hier hinzugefügt werden)
-      // Beispiel: Großer Kubus als Deckung
-      const boxMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6, metalness: 0.2 });
-      const box = new THREE.Mesh(new THREE.BoxGeometry(3,3,3), boxMat);
-      box.position.set(5, 1.5, -5);
-      scene.add(box);
+      // Anzeige der Spielerwerte (HUD)
+      const hud = document.getElementById('hud');
+      const cls = classes[selectedClass];
+      hud.innerHTML = 
+        `Klasse: ${selectedClass} (${cls.intro})<br>` +
+        `Level: 1<br>` +
+        `HP: ${cls.hp} | Speed: ${cls.speed} | Magazin: ${cls.mag} | Feuerrate: ${cls.rate}`;
 
-      // Event-Listener: Fenstergröße anpassen
-      window.addEventListener('resize', onWindowResize);
-      function onWindowResize() {
+      animate();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      if (controls.isLocked) {
+        const velocity = classes[selectedClass].speed;
+        if (moveForward)  controls.moveForward(velocity * delta);
+        if (moveBackward) controls.moveForward(-velocity * delta);
+        if (moveLeft)     controls.moveRight(-velocity * delta);
+        if (moveRight)    controls.moveRight(velocity * delta);
+      }
+      renderer.render(scene, camera);
+    }
+
+    // Fenster-Resize anpassen
+    window.addEventListener('resize', () => {
+      if (camera && renderer) {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
       }
-
-      // Event-Listener: Tastatursteuerung (Bewegung, Sprint, Nachladen)
-      initKeyboardControls();
-      // Maus-Klick: Schießen
-      document.addEventListener('mousedown', shoot);
-    }
-
-    // --- Tasten- und Mauskontrolle ---
-    let moveForward=false, moveBackward=false, moveLeft=false, moveRight=false, sprint=false;
-    function initKeyboardControls() {
-      document.addEventListener('keydown', (event) => {
-        switch(event.code) {
-          case 'KeyW': moveForward = true; break;
-          case 'KeyS': moveBackward = true; break;
-          case 'KeyA': moveLeft = true; break;
-          case 'KeyD': moveRight = true; break;
-          case 'ShiftLeft': case 'ShiftRight': sprint = true; break;
-          case 'KeyR':
-            if (!player.reloading && player.ammo < player.magSize) {
-              // Nachladen initiieren
-              player.reloading = true;
-              messageUI.textContent = 'Nachladen...';
-              setTimeout(() => {
-                player.ammo = player.magSize;
-                ammoVal.textContent = player.ammo;
-                player.reloading = false;
-                messageUI.textContent = 'Bereit';
-              }, player.reloadTime * 1000);
-            }
-            break;
-          case 'Escape':
-            controls.unlock(); // Finger weg, Lock verlassen
-            break;
-        }
-      });
-      document.addEventListener('keyup', (event) => {
-        switch(event.code) {
-          case 'KeyW': moveForward = false; break;
-          case 'KeyS': moveBackward = false; break;
-          case 'KeyA': moveLeft = false; break;
-          case 'KeyD': moveRight = false; break;
-          case 'ShiftLeft': case 'ShiftRight': sprint = false; break;
-        }
-      });
-    }
-
-    // --- Schießen ---
-    function shoot() {
-      if (!controls.isLocked || player.reloading) return;
-      const now = performance.now();
-      if (player.ammo <= 0 || (now - player.lastShot) < player.fireRate*1000) return;
-      player.lastShot = now;
-      player.ammo--;
-      ammoVal.textContent = player.ammo;
-      playGunshot(); // optional: Sound
-      // Raycaster von Kamera-Richtung verwenden:contentReference[oaicite:11]{index=11}
-      const origin = new THREE.Vector3();
-      camera.getWorldPosition(origin);
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction);
-      const raycaster = new THREE.Raycaster(origin, direction);
-      const intersects = raycaster.intersectObjects(enemies, true);
-      if (intersects.length > 0) {
-        const hit = intersects[0].object;
-        // Gegner entfernen
-        scene.remove(hit);
-        const idx = enemies.indexOf(hit);
-        if (idx !== -1) enemies.splice(idx, 1);
-        enemyCountUI.textContent = enemies.length;
-        // Level-Fortschritt prüfen
-        if (enemies.length === 0) {
-          if (player.level < 20) {
-            messageUI.textContent = 'Level ' + player.level + ' abgeschlossen!';
-            setTimeout(nextLevel, 2000);
-          } else {
-            messageUI.textContent = 'Alle Missionen abgeschlossen! Bravo.';
-          }
-        }
-      }
-    }
-
-    // (Platzhalter für Soundeffekte)
-    function playGunshot() { /* Sound-Effekt abspielen */ }
-    function playHitSound() { /* Sound bei Treffer */ }
-
-    // --- Gegner erzeugen ---
-    function spawnEnemies() {
-      const count = 5 + player.level * 2; // z.B. steigende Gegnerzahl
-      for (let i = 0; i < count; i++) {
-        const enemyMat = new THREE.MeshStandardMaterial({ color: 0x00cc00, roughness: 0.7, metalness: 0.3 });
-        const enemy = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), enemyMat);
-        // Zufällige Position um Spieler (aber nicht direkt daneben)
-        enemy.position.set(
-          (Math.random()-0.5)*40,
-          0.5,
-          (Math.random()-0.5)*40
-        );
-        enemies.push(enemy);
-        scene.add(enemy);
-      }
-      enemyCountUI.textContent = enemies.length;
-      messageUI.textContent = 'Level ' + player.level + ' – Eliminieren!';
-    }
-
-    function nextLevel() {
-      player.level++;
-      levelNum.textContent = player.level;
-      spawnEnemies();
-    }
-
-    // --- Animations-/Render-Schleife ---
-    function animate() {
-      requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      // Spielerbewegung mit Federung (Bremse) und Geschwindigkeitsvektor
-      const velocity = new THREE.Vector3();
-      // Laufrichtung berechnen
-      const dir = new THREE.Vector3(
-        (moveRight?1:0) - (moveLeft?1:0),
-        0,
-        (moveBackward?1:0) - (moveForward?1:0)
-      ).normalize();
-      // Sprintfaktor
-      const currentSpeed = player.speed * (sprint ? player.sprintMultiplier : 1);
-      // Bewegung anwenden
-      if (dir.z !== 0) controls.moveForward(-dir.z * currentSpeed * delta);
-      if (dir.x !== 0) controls.moveRight(dir.x * currentSpeed * delta);
-
-      // Gegner-KI: auf Spieler zulaufen
-      enemies.forEach(e => {
-        const pos = new THREE.Vector3();
-        camera.getWorldPosition(pos);
-        const dirToPlayer = new THREE.Vector3().subVectors(pos, e.position).normalize();
-        e.position.addScaledVector(dirToPlayer, 2 * delta); // Gegner-Geschwindigkeit (z.B. 2 units/s)
-        // Kollisionsabfrage mit Spieler (KP: e.position.y ~ Spielerhöhe)
-        if (e.position.distanceTo(pos) < 1.2) {
-          // Spieler trifft Gegner: Schaden und entferne Gegner
-          player.health -= 15;
-          hpVal.textContent = player.health;
-          scene.remove(e);
-          enemies.splice(enemies.indexOf(e), 1);
-          enemyCountUI.textContent = enemies.length;
-          playHitSound();
-          if (player.health <= 0) {
-            messageUI.textContent = 'Tot. Mission gescheitert.';
-            controls.unlock();
-            return;
-          }
-        }
-      });
-
-      // Rendern
-      renderer.render(scene, camera);
-    }
+    });
   </script>
 </body>
 </html>
