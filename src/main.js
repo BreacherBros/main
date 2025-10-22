@@ -80,6 +80,8 @@ function startGame(clsName) {
 import { Weapon } from './weapons.js';
 import { Enemy } from './enemy.js';
 import { updateHUD } from './hud.js';
+import { Map } from './map.js';
+import { Ability } from './abilities.js';
 
 // === Waffe initialisieren ===
 player.weapon = new Weapon(player, scene, {ammo: ammoEl});
@@ -117,6 +119,33 @@ if(enemies.length === 0){
     spawnEnemies(level);
 }
 updateHUD(player, {health: healthEl, ammo: ammoEl, ability: abilityEl}, level);
+
+// === Map erstellen ===
+const gameMap = new Map(scene);
+
+// Spieler-Mesh (sichtbar für Deckungssystem)
+player.mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(1,2,1),
+    new THREE.MeshBasicMaterial({color:0x00aaff})
+);
+player.mesh.position.copy(player.position);
+scene.add(player.mesh);
+
+// Fähigkeit initialisieren
+player.abilityObj = new Ability(player, scene);
+
+// Abklingzeit aktivieren
+document.addEventListener('keydown', e=>{
+    if(e.code === 'KeyF'){
+        player.abilityObj.use(enemies);
+    }
+});
+
+// Ability cooldown
+player.abilityObj.updateCooldown(delta);
+
+// Spieler-Mesh synchronisieren
+player.mesh.position.copy(controls.getObject().position);
 
 // ============================================================
 //   4  Three.js Grundszene
