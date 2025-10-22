@@ -1,81 +1,143 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <title>BreacherBros — Solo FPS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <title>BreacherBros — Solo FPS (Play)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    :root {
-      --accent: #ff3b3b;
-      --accent2: #ffd166;
-      --bg: #0b0f13;
-      --panel: rgba(10, 12, 14, 0.75);
-      --glass: rgba(255, 255, 255, 0.04);
+    /* ===== BreacherBros Theme (Orange, Turquoise, Violet) ===== */
+    :root{
+      --orange: #FF6B00;
+      --turquoise: #00FFD5;
+      --violet: #8F00FF;
+      --bg-dark: #05060a;
+      --panel: rgba(12,13,17,0.72);
+      --glass: rgba(255,255,255,0.04);
       --text: #e6eef8;
+      --muted: rgba(255,255,255,0.65);
       font-family: Inter, system-ui, -apple-system, Roboto, "Segoe UI", "Helvetica Neue", Arial;
     }
-    html, body { height: 100%; margin: 0; background: linear-gradient(180deg, #071018 0%, #0b1220 100%); overflow: hidden; color: var(--text); }
-    canvas { display: block; position: absolute; top: 0; left: 0; z-index: 0; }
+    html,body{height:100%;margin:0;background:
+      radial-gradient(1200px 600px at 10% 10%, rgba(143,0,255,0.06) 0%, transparent 10%),
+      radial-gradient(1200px 600px at 90% 90%, rgba(0,255,213,0.03) 0%, transparent 12%),
+      linear-gradient(180deg,#020205 0%, #071018 50%, #0b1220 100%); color:var(--text); overflow:hidden;}
+    canvas{display:block; position:absolute; top:0; left:0; z-index:0}
 
-    /* UI */
-    #ui { position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: auto; z-index: 10; }
-    .panel { position: absolute; background: var(--panel); backdrop-filter: blur(6px); border-radius: 14px; padding: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.6); color: var(--text); pointer-events: auto; }
-    #startScreen { width: 640px; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; padding: 28px; border-radius: 16px;
-                   background: radial-gradient(circle at 30% 10%, rgba(255,59,59,0.12), rgba(0,0,0,0.7)); border: 2px solid rgba(255,59,59,0.18);
-                   box-shadow: 0 12px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02); }
-    .logoTitle { font-size: 42px; letter-spacing: 2px; margin: 6px 0; font-weight: 800; color: var(--accent); }
-    .logoSub { opacity: 0.9; margin-bottom: 10px; color: var(--text); }
+    /* ===== UI OVERLAY ===== */
+    #ui{position:absolute; left:0; right:0; top:0; bottom:0; z-index:20; pointer-events:auto}
+    .panel{
+      position:relative; background:var(--panel); border-radius:14px; padding:14px;
+      box-shadow: 0 12px 50px rgba(0,0,0,0.7); color:var(--text); backdrop-filter: blur(6px);
+    }
 
-    /* Klassen-Auswahl */
-    #classSelect { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-start; align-items: flex-start; }
-    .classBtn { flex: 0 0 auto; min-width: 120px; display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06); cursor: pointer; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); transition: transform .12s ease, box-shadow .12s; }
-    .classIcon { width: 56px; height: 56px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #08101a; flex-shrink: 0; }
-    .selectedClass { box-shadow: 0 0 26px rgba(255,59,59,0.25); transform: translateY(-4px); }
+    /* ===== START SCREEN ===== */
+    #startScreen{
+      width:760px; max-width:94%; left:50%; top:50%; transform:translate(-50%,-50%);
+      position:absolute; text-align:left; border-radius:18px; padding:22px;
+      border: 1px solid rgba(255,255,255,0.04);
+      background: linear-gradient(180deg, rgba(20,20,28,0.7), rgba(6,8,12,0.9));
+      overflow: hidden;
+    }
+    #startTop{display:flex;align-items:center;gap:18px}
+    .logo{
+      width:86px; height:86px; border-radius:12px;
+      background: linear-gradient(135deg, var(--orange), var(--violet)); display:flex;align-items:center;justify-content:center;
+      box-shadow: 0 8px 30px rgba(143,0,255,0.12), inset 0 -6px 18px rgba(0,0,0,0.25);
+      font-weight:800; font-size:22px; color:#08101a;
+    }
+    .title{
+      font-size:34px; letter-spacing:2px; font-weight:800; color:var(--orange);
+    }
+    .subtitle{color:var(--muted); margin-top:6px}
 
-    .startLarge { margin-top: 14px; padding: 14px 20px; font-size: 18px; border-radius: 12px; background: linear-gradient(90deg, var(--accent), #ff7b7b); color: #08101a; border: none; cursor: pointer; font-weight: 700; }
-    .startLarge[disabled] { opacity: 0.45; cursor: not-allowed; }
+    /* glass row */
+    #startRow{display:flex; gap:18px; margin-top:18px; align-items:flex-start}
+    #classSelect{display:flex; flex-wrap:wrap; gap:12px; width:100%; padding:8px}
+
+    .classBtn{
+      display:flex; gap:12px; align-items:center; min-width:160px; max-width:220px;
+      padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);
+      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));
+      cursor:pointer; transition: transform .14s ease, box-shadow .14s ease;
+    }
+    .classBtn:hover{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+    .classIcon{
+      width:64px; height:64px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+      font-weight:800; color:#08101a; font-size:20px; flex-shrink:0;
+      box-shadow: inset 0 -6px 12px rgba(0,0,0,0.25);
+    }
+    .classInfo b{ display:block; font-size:16px; margin-bottom:3px; }
+    .selectedClass{ box-shadow: 0 18px 60px rgba(0,0,0,0.6), 0 0 30px rgba(255,107,0,0.12) !important; transform: translateY(-8px) !important; border:1px solid rgba(255,255,255,0.08) !important; }
+
+    /* start controls */
+    #startControls{ display:flex; align-items:center; gap:14px; margin-top:16px; justify-content:space-between }
+    .startLarge{
+      background: linear-gradient(90deg, var(--orange), var(--violet)); color:#08101a; border:none; padding:12px 18px; border-radius:12px; font-weight:800; font-size:16px; cursor:pointer;
+      box-shadow: 0 10px 40px rgba(255,107,0,0.08);
+    }
+    .startLarge[disabled]{ opacity:.45; cursor:not-allowed }
+
+    .infoSmall{ color:var(--muted); font-size:13px; }
 
     /* HUD */
-    #hudTop { left: 12px; top: 12px; }
-    #hudBottom { left: 12px; bottom: 12px; }
-    .hudItem { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; background: var(--glass); display: inline-block; }
-    /* Center crosshair */
-    #crosshair { position: absolute; left: 50%; top: 50%; width: 24px; height: 24px; margin-left: -12px; margin-top: -12px; pointer-events: none; }
-    #crosshair:before, #crosshair:after { content: ''; position: absolute; background: var(--accent); opacity: 0.95; }
-    #crosshair:before { left: 11px; top: 0; width: 2px; height: 24px; }
-    #crosshair:after { top: 11px; left: 0; height: 2px; width: 24px; }
-    /* Small message */
-    #message { position: absolute; right: 12px; top: 12px; padding: 10px 14px; border-radius: 10px; background: rgba(0,0,0,0.45); }
-    /* Level panel */
-    #levelPanel { position: absolute; right: 12px; bottom: 12px; padding: 14px 18px; border-radius: 12px; }
-    /* Responsive */
-    @media (max-width:800px) {
-      #startScreen { width: 94%; }
-      .logoTitle { font-size: 30px; }
-      #classSelect { flex-direction: column; }
+    #hudTop{ position:absolute; left:16px; top:16px; z-index:22; display:flex; gap:8px; flex-direction:column}
+    #hudBottom{ position:absolute; left:16px; bottom:16px; z-index:22; display:flex; gap:8px; flex-direction:column}
+    .hudItem{ padding:8px 12px; border-radius:10px; background:var(--glass); font-weight:600; color:var(--text) }
+
+    /* crosshair */
+    #crosshair{ position:absolute; left:50%; top:50%; width:26px; height:26px; margin-left:-13px; margin-top:-13px; pointer-events:none; z-index:21 }
+    #crosshair:before,#crosshair:after{ content:''; position:absolute; background:var(--turquoise); opacity:0.95 }
+    #crosshair:before{ left:12px; top:0; width:2px; height:26px }
+    #crosshair:after{ top:12px; left:0; height:2px; width:26px }
+
+    /* message / level panel */
+    #message{ position:absolute; right:16px; top:16px; z-index:22; padding:10px 14px; border-radius:10px; background:rgba(0,0,0,0.45) }
+    #levelPanel{ position:absolute; right:16px; bottom:16px; z-index:22; padding:12px 16px; border-radius:10px; background:rgba(0,0,0,0.45) }
+
+    /* responsive */
+    @media (max-width:900px){
+      #startScreen{ width:94%; padding:16px }
+      .title{ font-size:26px }
+      .classBtn{ min-width: 140px }
     }
   </style>
 </head>
 <body>
   <div id="ui">
-    <div id="startScreen" class="panel">
-      <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:20px;">
-        <div style="text-align:left">
-          <div class="logoTitle">BREACHERBROS</div>
-          <div class="logoSub">Wähle eine Klasse & starte die Mission</div>
+    <!-- START SCREEN -->
+    <div id="startScreen" class="panel" role="dialog" aria-label="Startscreen">
+      <div id="startTop">
+        <div class="logo">BB</div>
+        <div>
+          <div class="title">BREACHERBROS</div>
+          <div class="subtitle">Solo FPS — Wähle Charakter & Klasse, überlebe 20 Missionen</div>
+          <div class="infoSmall" style="margin-top:8px">Tasten: WASD · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
         </div>
       </div>
-      <div id="classSelect" aria-label="Klassen Auswahl"></div>
-      <button id="startGame" class="startLarge" disabled>Start Mission</button>
-      <div style="margin-top:12px;font-size:13px;opacity:0.9">Controls: WASD bewegen · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
+
+      <div id="startRow">
+        <div style="flex:1">
+          <div style="margin-top:14px; color:var(--muted)">Wähle eine Klasse</div>
+          <div id="classSelect" aria-label="Klassen Auswahl"></div>
+
+          <div id="startControls">
+            <div style="display:flex; gap:12px; align-items:center">
+              <button id="startGame" class="startLarge" disabled>Start Mission</button>
+              <div id="previewClass" style="min-width:240px"></div>
+            </div>
+            <div style="text-align:right; color:var(--muted); font-size:13px">BreacherBros – Solo Campaign • 20 Levels</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div id="hudTop" class="panel">
+    <!-- HUD -->
+    <div id="hudTop">
       <div id="hpHud" class="hudItem">HP: <span id="hpVal">100</span></div>
-      <div id="ammoHud" class="hudItem">Ammo: <span id="ammoVal">30</span>/<span id="magSize">30</span></div>
+      <div id="ammoHud" class="hudItem">Ammo: <span id="ammoVal">0</span>/<span id="magSize">0</span></div>
     </div>
 
-    <div id="hudBottom" class="panel">
+    <div id="hudBottom">
       <div id="classHud" class="hudItem">Klasse: <b id="className">-</b></div>
       <div id="levelHud" class="hudItem">Level: <b id="levelNum">0</b></div>
     </div>
@@ -85,280 +147,461 @@
     <div id="crosshair" aria-hidden="true"></div>
   </div>
 
+  <!-- Three.js import -->
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
     import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
 
-    // Spielvariablen
+    /* ===================== GAME STATE ===================== */
     let scene, camera, renderer, controls;
     const clock = new THREE.Clock();
+    let worldObjects = [];        // static obstacles
+    let enemiesGroup;             // THREE.Group of enemies
     const raycaster = new THREE.Raycaster();
-    const enemies = [];
 
-    const player = {
-      health: 100, maxHealth: 100, speed: 6, sprintMultiplier: 1.7,
-      ammo: 0, magSize: 0, reloadTime: 1.6, fireRate: 0.12, lastShot: 0,
-      selectedClass: null, level: 0, reloading: false
+    let gameRunning = false;
+    let gameOver = false;
+
+    const ui = {
+      hpVal: document.getElementById('hpVal'),
+      ammoVal: document.getElementById('ammoVal'),
+      magSize: document.getElementById('magSize'),
+      className: document.getElementById('className'),
+      levelNum: document.getElementById('levelNum'),
+      enemyCount: document.getElementById('enemyCount'),
+      message: document.getElementById('message'),
+      preview: document.getElementById('previewClass'),
+      startScreen: document.getElementById('startScreen'),
+      startBtn: document.getElementById('startGame')
     };
 
-    // Definition der Klassen
+    /* -------- Player & Classes -------- */
+    const player = {
+      pos: new THREE.Vector3(),
+      health: 100,
+      maxHealth: 100,
+      speed: 6,
+      sprintMultiplier: 1.7,
+      ammo: 0,
+      magSize: 0,
+      reloadTime: 1.6,
+      fireRate: 0.12,
+      lastShot: -9999,
+      reloading: false,
+      selectedClass: null,
+      level: 0,
+    };
+
+    // 5 Klassen (id,name,description,stats,color)
     const classes = [
-      { id: 'assault', name: 'Assault', desc: 'Balanced - guter Allrounder', hp: 110, speed: 6, fireRate: 0.12, mag: 30, reload: 1.6, color: 0xff6b6b },
-      { id: 'breacher', name: 'Breacher', desc: 'High HP, langsamer', hp: 150, speed: 4.8, fireRate: 0.16, mag: 20, reload: 2.0, color: 0xffb86b },
-      { id: 'scout', name: 'Scout', desc: 'Schnell, weniger HP', hp: 80, speed: 8.2, fireRate: 0.10, mag: 24, reload: 1.4, color: 0x6bdeff },
-      { id: 'engineer', name: 'Engineer', desc: 'Gute Rüstung, Spezial-Tools', hp: 120, speed: 5.6, fireRate: 0.14, mag: 28, reload: 1.5, color: 0x9d6bff },
-      { id: 'medic',   name: 'Medic',   desc: 'Heilt und unterstützt, durchschnittlich', hp: 100, speed: 5.8, fireRate: 0.13, mag: 26, reload: 1.8, color: 0x6bff90 }
+      { id:'assault',  name:'Assault',  desc:'Allround-Klasse. Stabil in Nah- & Mittelbereich.', hp:110, speed:6.0, fireRate:0.12, mag:30, reload:1.6, color:0xFF6B00 },
+      { id:'breacher', name:'Breacher', desc:'Robust & widerstandsfähig. Ideal für Türdurchstöße.', hp:150, speed:4.9, fireRate:0.16, mag:20, reload:2.0, color:0x8F00FF },
+      { id:'scout',    name:'Scout',    desc:'Schnell & wendig, perfekt für Flanken.', hp:80,  speed:8.2, fireRate:0.10, mag:24, reload:1.4, color:0x00FFD5 },
+      { id:'engineer', name:'Engineer', desc:'Spezialist für Gadgets, solide Verteidigung.', hp:120, speed:5.6, fireRate:0.14, mag:28, reload:1.5, color:0x4bc0c0 },
+      { id:'sniper',   name:'Sniper',   desc:'Fernkampf-Experte, hoher Schaden auf Distanz.', hp:90,  speed:5.0, fireRate:0.18, mag:10, reload:2.2, color:0x6b8cff }
     ];
 
-    // UI-Elemente
-    const startBtn = document.getElementById('startGame');
-    const classSelect = document.getElementById('classSelect');
-    const classNameUI = document.getElementById('className');
-    const hpVal = document.getElementById('hpVal');
-    const ammoVal = document.getElementById('ammoVal');
-    const magSizeUI = document.getElementById('magSize');
-    const levelNum = document.getElementById('levelNum');
-    const enemyCount = document.getElementById('enemyCount');
-    const messageDiv = document.getElementById('message');
+    /* ====== Populate Startscreen - class buttons (FIX selection bug robustly) ====== */
+    const classSelectEl = document.getElementById('classSelect');
 
-    // Klassen-Auswahl-Buttons erstellen
-    classes.forEach(c => {
+    classes.forEach((c, idx) => {
       const btn = document.createElement('button');
       btn.className = 'classBtn';
-      const colorHex = '#' + c.color.toString(16).padStart(6, '0');
+      btn.type = 'button';
+      btn.dataset.classId = c.id;
+      const colorHex = '#' + c.color.toString(16).padStart(6,'0');
+
       btn.innerHTML = `
-        <div class="classIcon" style="background:${colorHex}">${c.id.charAt(0).toUpperCase()}</div>
-        <div>
-          <div><b>${c.name}</b></div>
-          <div style="font-size:12px;opacity:0.8">${c.desc}</div>
+        <div class="classIcon" style="background:${colorHex}">${c.name.charAt(0)}</div>
+        <div class="classInfo">
+          <b>${c.name}</b>
+          <div style="font-size:12px;opacity:0.85">${c.desc}</div>
+          <div style="font-size:12px;margin-top:6px;color:var(--muted)">
+            HP: ${c.hp} · Mag: ${c.mag} · Speed: ${c.speed}
+          </div>
         </div>
       `;
-      btn.addEventListener('click', () => selectClass(c, btn));
-      classSelect.appendChild(btn);
+
+      // Use delegation-safe event + dataset; closure not required
+      btn.addEventListener('click', () => {
+        // Visual highlight remove
+        document.querySelectorAll('.classBtn').forEach(b => b.classList.remove('selectedClass'));
+        btn.classList.add('selectedClass');
+        // Apply class selection to player
+        applyClassToPlayer(c);
+      });
+
+      classSelectEl.appendChild(btn);
     });
 
-    function selectClass(c, btn) {
+    function applyClassToPlayer(c){
       player.selectedClass = c;
       player.health = c.hp;
       player.maxHealth = c.hp;
-      player.ammo = c.mag;
-      player.magSize = c.mag;
-      player.reloadTime = c.reload;
-      player.fireRate = c.fireRate;
       player.speed = c.speed;
-      classNameUI.textContent = c.name;
-      hpVal.textContent = player.health;
-      ammoVal.textContent = player.ammo;
-      magSizeUI.textContent = player.magSize;
-      startBtn.disabled = false;
-      document.querySelectorAll('.classBtn').forEach(b => b.classList.remove('selectedClass'));
-      btn.classList.add('selectedClass');
+      player.fireRate = c.fireRate;
+      player.reloadTime = c.reload;
+      player.magSize = c.mag;
+      player.ammo = c.mag;
+      // Update UI preview & HUD
+      ui.className.textContent = c.name;
+      ui.hpVal.textContent = player.health;
+      ui.ammoVal.textContent = player.ammo;
+      ui.magSize && (ui.magSize.textContent = player.magSize);
+      ui.preview.innerHTML = `<div style="font-weight:700;color:${'#'+c.color.toString(16).padStart(6,'0')}">${c.name}</div><div style="font-size:12px;color:var(--muted)">${c.desc}</div>`;
+      ui.startBtn.disabled = false;
+      ui.message.textContent = `Klasse ${c.name} ausgewählt`;
+      setTimeout(()=>{ if(!gameRunning) ui.message.textContent = 'Bereit'; }, 1200);
     }
 
-    startBtn.addEventListener('click', () => {
-      document.getElementById('startScreen').style.display = 'none';
-      player.level = 1;
-      levelNum.textContent = player.level;
-      messageDiv.textContent = `Level ${player.level}`;
-      initGame();
-      animate();
-      setTimeout(() => { messageDiv.textContent = ''; }, 2000);
+    /* ===== START GAME BUTTON ===== */
+    ui.startBtn.addEventListener('click', () => {
+      if (!player.selectedClass) {
+        ui.message.textContent = 'Bitte zuerst eine Klasse wählen!';
+        return;
+      }
+      startGame();
     });
 
-    // Initialisierung von Three.js und Spiel
-    function initGame() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 1.7, 0);
+    /* ===================== CORE: init scene, objects, controls ===================== */
+    function startGame(){
+      ui.startScreen.style.display = 'none';
+      gameRunning = true;
+      gameOver = false;
+      player.level = 1;
+      ui.levelNum.textContent = player.level;
+      initThree();
+      spawnLevel(player.level);
+      animate();
+    }
 
+    function initThree(){
+      // Scene
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x020205, 0.0025);
+
+      // Camera
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 1.75, 0);
+
+      // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.physicallyCorrectLights = true;
       document.body.appendChild(renderer.domElement);
 
-      // PointerLockControls für Kamera
-      controls = new PointerLockControls(camera, document.body);
-      document.body.addEventListener('click', () => {
-        if (controls) controls.lock();
-      });
-      scene.add(controls.getObject());
+      // Lights (PBR friendly)
+      const hemi = new THREE.HemisphereLight(0xffffff, 0x080820, 0.35);
+      scene.add(hemi);
+      const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+      dir.position.set(10,20,10);
+      dir.castShadow = true;
+      scene.add(dir);
+      const amb = new THREE.AmbientLight(0xffffff, 0.12);
+      scene.add(amb);
 
-      // Licht
-      const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(5, 10, 7);
-      scene.add(light);
-      const ambient = new THREE.AmbientLight(0xffffff, 0.3);
-      scene.add(ambient);
-
-      // Boden
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x101010 });
-      const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), floorMat);
-      floor.rotation.x = -Math.PI / 2;
+      // Floor (PBR-ish)
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f1216, roughness: 0.85, metalness: 0.05 });
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(400,400), floorMat);
+      floor.rotation.x = -Math.PI/2;
+      floor.receiveShadow = true;
       scene.add(floor);
+      worldObjects.push(floor);
 
-      // Einfache Hindernisse (Boxen) als Cover
-      const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-      const boxMat = new THREE.MeshStandardMaterial({ color: 0x404040, metalness: 0.1, roughness: 0.8 });
-      for (let i = 0; i < 10; i++) {
-        const box = new THREE.Mesh(boxGeo, boxMat);
-        box.position.set((Math.random() - 0.5) * 50, 0.5, (Math.random() - 0.5) * 50);
+      // Simple obstructing boxes (cover)
+      const coverMat = new THREE.MeshStandardMaterial({ color:0x1b1f24, roughness:0.6, metalness:0.1 });
+      for(let i=0;i<18;i++){
+        const w = 1+Math.random()*5, h = 0.8+Math.random()*2, d = 1+Math.random()*5;
+        const box = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), coverMat);
+        box.position.set((Math.random()-0.5)*140, h/2, (Math.random()-0.5)*140);
+        box.castShadow = true; box.receiveShadow = true;
         scene.add(box);
+        worldObjects.push(box);
       }
 
-      // Gegner für Level 1 spawnen
-      spawnEnemies(player.level * 3 + 2);
-      updateEnemyCount();
+      // PointerLockControls
+      controls = new PointerLockControls(camera, document.body);
+      scene.add(controls.getObject());
+      // Click to lock
+      document.body.addEventListener('click', () => { if (!controls.isLocked) controls.lock(); });
 
-      // Event-Listener für Eingaben
+      controls.addEventListener('lock', () => ui.message.textContent = 'Feuer frei!');
+      controls.addEventListener('unlock', () => ui.message.textContent = 'Pausiert');
+
+      // Enemies group
+      enemiesGroup = new THREE.Group();
+      scene.add(enemiesGroup);
+
+      // Event listeners
+      window.addEventListener('resize', onWindowResize);
       document.addEventListener('keydown', onKeyDown);
       document.addEventListener('keyup', onKeyUp);
       document.addEventListener('mousedown', onMouseDown);
-      document.addEventListener('keydown', onReload);
-      window.addEventListener('resize', onWindowResize);
+      document.addEventListener('keydown', onReloadKey);
     }
 
-    function onWindowResize() {
+    function onWindowResize(){
+      if (!camera || !renderer) return;
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    // Bewegung
-    const move = { forward: false, backward: false, left: false, right: false, sprint: false };
-    function onKeyDown(event) {
-      switch (event.code) {
-        case 'KeyW': move.forward = true; break;
-        case 'KeyS': move.backward = true; break;
-        case 'KeyA': move.left = true; break;
-        case 'KeyD': move.right = true; break;
-        case 'ShiftLeft': move.sprint = true; break;
-        case 'Escape': if (controls) controls.unlock(); break;
-      }
+    /* ===================== INPUT & MOVEMENT ===================== */
+    const moveState = { forward:false, back:false, left:false, right:false, sprint:false };
+    function onKeyDown(e){
+      if (e.code === 'KeyW') moveState.forward = true;
+      if (e.code === 'KeyS') moveState.back = true;
+      if (e.code === 'KeyA') moveState.left = true;
+      if (e.code === 'KeyD') moveState.right = true;
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') moveState.sprint = true;
+      if (e.code === 'Escape') controls && controls.unlock();
     }
-    function onKeyUp(event) {
-      switch (event.code) {
-        case 'KeyW': move.forward = false; break;
-        case 'KeyS': move.backward = false; break;
-        case 'KeyA': move.left = false; break;
-        case 'KeyD': move.right = false; break;
-        case 'ShiftLeft': move.sprint = false; break;
-      }
+    function onKeyUp(e){
+      if (e.code === 'KeyW') moveState.forward = false;
+      if (e.code === 'KeyS') moveState.back = false;
+      if (e.code === 'KeyA') moveState.left = false;
+      if (e.code === 'KeyD') moveState.right = false;
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') moveState.sprint = false;
     }
 
-    // Schießen
-    function onMouseDown(event) {
-      if (event.button !== 0) return; // nur Linksklick
+    /* ===================== SHOOTING / RAYCAST ===================== */
+    function onMouseDown(e){
+      if (e.button !== 0) return;
       shoot();
     }
 
-    function shoot() {
-      if (!controls.isLocked) return;
+    function shoot(){
+      if (!controls || !controls.isLocked) return;
       if (player.reloading) return;
-      const time = clock.getElapsedTime();
-      if (time - player.lastShot < player.fireRate) return;
-      if (player.ammo <= 0) return;
-      player.lastShot = time;
+      const t = clock.getElapsedTime();
+      if (t - player.lastShot < player.fireRate) return;
+      if (player.ammo <= 0) { ui.message.textContent = 'Kein Magazin — R drücken zum Nachladen'; return; }
+      player.lastShot = t;
       player.ammo--;
-      ammoVal.textContent = player.ammo;
-      // Trefferabfrage via Raycast
-      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-      const hits = raycaster.intersectObjects(enemies, false);
-      if (hits.length > 0) {
-        const enemy = hits[0].object;
-        scene.remove(enemy);
-        const index = enemies.indexOf(enemy);
-        if (index > -1) enemies.splice(index, 1);
-        updateEnemyCount();
-      }
-      // Wenn letzter Gegner, Level aufsteigen
-      if (enemies.length === 0) {
-        nextLevel();
-      }
-    }
+      ui.ammoVal.textContent = player.ammo;
 
-    // Nachladen
-    function onReload(event) {
-      if (event.code === 'KeyR') {
-        if (player.reloading) return;
-        if (player.ammo < player.magSize) {
-          player.reloading = true;
-          messageDiv.textContent = 'Nachladen...';
-          setTimeout(() => {
-            player.ammo = player.magSize;
-            ammoVal.textContent = player.ammo;
-            player.reloading = false;
-            messageDiv.textContent = '';
-          }, player.reloadTime * 1000);
+      // muzzle flash (small ephemeral sphere)
+      const flash = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,6), new THREE.MeshBasicMaterial({color:0xFFD580}));
+      flash.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.6)).add(new THREE.Vector3(0,-0.15,0));
+      scene.add(flash);
+      setTimeout(()=>scene.remove(flash),80);
+
+      // Raycast from center of camera
+      raycaster.set(camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
+      const intersects = raycaster.intersectObjects(enemiesGroup.children, true);
+      if (intersects.length > 0){
+        const hit = intersects[0].object;
+        // 'Damage' — we keep each enemy with an hp property
+        if (hit.userData && typeof hit.userData.hp === 'number'){
+          hit.userData.hp -= 50; // hit = 50 damage
+          if (hit.userData.hp <= 0){
+            // death: explosion puff
+            spawnDeathPuff(hit.position);
+            enemiesGroup.remove(hit);
+            updateEnemyUI();
+            // if cleared, advance level or finish
+            if (enemiesGroup.children.length === 0) {
+              onLevelCleared();
+            }
+          } else {
+            // small hit feedback
+            spawnHitMarker(intersects[0].point);
+          }
         }
       }
     }
 
-    function updateEnemyCount() {
-      enemyCount.textContent = enemies.length;
+    function spawnHitMarker(pos){
+      const mark = new THREE.Mesh(new THREE.RingGeometry(0.02,0.06,8), new THREE.MeshBasicMaterial({color:0xFF6B00, side: THREE.DoubleSide}));
+      mark.position.copy(pos);
+      mark.lookAt(camera.position);
+      scene.add(mark);
+      setTimeout(()=>scene.remove(mark),220);
+    }
+    function spawnDeathPuff(pos){
+      const geo = new THREE.SphereGeometry(0.6,8,8);
+      const mat = new THREE.MeshStandardMaterial({color:0xBB2222, transparent:true, opacity:0.85});
+      const s = new THREE.Mesh(geo, mat);
+      s.position.copy(pos);
+      scene.add(s);
+      setTimeout(()=> {
+        scene.remove(s);
+      }, 420);
     }
 
-    // Gegner spawnen
-    function spawnEnemies(num) {
-      for (let i = 0; i < num; i++) {
-        const size = 1;
-        const geometry = new THREE.BoxGeometry(size, size * 2, size);
-        const material = new THREE.MeshStandardMaterial({ color: 0x8f8f8f });
-        const enemy = new THREE.Mesh(geometry, material);
-        const angle = Math.random() * Math.PI * 2;
-        const distance = 20 + Math.random() * 30;
-        enemy.position.set(Math.cos(angle) * distance, 1, Math.sin(angle) * distance);
-        enemy.speed = 2 + Math.random() * 1 + player.level * 0.2;
-        scene.add(enemy);
-        enemies.push(enemy);
+    /* ===================== RELOAD ===================== */
+    function onReloadKey(e){
+      if (e.code !== 'KeyR') return;
+      if (player.reloading) return;
+      if (player.ammo >= player.magSize) return;
+      player.reloading = true;
+      ui.message.textContent = 'Nachladen...';
+      setTimeout(()=>{
+        player.ammo = player.magSize;
+        ui.ammoVal.textContent = player.ammo;
+        player.reloading = false;
+        ui.message.textContent = 'Bereit';
+      }, Math.max(600, player.reloadTime*1000));
+    }
+
+    /* ===================== ENEMY SPAWN & AI ===================== */
+    function spawnLevel(level){
+      enemiesGroup.clear(); // remove any leftover
+      const base = 4 + Math.floor(level * 1.5);
+      const count = Math.min(60, base); // cap for perf
+      for (let i=0;i<count;i++){
+        spawnEnemyAtRandom(level);
       }
+      updateEnemyUI();
+      ui.levelNum.textContent = level;
+      ui.message.textContent = `Level ${level} — Eliminieren!`;
+      setTimeout(()=>{ ui.message.textContent = ''; }, 1600);
     }
 
-    function nextLevel() {
-      player.level++;
-      levelNum.textContent = player.level;
-      messageDiv.textContent = `Level ${player.level}`;
-      setTimeout(() => { messageDiv.textContent = ''; }, 2000);
-      spawnEnemies(player.level * 3 + 2);
-      updateEnemyCount();
+    function spawnEnemyAtRandom(level){
+      const size = 0.9 + Math.random()*0.8;
+      const geom = new THREE.BoxGeometry(0.8*size, 1.6*size, 0.6*size);
+      const mat = new THREE.MeshStandardMaterial({color:0x8b8b8b, roughness:0.7});
+      const enemy = new THREE.Mesh(geom, mat);
+      // position in ring around origin, avoid immediate spawn near player
+      const angle = Math.random() * Math.PI * 2;
+      const dist = 12 + Math.random()* (18 + level*2);
+      enemy.position.set(Math.cos(angle)*dist, 0.8, Math.sin(angle)*dist);
+      enemy.userData = {
+        hp: 100 + Math.floor(level*12), // scale HP with level
+        speed: 1.2 + level*0.06 + Math.random()*0.6,
+        lastAttack: 0
+      };
+      enemiesGroup.add(enemy);
     }
 
-    let gameOver = false;
-    // Haupt-Animationsschleife
-    function animate() {
-      if (gameOver) return;
-      requestAnimationFrame(animate);
-      const delta = clock.getDelta();
+    function updateEnemyUI(){
+      ui.enemyCount.textContent = enemiesGroup.children.length;
+    }
 
-      // Spielertempo berechnen
-      if (controls.isLocked) {
-        let speed = player.speed * (move.sprint ? player.sprintMultiplier : 1);
-        if (move.forward) controls.moveForward(speed * delta);
-        if (move.backward) controls.moveForward(-speed * delta);
-        if (move.left) controls.moveRight(-speed * delta);
-        if (move.right) controls.moveRight(speed * delta);
+    function onLevelCleared(){
+      if (player.level >= 20){
+        ui.message.textContent = 'Alle Missionen abgeschlossen — Du hast gewonnen!';
+        gameRunning = false;
+        controls.unlock();
+        return;
       }
-      // Spielerposition aktualisieren (für Gegner-KI)
-      player.position = camera.position.clone();
+      ui.message.textContent = `Level ${player.level} abgeschlossen! Nächste Welle...`;
+      setTimeout(()=>{
+        player.level++;
+        spawnLevel(player.level);
+      }, 1400);
+    }
 
-      // Gegner-KI: bewegen sich auf Spieler zu
-      enemies.forEach(enemy => {
-        const direction = new THREE.Vector3();
-        direction.subVectors(player.position, enemy.position).normalize();
-        enemy.position.add(direction.multiplyScalar(enemy.speed * delta));
-        // Schaden bei Kontakt
-        const distance = enemy.position.distanceTo(player.position);
-        if (distance < 2) {
-          player.health -= 10 * delta;
-          player.health = Math.max(player.health, 0);
-          hpVal.textContent = Math.floor(player.health);
-          if (player.health <= 0) {
-            gameOver = true;
-            messageDiv.textContent = 'Game Over';
+    /* ===================== AI/MOVEMENT + COLLISIONS ===================== */
+    function enemyStep(delta){
+      // update player position
+      controls.getObject().getWorldPosition(player.pos);
+
+      // each enemy tries to move toward player, avoid obstacles simply
+      enemiesGroup.children.forEach(enemy => {
+        const dir = new THREE.Vector3().subVectors(player.pos, enemy.position);
+        const dist = dir.length();
+        dir.normalize();
+        // line-of-sight simple check: raycast from enemy to player against worldObjects
+        const sightRay = new THREE.Raycaster(enemy.position.clone().add(new THREE.Vector3(0,0.6,0)), dir, 0, dist);
+        const blockers = sightRay.intersectObjects(worldObjects, true);
+        const seesPlayer = blockers.length === 0;
+        if (seesPlayer){
+          // move towards player
+          const step = enemy.userData.speed * delta;
+          enemy.position.addScaledVector(dir, step);
+        } else {
+          // small random wander
+          const wander = new THREE.Vector3(Math.cos(performance.now()*0.001 + enemy.id),0,Math.sin(performance.now()*0.001 + enemy.id));
+          enemy.position.addScaledVector(wander.normalize(), 0.2*delta);
+        }
+        // attack if close
+        if (enemy.position.distanceTo(player.pos) < 1.6){
+          // damage over time
+          const now = clock.getElapsedTime();
+          if (now - enemy.userData.lastAttack > 0.9){
+            enemy.userData.lastAttack = now;
+            player.health -= 8 + Math.floor(player.level*0.6);
+            player.health = Math.max(0, player.health);
+            ui.hpVal.textContent = Math.floor(player.health);
+            ui.message.textContent = 'Getroffen!';
+            setTimeout(()=>{ ui.message.textContent = '' }, 900);
+            if (player.health <= 0){
+              onPlayerDeath();
+            }
           }
         }
       });
+    }
+
+    function onPlayerDeath(){
+      gameOver = true;
+      gameRunning = false;
+      ui.message.textContent = 'Mission gescheitert — Du bist gefallen.';
+      controls.unlock();
+    }
+
+    /* ===================== ANIMATION / RENDER LOOP ===================== */
+    const velocity = new THREE.Vector3();
+    function animate(){
+      if (!gameRunning) return;
+      requestAnimationFrame(animate);
+      const delta = Math.min(0.05, clock.getDelta());
+      // Movement
+      if (controls && controls.isLocked){
+        let spd = player.speed * (moveState.sprint ? player.sprintMultiplier : 1);
+        // Forward/back based on camera direction
+        if (moveState.forward) controls.moveForward(spd * delta);
+        if (moveState.back) controls.moveForward(-spd * delta);
+        if (moveState.left) controls.moveRight(-spd * delta);
+        if (moveState.right) controls.moveRight(spd * delta);
+      }
+      // enemy AI
+      if (enemiesGroup && enemiesGroup.children.length > 0){
+        enemyStep(delta);
+      }
+
+      // small ambient camera bob based on movement (for feel)
+      const time = performance.now()*0.001;
+      if (controls && controls.isLocked){
+        camera.rotation.z = Math.sin(time*1.5)*0.002;
+      }
 
       renderer.render(scene, camera);
     }
+
+    /* ===================== BOOTSTRAP / UI INIT ===================== */
+    // Display classes requires no async resources, so selection should be immediate.
+    // Make sure start button is disabled until selection is done (done in applyClassToPlayer).
+
+    // initialize preview with default text
+    ui.preview.innerHTML = `<div style="color:var(--muted)">Keine Klasse gewählt</div>`;
+
+    // defensive: set some UI nodes if missing
+    ui.ammoVal.textContent = player.ammo;
+    ui.hpVal.textContent = player.health;
+    ui.levelNum.textContent = player.level;
+
+    /* ===================== Tidy up: ensure clickable on mobile + keyboard ===================== */
+    // prevent accidental selection
+    document.addEventListener('selectstart', e => { if (gameRunning) e.preventDefault(); });
+
+    // ensure pointer lock instructions
+    ui.message.textContent = 'Wähle eine Klasse, dann Start Mission';
+
+    // Expose a simple debug: pressing "L" will skip to next level (dev convenience)
+    document.addEventListener('keydown', (e) => {
+      if (!gameRunning) return;
+      if (e.code === 'KeyL') {
+        spawnLevel(++player.level);
+      }
+    });
+
+    // final helper: ensure startscreen scroll into view
+    document.getElementById('startScreen').scrollIntoView();
+
   </script>
 </body>
 </html>
