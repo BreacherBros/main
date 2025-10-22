@@ -1,0 +1,93 @@
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: 'Arial', sans-serif;
+  color: #fff;
+}
+
+/* === Overlay-Menüs === */
+.overlay {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10,10,10,0.8);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  padding: 30px 50px;
+  text-align: center;
+  backdrop-filter: blur(5px);
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-size: 28px;
+  letter-spacing: 2px;
+  color: #ff8800;
+  text-shadow: 0 0 10px #ff8800;
+}
+
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.class-btn {
+  width: 220px;
+  margin: 8px;
+  padding: 12px;
+  font-size: 18px;
+  color: #fff;
+  background: rgba(255,136,0,0.2);
+  border: 1px solid #ff8800;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.class-btn:hover {
+  background: rgba(255,136,0,0.5);
+}
+
+/* === HUD === */
+#hud {
+  position: fixed;
+  top: 10px; left: 10px;
+  font-size: 18px;
+  text-shadow: 0 0 5px #000;
+}
+#hud div { margin-bottom: 4px; }
+
+/* === Crosshair === */
+#crosshair {
+  position: fixed;
+  top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+#crosshair::before,
+#crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(255,0,0,0.8);
+}
+#crosshair::before {
+  left: 50%; top: 0;
+  width: 2px; height: 100%;
+  transform: translateX(-50%);
+}
+#crosshair::after {
+  top: 50%; left: 0;
+  width: 100%; height: 2px;
+  transform: translateY(-50%);
+}
+
+/* === Canvas === */
+#gameCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: block;
+}
