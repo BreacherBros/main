@@ -1,10 +1,11 @@
 // ============================================================
 //   BREACHER BROS — 3D FPS BROWSERGAME (VOLLSTÄNDIG)
-//   Grundgerüst: Szene + Menü + Kamera + Steuerung + Gegner + HUD + Abilities
+//   main.js mit echten Modulen, PointerLock nach Start, HUD,
+//   Gegner, Abilities, Projektile, Map, Audio, LevelSystem
 // ============================================================
 
 // ==========================
-// IMPORTS (Platzhalter, Standalone) 
+// IMPORTS
 // ==========================
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
 import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/PointerLockControls.js';
@@ -44,20 +45,17 @@ const abilityEl  = document.getElementById('ability');
 const levelEl    = document.getElementById('level');
 
 // ==========================
-// 2. Platzhalter-Klassen für externe Module
-// ==========================
-
-
-// ==========================
-// 3. PointerLock erst nach Start
+// 2. PointerLock (erst nach Spielstart)
 // ==========================
 let controls;
 function initPointerLock(){
     controls = new PointerLockControls(camera, document.body);
     scene.add(controls.getObject());
+
     document.body.addEventListener('click', ()=>{
         if(!menuVisible()) controls.lock();
     });
+
     controls.addEventListener('lock', ()=>{ console.log("PointerLock aktiviert"); });
     controls.addEventListener('unlock', ()=>{ console.log("PointerLock deaktiviert"); });
 }
@@ -65,7 +63,7 @@ function initPointerLock(){
 function menuVisible(){ return menu.style.display!=='none' || briefing.style.display!=='none'; }
 
 // ==========================
-// 4. Klassenauswahl Buttons
+// 3. Klassenauswahl Buttons
 // ==========================
 classBtns.forEach(btn=>{
     btn.addEventListener('click', (e)=>{
@@ -93,16 +91,20 @@ classBtns.forEach(btn=>{
 });
 
 // ==========================
-// 5. Spielstart
+// 4. Variablen für Spieler, Gegner, Level
 // ==========================
-let scene, camera, renderer;
-let floor;
-let move = {forward:false,backward:false,left:false,right:false};
+let scene, camera, renderer, floor;
+let move = { forward:false, backward:false, left:false, right:false };
 let prevTime = performance.now();
 let projectiles = [];
 let enemies = [];
 let levelManager;
+let gameMap;
+let audioManager;
 
+// ==========================
+// 5. Spielstart
+// ==========================
 function startGame(clsName){
     const cls = classes[clsName];
     player = {
@@ -111,7 +113,8 @@ function startGame(clsName){
         velocity: new THREE.Vector3(),
         canJump:false,
         weapon:null,
-        abilityObj:null
+        abilityObj:null,
+        mesh:null
     };
 
     briefing.style.display = 'none';
@@ -123,7 +126,7 @@ function startGame(clsName){
 }
 
 // ==========================
-// 6. Szene + Renderer
+// 6. Szene + Renderer + Licht
 // ==========================
 function initScene(){
     scene = new THREE.Scene();
@@ -136,6 +139,7 @@ function initScene(){
     scene.add(ambientLight);
     const dirLight = new THREE.DirectionalLight(0xffffff,1);
     dirLight.position.set(10,20,10);
+    dirLight.castShadow = true;
     scene.add(dirLight);
 
     renderer = new THREE.WebGLRenderer({canvas:document.getElementById('gameCanvas'),antialias:true});
@@ -153,18 +157,23 @@ function initScene(){
 }
 
 // ==========================
-// 7. Player Initialisierung
+// 7. Player + Map + Gegner Initialisierung
 // ==========================
 function initPlayer(){
-    const map = new Map(scene);
-    player.mesh = new THREE.Mesh(new THREE.BoxGeometry(1,2,1), new THREE.MeshBasicMaterial({color:0x00aaff}));
+    gameMap = new Map(scene);
+
+    player.mesh = new THREE.Mesh(new THREE.BoxGeometry(1,2,1), new THREE.MeshPhongMaterial({color:0x00aaff}));
     player.mesh.position.copy(player.position);
+    player.mesh.castShadow = true;
     scene.add(player.mesh);
 
     player.weapon = new Weapon(player,scene,{ammo:ammoEl});
     player.abilityObj = new Ability(player,scene);
 
-    levelManager = new LevelManager(scene,map,player);
+    audioManager = new AudioManager(new THREE.AudioListener());
+    audioManager.load('shoot','./assets/sounds/shoot.wav');
+
+    levelManager = new LevelManager(scene,gameMap,player);
     levelManager.startLevel();
 
     enemies = levelManager.enemies;
@@ -183,6 +192,7 @@ function playerMovement(delta){
     if(move.forward || move.backward) player.velocity.z -= direction.z*speed*delta;
     if(move.left || move.right) player.velocity.x -= direction.x*speed*delta;
 
+    // Gravitation
     player.velocity.y -= 9.8*10*delta;
 
     controls.moveRight(-player.velocity.x*delta);
@@ -194,6 +204,9 @@ function playerMovement(delta){
         controls.getObject().position.y=2;
         player.canJump=true;
     }
+
+    // Spieler-Mesh synchronisieren
+    player.mesh.position.copy(controls.getObject().position);
 }
 
 // ==========================
@@ -207,10 +220,20 @@ function animate(){
 
     if(controls?.isLocked && !menuVisible()){
         playerMovement(delta);
+
+        // Gegner AI
+        enemies.forEach(e=>{
+            const ai = new EnemyAI(e,gameMap,player);
+            ai.update(delta);
+        });
+
+        // Projektile Update
         projectiles.forEach(p=>p.update?.(delta,enemies));
-        levelManager.enemies.forEach(e=>e.mesh.position.add(new THREE.Vector3(0,0,0))); // simple AI placeholder
+
+        // Ability Cooldown
         player.abilityObj.updateCooldown(delta);
     }
+
     updateHUD();
     renderer.render(scene,camera);
 }
@@ -262,7 +285,10 @@ document.addEventListener('keyup', e=>{
 // 13. Maus Events
 // ==========================
 document.addEventListener('mousedown', e=>{
-    if(controls?.isLocked && e.button===0) player.weapon.shoot(enemies);
+    if(controls?.isLocked && e.button===0) {
+        player.weapon.shoot(enemies);
+        audioManager.play('shoot');
+    }
 });
 
 // ==========================
