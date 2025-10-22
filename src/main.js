@@ -79,7 +79,7 @@ function startGame(clsName) {
 }
 import { Weapon } from './weapons.js';
 import { Enemy } from './enemy.js';
-import { updateHUD } from './hud.js';
+import { HUD } from './hud.js';
 import { Map } from './map.js';
 import { Ability } from './abilities.js';
 import { Projectile } from './physics.js';
