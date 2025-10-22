@@ -82,6 +82,45 @@ import { Enemy } from './enemy.js';
 import { updateHUD } from './hud.js';
 import { Map } from './map.js';
 import { Ability } from './abilities.js';
+import { Projectile } from './physics.js';
+import { EnemyAI } from './enemyAI.js';
+import { AudioManager } from './audio.js';
+
+const listener = new THREE.AudioListener();
+camera.add(listener);
+const audioManager = new AudioManager(listener);
+audioManager.load('shoot', './assets/sounds/shoot.wav');
+
+document.addEventListener('mousedown', e=>{
+    if(controls.isLocked && e.button===0){
+        player.weapon.shoot(enemies); // bestehendes Raycast
+        audioManager.play('shoot');
+        // Alternativ: echte Projektil-Objekte
+        const dir = new THREE.Vector3(0,0,-1).applyQuaternion(player.quaternion);
+        projectiles.push(new Projectile(scene, player.position.clone(), dir));
+    }
+});
+
+const projectiles = [];
+const enemyAIs = enemies.map(e=>new EnemyAI(e, gameMap, player));
+
+function animate(){
+    requestAnimationFrame(animate);
+    const time = performance.now();
+    const delta = (time-prevTime)/1000;
+    prevTime = time;
+
+    if(controls.isLocked){
+        playerMovement(delta);
+
+        // Projektile
+        projectiles.forEach(p=>p.update(delta, enemies));
+        // Gegner-KI
+        enemyAIs.forEach(ai=>ai.update(delta));
+    }
+
+    renderer.render(scene, camera);
+}
 
 // === Waffe initialisieren ===
 player.weapon = new Weapon(player, scene, {ammo: ammoEl});
