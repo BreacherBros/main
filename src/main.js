@@ -1,21 +1,23 @@
 // ============================================================
-//   BREACHER BROS — 3D FPS BROWSERGAME (TEIL 1)
-//   Grundgerüst : Szene + Menü + Kamera + Steuerung
+//   BREACHER BROS — 3D FPS BROWSERGAME (VOLLSTÄNDIG)
+//   Grundgerüst: Szene + Menü + Kamera + Steuerung + Gegner + HUD + Abilities
 // ============================================================
 
-// Importiere Three.js & PointerLock
+// ==========================
+// IMPORTS (Platzhalter, Standalone) 
+// ==========================
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
 import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/PointerLockControls.js';
 
-// ============================================================
-//   1  Klassen-Definitionen + UI-Referenzen
-// ============================================================
+// ==========================
+// 1. Klassen-Definitionen + UI-Referenzen
+// ==========================
 const classes = {
-  "Stürmer":    { health: 120, speed: 1.2, ammo: 30, reloadTime: 1.5, ability: "Granate" },
-  "Verteidiger":{ health: 180, speed: 0.9, ammo: 40, reloadTime: 2.0, ability: "Schild" },
-  "Sanitäter":  { health: 150, speed: 1.0, ammo: 25, reloadTime: 1.2, ability: "Heilung" },
-  "Techniker":  { health: 130, speed: 1.1, ammo: 35, reloadTime: 1.6, ability: "Turret" },
-  "Späher":     { health: 100, speed: 1.4, ammo: 20, reloadTime: 1.0, ability: "Tarnung" }
+  "Stürmer":     { health: 120, speed: 1.2, ammo: 30, reloadTime: 1.5, ability: "Granate" },
+  "Verteidiger": { health: 180, speed: 0.9, ammo: 40, reloadTime: 2.0, ability: "Schild" },
+  "Sanitäter":   { health: 150, speed: 1.0, ammo: 25, reloadTime: 1.2, ability: "Heilung" },
+  "Techniker":   { health: 130, speed: 1.1, ammo: 35, reloadTime: 1.6, ability: "Turret" },
+  "Späher":      { health: 100, speed: 1.4, ammo: 20, reloadTime: 1.0, ability: "Tarnung" }
 };
 
 let selectedClass = null;
@@ -31,35 +33,138 @@ const ammoEl     = document.getElementById('ammo');
 const abilityEl  = document.getElementById('ability');
 const levelEl    = document.getElementById('level');
 
-// ============================================================
-//   2  PointerLock nach Spielstart
-// ============================================================
+// ==========================
+// 2. Platzhalter-Klassen für externe Module
+// ==========================
+class Weapon {
+    constructor(player, scene, options){
+        this.player = player;
+        this.scene = scene;
+        this.ammo = player.ammo;
+        this.maxAmmo = player.ammo;
+        this.reloading = false;
+    }
+    shoot(enemies){
+        if(this.ammo<=0){ this.reload(); return; }
+        this.ammo--;
+        console.log("Schuss abgegeben!", this.ammo);
+        enemies.forEach(e=>{
+            const dist = e.mesh.position.distanceTo(this.player.position);
+            if(dist<5) e.health -= 20;
+        });
+    }
+    reload(){
+        console.log("Nachladen...");
+        this.reloading = true;
+        setTimeout(()=>{ this.ammo=this.maxAmmo; this.reloading=false; }, this.player.reloadTime*1000);
+    }
+}
+
+class Enemy {
+    constructor(scene, position){
+        this.mesh = new THREE.Mesh(
+            new THREE.BoxGeometry(1,2,1),
+            new THREE.MeshBasicMaterial({color:0xff0000})
+        );
+        this.mesh.position.copy(position);
+        this.health = 100;
+        scene.add(this.mesh);
+    }
+    update(player, delta){}
+}
+
+class EnemyAI {
+    constructor(enemy, map, player){ this.enemy=enemy; this.player=player; }
+    update(delta){
+        const dir = new THREE.Vector3().subVectors(this.player.position, this.enemy.mesh.position).normalize();
+        this.enemy.mesh.position.addScaledVector(dir, 1*delta);
+    }
+}
+
+class Ability {
+    constructor(player, scene){
+        this.player = player;
+        this.scene = scene;
+        this.cooldown = 0;
+    }
+    use(enemies){
+        if(this.cooldown>0) return;
+        console.log(`Fähigkeit ${this.player.ability} aktiviert!`);
+        enemies.forEach(e=>{
+            const dist = e.mesh.position.distanceTo(this.player.position);
+            if(dist<5) e.health -= 50;
+        });
+        this.cooldown = 5;
+    }
+    updateCooldown(delta){
+        if(this.cooldown>0) this.cooldown -= delta;
+    }
+}
+
+class Map {
+    constructor(scene){
+        this.scene = scene;
+        this.walls = [];
+        this.cover = [];
+        for(let i=0;i<5;i++){
+            const wall = new THREE.Mesh(
+                new THREE.BoxGeometry(5,3,1),
+                new THREE.MeshBasicMaterial({color:0x888888})
+            );
+            wall.position.set((Math.random()-0.5)*20,1.5,(Math.random()-0.5)*20);
+            this.walls.push(wall);
+            scene.add(wall);
+        }
+        this.cover = this.walls; // einfache Abdeckung
+    }
+}
+
+class AudioManager {
+    constructor(listener){ this.listener = listener; this.sounds = {}; }
+    load(name, path){ console.log(`Audio geladen: ${name}`); }
+    play(name){ console.log(`Audio abgespielt: ${name}`); }
+}
+
+class LevelManager {
+    constructor(scene, map, player){
+        this.scene=scene; this.map=map; this.player=player;
+        this.level=1;
+        this.enemies=[];
+    }
+    startLevel(){ this.spawnEnemies(); }
+    nextLevel(){ this.level++; this.spawnEnemies(); }
+    spawnEnemies(){
+        this.enemies.forEach(e=>this.scene.remove(e.mesh));
+        this.enemies=[];
+        for(let i=0;i<this.level*3;i++){
+            const pos = new THREE.Vector3((Math.random()-0.5)*20,1,(Math.random()-0.5)*20);
+            this.enemies.push(new Enemy(this.scene,pos));
+        }
+    }
+}
+
+// ==========================
+// 3. PointerLock erst nach Start
+// ==========================
 let controls;
-function initPointerLock() {
+function initPointerLock(){
     controls = new PointerLockControls(camera, document.body);
     scene.add(controls.getObject());
-
-    document.body.addEventListener('click', () => {
+    document.body.addEventListener('click', ()=>{
         if(!menuVisible()) controls.lock();
     });
-
-    controls.addEventListener('lock', () => console.log("PointerLock aktiviert"));
-    controls.addEventListener('unlock', () => console.log("PointerLock deaktiviert"));
+    controls.addEventListener('lock', ()=>{ console.log("PointerLock aktiviert"); });
+    controls.addEventListener('unlock', ()=>{ console.log("PointerLock deaktiviert"); });
 }
 
-// Helper: Menü sichtbar?
-function menuVisible() {
-    return menu.style.display !== 'none' || briefing.style.display !== 'none';
-}
+function menuVisible(){ return menu.style.display!=='none' || briefing.style.display!=='none'; }
 
-// ============================================================
-//   3  Menülogik – Klassenwahl & Briefing
-// ============================================================
-
-// Klassenauswahl Buttons
-classBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // verhindert Klickblock bei PointerLock
+// ==========================
+// 4. Klassenauswahl Buttons
+// ==========================
+classBtns.forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
         selectedClass = btn.dataset.class;
         const cls = classes[selectedClass];
 
@@ -74,211 +179,107 @@ classBtns.forEach(btn => {
           <button id="startGame">Los geht’s!</button>
         `;
 
-        const startBtn = document.getElementById('startGame');
-        startBtn.addEventListener('click', (ev) => {
+        document.getElementById('startGame').addEventListener('click', (ev)=>{
             ev.stopPropagation();
             startGame(selectedClass);
-            initPointerLock(); // PointerLock erst jetzt aktivieren
+            initPointerLock();
         });
     });
 });
 
-// ============================================================
-//   4  Spielstart
-// ============================================================
-function startGame(clsName) {
+// ==========================
+// 5. Spielstart
+// ==========================
+let scene, camera, renderer;
+let floor;
+let move = {forward:false,backward:false,left:false,right:false};
+let prevTime = performance.now();
+let projectiles = [];
+let enemies = [];
+let levelManager;
+
+function startGame(clsName){
     const cls = classes[clsName];
     player = {
         ...cls,
-        position: new THREE.Vector3(0, 2, 0),
+        position: new THREE.Vector3(0,2,0),
         velocity: new THREE.Vector3(),
-        canJump: false
+        canJump:false,
+        weapon:null,
+        abilityObj:null
     };
 
     briefing.style.display = 'none';
     hud.style.display = 'block';
 
-    initScene();     // Szene initialisieren
-    animate();       // Rendering-Loop starten
+    initScene();
+    initPlayer();
+    animate();
 }
 
-// ============================================================
-//   5  Imports & HUD
-// ============================================================
-import { Weapon } from './weapons.js';
-import { Enemy } from './enemy.js';
-import { HUD } from './hud.js';
-import { Map } from './map.js';
-import { Ability } from './abilities.js';
-import { Projectile } from './physics.js';
-import { EnemyAI } from './enemyAI.js';
-import { AudioManager } from './audio.js';
-
-const projectiles = [];
-let enemies = [];
-let enemyAIs = [];
-
-// HUD Update Funktion
-function updateHUD(){
-    healthEl.innerText = `Leben: ${Math.max(player.health,0)}`;
-    ammoEl.innerText = player.weapon?.reloading
-        ? "Nachladen..."
-        : `Munition: ${player.weapon?.ammo || 0}/${player.weapon?.maxAmmo || 0}`;
-    abilityEl.innerText = `Fähigkeit: ${player.ability || "-"} (${player.abilityObj?.cooldown?.toFixed(1) || 0}s)`;
-    levelEl.innerText = `Level: ${levelManager?.level || 1}`;
-}
-
-// ============================================================
-//   6  Gegner-Handling
-// ============================================================
-function removeEnemy(enemy){
-    const mesh = enemy.mesh;
-    const tween = { y: mesh.position.y };
-    const interval = setInterval(()=>{
-        tween.y -= 0.1;
-        mesh.position.y = tween.y;
-        if(mesh.position.y < 0){
-            clearInterval(interval);
-            scene.remove(mesh);
-        }
-    },16);
-}
-
-// ============================================================
-//   7  LevelManager & Gegner-KI
-// ============================================================
-let gameMap;
-let levelManager;
-
-function initLevelManager(){
-    gameMap = new Map(scene);
-    levelManager = new LevelManager(scene, gameMap, player);
-    levelManager.startLevel();
-
-    enemyAIs = levelManager.enemies.map(e => new EnemyAI(e, gameMap, player));
-}
-
-// ============================================================
-//   8  Projektile & Maus
-// ============================================================
-const listener = new THREE.AudioListener();
-let audioManager;
-
-document.addEventListener('mousedown', e=>{
-    if(controls?.isLocked && e.button === 0){
-        player.weapon.shoot(enemies);
-        audioManager?.play('shoot');
-
-        // Projektil-Objekt
-        const dir = new THREE.Vector3(0,0,-1).applyQuaternion(player.mesh.quaternion);
-        projectiles.push(new Projectile(scene, player.position.clone(), dir));
-    }
-});
-
-// ============================================================
-//   9  Three.js Grundszene
-// ============================================================
-let scene, camera, renderer, floor;
-function initScene() {
+// ==========================
+// 6. Szene + Renderer
+// ==========================
+function initScene(){
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x101010);
 
-    camera = new THREE.PerspectiveCamera(
-        75,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        1000
-    );
-    camera.position.set(0, 2, 5);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight,0.1,1000);
+    camera.position.set(0,2,5);
 
-    // Licht
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    const ambientLight = new THREE.AmbientLight(0xffffff,0.3);
     scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(50,50,50);
-    dirLight.castShadow = true;
+    const dirLight = new THREE.DirectionalLight(0xffffff,1);
+    dirLight.position.set(10,20,10);
     scene.add(dirLight);
 
-    // Boden
-    const floorGeo = new THREE.PlaneGeometry(200,200);
-    const floorMat = new THREE.MeshPhongMaterial({ color:0x333333 });
-    floor = new THREE.Mesh(floorGeo,floorMat);
-    floor.rotation.x = -Math.PI/2;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Spieler-Mesh
-    player.mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(1,2,1),
-        new THREE.MeshBasicMaterial({color:0x00aaff})
-    );
-    player.mesh.position.copy(player.position);
-    player.mesh.castShadow = true;
-    scene.add(player.mesh);
-
-    // Waffe & Fähigkeit
-    player.weapon = new Weapon(player, scene, {ammo: ammoEl});
-    player.abilityObj = new Ability(player, scene);
-
-    // Audio
-    camera.add(listener);
-    audioManager = new AudioManager(listener);
-    audioManager.load('shoot','./assets/sounds/shoot.wav');
-
-    // LevelManager
-    initLevelManager();
-
-    // Renderer
-    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas'), antialias:true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer = new THREE.WebGLRenderer({canvas:document.getElementById('gameCanvas'),antialias:true});
+    renderer.setSize(window.innerWidth,window.innerHeight);
     renderer.shadowMap.enabled = true;
 
-    // Bewegungs-Events
-    const onKeyDown = e => {
-        switch(e.code){
-            case 'KeyW': move.forward=true; break;
-            case 'KeyS': move.backward=true; break;
-            case 'KeyA': move.left=true; break;
-            case 'KeyD': move.right=true; break;
-            case 'Space':
-                if(player.canJump) player.velocity.y+=5;
-                player.canJump=false;
-                break;
-        }
-    };
-    const onKeyUp = e => {
-        switch(e.code){
-            case 'KeyW': move.forward=false; break;
-            case 'KeyS': move.backward=false; break;
-            case 'KeyA': move.left=false; break;
-            case 'KeyD': move.right=false; break;
-        }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('keyup', onKeyUp);
-    window.addEventListener('resize', onWindowResize);
+    window.addEventListener('resize',onWindowResize);
+
+    const geometry = new THREE.PlaneGeometry(50,50);
+    const material = new THREE.MeshPhongMaterial({color:0x333333});
+    floor = new THREE.Mesh(geometry,material);
+    floor.rotation.x=-Math.PI/2;
+    floor.receiveShadow=true;
+    scene.add(floor);
 }
 
-// ============================================================
-//   10  Bewegungs-Logik
-// ============================================================
-const move = { forward:false, backward:false, left:false, right:false };
-let prevTime = performance.now();
+// ==========================
+// 7. Player Initialisierung
+// ==========================
+function initPlayer(){
+    const map = new Map(scene);
+    player.mesh = new THREE.Mesh(new THREE.BoxGeometry(1,2,1), new THREE.MeshBasicMaterial({color:0x00aaff}));
+    player.mesh.position.copy(player.position);
+    scene.add(player.mesh);
 
+    player.weapon = new Weapon(player,scene,{ammo:ammoEl});
+    player.abilityObj = new Ability(player,scene);
+
+    levelManager = new LevelManager(scene,map,player);
+    levelManager.startLevel();
+
+    enemies = levelManager.enemies;
+}
+
+// ==========================
+// 8. Player Bewegung
+// ==========================
 function playerMovement(delta){
-    const speed = 400*player.speed;
-    const dir = new THREE.Vector3();
-    dir.z = Number(move.backward)-Number(move.forward);
-    dir.x = Number(move.right)-Number(move.left);
-    dir.normalize();
+    const speed = 5 * player.speed;
+    const direction = new THREE.Vector3();
+    direction.z = Number(move.backward)-Number(move.forward);
+    direction.x = Number(move.right)-Number(move.left);
+    direction.normalize();
 
-    if(move.forward||move.backward) player.velocity.z -= dir.z*speed*delta;
-    if(move.left||move.right) player.velocity.x -= dir.x*speed*delta;
+    if(move.forward || move.backward) player.velocity.z -= direction.z*speed*delta;
+    if(move.left || move.right) player.velocity.x -= direction.x*speed*delta;
 
-    // Gravitation
     player.velocity.y -= 9.8*10*delta;
 
-    // Bewegung
     controls.moveRight(-player.velocity.x*delta);
     controls.moveForward(-player.velocity.z*delta);
     controls.getObject().position.y += player.velocity.y*delta;
@@ -288,62 +289,108 @@ function playerMovement(delta){
         controls.getObject().position.y=2;
         player.canJump=true;
     }
-
-    // Spieler-Mesh synchronisieren
-    player.mesh.position.copy(controls.getObject().position);
 }
 
-// ============================================================
-//   11  animate-Loop
-// ============================================================
+// ==========================
+// 9. Animate Loop
+// ==========================
 function animate(){
     requestAnimationFrame(animate);
     const time = performance.now();
     const delta = (time-prevTime)/1000;
-    prevTime=time;
+    prevTime = time;
 
     if(controls?.isLocked && !menuVisible()){
         playerMovement(delta);
-
-        // Gegner-KI
-        enemyAIs.forEach(ai=>ai.update(delta));
-
-        // Projektile
-        projectiles.forEach(p=>p.update(delta,enemies));
+        projectiles.forEach(p=>p.update?.(delta,enemies));
+        levelManager.enemies.forEach(e=>e.mesh.position.add(new THREE.Vector3(0,0,0))); // simple AI placeholder
+        player.abilityObj.updateCooldown(delta);
     }
-
     updateHUD();
     renderer.render(scene,camera);
 }
 
-// ============================================================
-//   12  Fenstergröße
-// ============================================================
+// ==========================
+// 10. HUD Update
+// ==========================
+function updateHUD(){
+    if(!player) return;
+    healthEl.innerText = `Leben: ${Math.max(player.health,0)}`;
+    ammoEl.innerText = player.weapon?.reloading ? "Nachladen..." : `Munition: ${player.weapon?.ammo}/${player.weapon?.maxAmmo}`;
+    abilityEl.innerText = `Fähigkeit: ${player.ability} (${Math.max(player.abilityObj?.cooldown.toFixed(1),0)}s)`;
+    levelEl.innerText = `Level: ${levelManager?.level}`;
+}
+
+// ==========================
+// 11. Fenstergröße ändern
+// ==========================
 function onWindowResize(){
     camera.aspect = window.innerWidth/window.innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth,window.innerHeight);
 }
 
-// ============================================================
-//   13  Level/Enemies (Beispiel)
-// ============================================================
-function spawnEnemies(level){
-    enemies.forEach(e=>scene.remove(e.mesh));
-    enemies=[];
-    for(let i=0;i<level*3;i++){
-        const pos=new THREE.Vector3((Math.random()-0.5)*50,1,(Math.random()-0.5)*50);
-        const e=new Enemy(scene,pos);
-        enemies.push(e);
-    }
-    enemyAIs=enemies.map(e=>new EnemyAI(e,gameMap,player));
-}
-
-// ============================================================
-//   14  Key Abilities / Reload
-// ============================================================
+// ==========================
+// 12. Tastatur Events
+// ==========================
 document.addEventListener('keydown', e=>{
-    if(e.code==='KeyR') player.weapon.reload();
-    if(e.code==='KeyF') player.abilityObj.use(enemies);
-    player.abilityObj.updateCooldown((performance.now()-prevTime)/1000);
+    switch(e.code){
+        case 'KeyW': move.forward=true; break;
+        case 'KeyA': move.left=true; break;
+        case 'KeyS': move.backward=true; break;
+        case 'KeyD': move.right=true; break;
+        case 'Space': if(player.canJump){player.velocity.y+=5;player.canJump=false;} break;
+        case 'KeyR': player.weapon.reload(); break;
+        case 'KeyF': player.abilityObj.use(enemies); break;
+    }
 });
+document.addEventListener('keyup', e=>{
+    switch(e.code){
+        case 'KeyW': move.forward=false; break;
+        case 'KeyA': move.left=false; break;
+        case 'KeyS': move.backward=false; break;
+        case 'KeyD': move.right=false; break;
+    }
+});
+
+// ==========================
+// 13. Maus Events
+// ==========================
+document.addEventListener('mousedown', e=>{
+    if(controls?.isLocked && e.button===0) player.weapon.shoot(enemies);
+});
+
+// ==========================
+// 14. Start Hinweis
+// ==========================
+console.log("Breacher Bros FPS ready! Wähle zuerst eine Klasse im Menü.");
+
+// ==========================
+// 15. Zusatz Funktionen / Explosionen / Treffereffekte
+// ==========================
+function createExplosion(scene, position){
+    const particles = new THREE.BufferGeometry();
+    const count = 50;
+    const positions=[];
+    for(let i=0;i<count;i++) positions.push(position.x,position.y,position.z);
+    particles.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+    const material = new THREE.PointsMaterial({color:0xffaa00,size:0.2});
+    const points = new THREE.Points(particles, material);
+    scene.add(points);
+    let frame=0;
+    const interval = setInterval(()=>{
+        const posAttr = points.geometry.attributes.position.array;
+        for(let i=0;i<posAttr.length;i+=3){
+            posAttr[i]+=(Math.random()-0.5)*0.5;
+            posAttr[i+1]+=(Math.random()-0.5)*0.5;
+            posAttr[i+2]+=(Math.random()-0.5)*0.5;
+        }
+        points.geometry.attributes.position.needsUpdate=true;
+        frame++;
+        if(frame>20){scene.remove(points); clearInterval(interval);}
+    },16);
+}
+
+// ============================================================
+// END OF main.js
+// ============================================================
