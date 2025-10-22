@@ -67,7 +67,6 @@ function menuVisible(){ return menu.style.display!=='none' || briefing.style.dis
 // ==========================
 classBtns.forEach(btn=>{
     btn.addEventListener('click', (e)=>{
-        e.stopPropagation();
         selectedClass = btn.dataset.class;
         const cls = classes[selectedClass];
 
