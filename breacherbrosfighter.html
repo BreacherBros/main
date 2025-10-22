@@ -3,131 +3,115 @@
 <head>
   <meta charset="utf-8" />
   <title>BreacherBros — Solo FPS (Play)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <style>
-    /* ===== BreacherBros Theme (Orange, Turquoise, Violet) ===== */
+    /* BreacherBros theme */
     :root{
-      --orange: #FF6B00;
-      --turquoise: #00FFD5;
-      --violet: #8F00FF;
-      --bg-dark: #05060a;
-      --panel: rgba(12,13,17,0.72);
-      --glass: rgba(255,255,255,0.04);
-      --text: #e6eef8;
-      --muted: rgba(255,255,255,0.65);
+      --orange:#FF6B00;
+      --turquoise:#00FFD5;
+      --violet:#8F00FF;
+      --bg-dark:#05060a;
+      --panel: rgba(12,13,17,0.78);
+      --glass: rgba(255,255,255,0.03);
+      --text:#e6eef8;
+      --muted: rgba(255,255,255,0.68);
       font-family: Inter, system-ui, -apple-system, Roboto, "Segoe UI", "Helvetica Neue", Arial;
     }
     html,body{height:100%;margin:0;background:
-      radial-gradient(1200px 600px at 10% 10%, rgba(143,0,255,0.06) 0%, transparent 10%),
-      radial-gradient(1200px 600px at 90% 90%, rgba(0,255,213,0.03) 0%, transparent 12%),
-      linear-gradient(180deg,#020205 0%, #071018 50%, #0b1220 100%); color:var(--text); overflow:hidden;}
-    canvas{display:block; position:absolute; top:0; left:0; z-index:0}
+      radial-gradient(800px 400px at 10% 10%, rgba(143,0,255,0.06) 0%, transparent 8%),
+      radial-gradient(1000px 500px at 90% 90%, rgba(0,255,213,0.03) 0%, transparent 12%),
+      linear-gradient(180deg,#020205 0%, #071018 50%, #0b1220 100%);
+      color:var(--text); overflow:hidden;
+    }
+    canvas{position:absolute;top:0;left:0;display:block;z-index:0}
 
-    /* ===== UI OVERLAY ===== */
-    #ui{position:absolute; left:0; right:0; top:0; bottom:0; z-index:20; pointer-events:auto}
-    .panel{
-      position:relative; background:var(--panel); border-radius:14px; padding:14px;
-      box-shadow: 0 12px 50px rgba(0,0,0,0.7); color:var(--text); backdrop-filter: blur(6px);
-    }
+    /* UI overlay */
+    #ui{position:absolute;left:0;right:0;top:0;bottom:0;z-index:40;pointer-events:auto}
+    .panel{background:var(--panel);backdrop-filter:blur(6px);border-radius:14px;padding:12px;color:var(--text);box-shadow:0 12px 60px rgba(0,0,0,0.7)}
 
-    /* ===== START SCREEN ===== */
-    #startScreen{
-      width:760px; max-width:94%; left:50%; top:50%; transform:translate(-50%,-50%);
-      position:absolute; text-align:left; border-radius:18px; padding:22px;
-      border: 1px solid rgba(255,255,255,0.04);
-      background: linear-gradient(180deg, rgba(20,20,28,0.7), rgba(6,8,12,0.9));
-      overflow: hidden;
-    }
-    #startTop{display:flex;align-items:center;gap:18px}
-    .logo{
-      width:86px; height:86px; border-radius:12px;
-      background: linear-gradient(135deg, var(--orange), var(--violet)); display:flex;align-items:center;justify-content:center;
-      box-shadow: 0 8px 30px rgba(143,0,255,0.12), inset 0 -6px 18px rgba(0,0,0,0.25);
-      font-weight:800; font-size:22px; color:#08101a;
-    }
-    .title{
-      font-size:34px; letter-spacing:2px; font-weight:800; color:var(--orange);
-    }
-    .subtitle{color:var(--muted); margin-top:6px}
+    /* Start screen */
+    #startScreen{width:820px;max-width:96%;left:50%;top:50%;transform:translate(-50%,-50%);position:absolute;padding:22px;border-radius:16px;border:1px solid rgba(255,255,255,0.03)}
+    #startTop{display:flex;gap:18px;align-items:center}
+    .logo{width:96px;height:96px;border-radius:14px;background:linear-gradient(135deg,var(--orange),var(--violet));display:flex;align-items:center;justify-content:center;font-weight:900;color:#08101a;font-size:26px;box-shadow:0 12px 36px rgba(143,0,255,0.12)}
+    .title{font-size:36px;color:var(--orange);font-weight:900;letter-spacing:2px}
+    .subtitle{color:var(--muted);margin-top:6px}
 
-    /* glass row */
-    #startRow{display:flex; gap:18px; margin-top:18px; align-items:flex-start}
-    #classSelect{display:flex; flex-wrap:wrap; gap:12px; width:100%; padding:8px}
+    #chooseWrap{display:flex;margin-top:18px;gap:18px;align-items:flex-start}
+    #classSelect{display:flex;flex-wrap:wrap;gap:12px;flex:1}
 
-    .classBtn{
-      display:flex; gap:12px; align-items:center; min-width:160px; max-width:220px;
-      padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.04);
-      background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));
-      cursor:pointer; transition: transform .14s ease, box-shadow .14s ease;
-    }
-    .classBtn:hover{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
-    .classIcon{
-      width:64px; height:64px; border-radius:10px; display:flex; align-items:center; justify-content:center;
-      font-weight:800; color:#08101a; font-size:20px; flex-shrink:0;
-      box-shadow: inset 0 -6px 12px rgba(0,0,0,0.25);
-    }
-    .classInfo b{ display:block; font-size:16px; margin-bottom:3px; }
-    .selectedClass{ box-shadow: 0 18px 60px rgba(0,0,0,0.6), 0 0 30px rgba(255,107,0,0.12) !important; transform: translateY(-8px) !important; border:1px solid rgba(255,255,255,0.08) !important; }
+    .classBtn{display:flex;gap:12px;align-items:center;min-width:170px;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.04);cursor:pointer;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));transition:transform .12s ease,box-shadow .12s}
+    .classBtn:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(0,0,0,0.5)}
+    .classIcon{width:64px;height:64px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#08101a;font-size:20px;box-shadow:inset 0 -6px 14px rgba(0,0,0,0.25)}
+    .classInfo b{display:block;font-size:15px}
+    .selectedClass{box-shadow:0 22px 70px rgba(0,0,0,0.6),0 0 28px rgba(255,107,0,0.12)!important;transform:translateY(-10px)!important;border:1px solid rgba(255,255,255,0.08)!important}
 
-    /* start controls */
-    #startControls{ display:flex; align-items:center; gap:14px; margin-top:16px; justify-content:space-between }
-    .startLarge{
-      background: linear-gradient(90deg, var(--orange), var(--violet)); color:#08101a; border:none; padding:12px 18px; border-radius:12px; font-weight:800; font-size:16px; cursor:pointer;
-      box-shadow: 0 10px 40px rgba(255,107,0,0.08);
-    }
-    .startLarge[disabled]{ opacity:.45; cursor:not-allowed }
+    #startControls{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:12px}
+    .startLarge{background:linear-gradient(90deg,var(--orange),var(--violet));color:#08101a;border:none;padding:12px 18px;border-radius:12px;cursor:pointer;font-weight:900;box-shadow:0 12px 40px rgba(255,107,0,0.08)}
+    .startLarge[disabled]{opacity:0.45;cursor:not-allowed}
 
-    .infoSmall{ color:var(--muted); font-size:13px; }
+    #previewClass{min-width:260px;padding:10px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.012),rgba(255,255,255,0.006));font-size:14px;color:var(--muted)}
+
+    /* Briefing modal */
+    #briefing{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:640px;max-width:92%;padding:18px;border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,0.75),rgba(6,6,10,0.92));display:none;z-index:60;border:1px solid rgba(255,255,255,0.03)}
+    #briefTitle{font-size:22px;margin-bottom:6px}
+    #briefText{color:var(--muted);margin-bottom:12px}
+    .briefBtn{padding:10px 14px;border-radius:10px;border:none;font-weight:800;cursor:pointer}
 
     /* HUD */
-    #hudTop{ position:absolute; left:16px; top:16px; z-index:22; display:flex; gap:8px; flex-direction:column}
-    #hudBottom{ position:absolute; left:16px; bottom:16px; z-index:22; display:flex; gap:8px; flex-direction:column}
-    .hudItem{ padding:8px 12px; border-radius:10px; background:var(--glass); font-weight:600; color:var(--text) }
+    #hudTop{position:absolute;left:14px;top:14px;z-index:50;display:flex;flex-direction:column;gap:8px}
+    .hudItem{background:var(--glass);padding:8px 12px;border-radius:10px;font-weight:700;color:var(--text)}
 
-    /* crosshair */
-    #crosshair{ position:absolute; left:50%; top:50%; width:26px; height:26px; margin-left:-13px; margin-top:-13px; pointer-events:none; z-index:21 }
-    #crosshair:before,#crosshair:after{ content:''; position:absolute; background:var(--turquoise); opacity:0.95 }
-    #crosshair:before{ left:12px; top:0; width:2px; height:26px }
-    #crosshair:after{ top:12px; left:0; height:2px; width:26px }
+    #hudBottom{position:absolute;left:14px;bottom:14px;z-index:50;display:flex;flex-direction:column;gap:8px}
 
-    /* message / level panel */
-    #message{ position:absolute; right:16px; top:16px; z-index:22; padding:10px 14px; border-radius:10px; background:rgba(0,0,0,0.45) }
-    #levelPanel{ position:absolute; right:16px; bottom:16px; z-index:22; padding:12px 16px; border-radius:10px; background:rgba(0,0,0,0.45) }
+    #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;margin-left:-13px;margin-top:-13px;z-index:48;pointer-events:none}
+    #crosshair:before,#crosshair:after{content:'';position:absolute;background:var(--turquoise);opacity:0.95}
+    #crosshair:before{left:12px;top:0;width:2px;height:26px}
+    #crosshair:after{top:12px;left:0;height:2px;width:26px}
 
-    /* responsive */
-    @media (max-width:900px){
-      #startScreen{ width:94%; padding:16px }
-      .title{ font-size:26px }
-      .classBtn{ min-width: 140px }
+    #message{position:absolute;right:14px;top:14px;z-index:50;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.45)}
+
+    #levelPanel{position:absolute;right:14px;bottom:14px;z-index:50;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.45)}
+
+    @media (max-width:800px){
+      .title{font-size:24px}
+      .logo{width:72px;height:72px;font-size:20px}
+      #briefing{width:92%}
     }
   </style>
 </head>
 <body>
   <div id="ui">
-    <!-- START SCREEN -->
+    <!-- Start Screen -->
     <div id="startScreen" class="panel" role="dialog" aria-label="Startscreen">
       <div id="startTop">
         <div class="logo">BB</div>
         <div>
           <div class="title">BREACHERBROS</div>
-          <div class="subtitle">Solo FPS — Wähle Charakter & Klasse, überlebe 20 Missionen</div>
-          <div class="infoSmall" style="margin-top:8px">Tasten: WASD · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
+          <div class="subtitle">Solo FPS — Wähle Klasse, Briefing & starte Mission</div>
+          <div style="margin-top:8px;color:var(--muted)">Tasten: WASD · Maus zielen · Klick schießen · R nachladen · Shift sprint · ESC pausieren</div>
         </div>
       </div>
 
-      <div id="startRow">
-        <div style="flex:1">
-          <div style="margin-top:14px; color:var(--muted)">Wähle eine Klasse</div>
-          <div id="classSelect" aria-label="Klassen Auswahl"></div>
+      <div id="chooseWrap">
+        <div id="classSelect" aria-label="Klassen Auswahl"></div>
+      </div>
 
-          <div id="startControls">
-            <div style="display:flex; gap:12px; align-items:center">
-              <button id="startGame" class="startLarge" disabled>Start Mission</button>
-              <div id="previewClass" style="min-width:240px"></div>
-            </div>
-            <div style="text-align:right; color:var(--muted); font-size:13px">BreacherBros – Solo Campaign • 20 Levels</div>
-          </div>
+      <div id="startControls">
+        <div style="display:flex;gap:12px;align-items:center">
+          <button id="startGame" class="startLarge" disabled>Briefing</button>
+          <div id="previewClass">Keine Klasse gewählt</div>
         </div>
+        <div style="color:var(--muted);font-size:13px">BreacherBros — Solo Campaign • 20 Levels</div>
+      </div>
+    </div>
+
+    <!-- Briefing modal -->
+    <div id="briefing" role="dialog" aria-label="Briefing">
+      <div id="briefTitle"></div>
+      <div id="briefText"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button id="backToSelect" class="briefBtn" style="background:rgba(255,255,255,0.04);color:var(--text)">Zurück</button>
+        <button id="beginMission" class="briefBtn" style="background:linear-gradient(90deg,var(--turquoise),var(--violet));color:#08101a">Beginne Mission</button>
       </div>
     </div>
 
@@ -142,197 +126,250 @@
       <div id="levelHud" class="hudItem">Level: <b id="levelNum">0</b></div>
     </div>
 
-    <div id="message" class="panel" aria-live="polite">Bereit</div>
+    <div id="message" class="panel">Bereit</div>
     <div id="levelPanel" class="panel">Gegner: <span id="enemyCount">0</span></div>
     <div id="crosshair" aria-hidden="true"></div>
   </div>
 
-  <!-- Three.js import -->
+  <!-- Three.js -->
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
     import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js';
 
-    /* ===================== GAME STATE ===================== */
-    let scene, camera, renderer, controls;
-    const clock = new THREE.Clock();
-    let worldObjects = [];        // static obstacles
-    let enemiesGroup;             // THREE.Group of enemies
-    const raycaster = new THREE.Raycaster();
+    /* ---------- AUDIO (WebAudio) ---------- */
+    const AudioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    let gameRunning = false;
-    let gameOver = false;
+    function playBeep(freq=880, time=0.08, when=0){
+      const o = AudioCtx.createOscillator();
+      const g = AudioCtx.createGain();
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.value = 0.0001;
+      o.connect(g); g.connect(AudioCtx.destination);
+      const now = AudioCtx.currentTime + when;
+      g.gain.linearRampToValueAtTime(0.8, now + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + time);
+      o.start(now); o.stop(now + time + 0.01);
+    }
 
+    function playRadioCrackle(duration = 0.8){
+      // simple noise burst (brief)
+      const bufferSize = AudioCtx.sampleRate * duration;
+      const buffer = AudioCtx.createBuffer(1, bufferSize, AudioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i=0;i<bufferSize;i++){
+        data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
+      }
+      const src = AudioCtx.createBufferSource();
+      src.buffer = buffer;
+      const g = AudioCtx.createGain(); g.gain.value = 0.5;
+      src.connect(g); g.connect(AudioCtx.destination);
+      src.start();
+      setTimeout(()=>{ try{ src.stop(); }catch(e){} }, duration*1000);
+    }
+
+    function playGunshot(){
+      // short noise with low pitch
+      const dur = 0.12;
+      const bufferSize = AudioCtx.sampleRate * dur;
+      const buffer = AudioCtx.createBuffer(1, bufferSize, AudioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i=0;i<bufferSize;i++){
+        data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
+      }
+      const src = AudioCtx.createBufferSource(); src.buffer = buffer;
+      const g = AudioCtx.createGain(); g.gain.value = 0.8;
+      src.connect(g); g.connect(AudioCtx.destination);
+      src.start();
+      setTimeout(()=>{ try{ src.stop(); }catch(e){} }, dur*1000);
+    }
+
+    function playHitSound(){
+      playBeep(600,0.06);
+    }
+
+    function ensureAudioUnlocked(){
+      // Some browsers require resume on user gesture
+      if (AudioCtx.state === 'suspended') return AudioCtx.resume();
+      return Promise.resolve();
+    }
+
+    /* ---------- GAME STATE & UI refs ---------- */
     const ui = {
+      startScreen: document.getElementById('startScreen'),
+      briefing: document.getElementById('briefing'),
+      briefTitle: document.getElementById('briefTitle'),
+      briefText: document.getElementById('briefText'),
+      backToSelect: document.getElementById('backToSelect'),
+      beginMission: document.getElementById('beginMission'),
+      startBtn: document.getElementById('startGame'),
+      preview: document.getElementById('previewClass'),
       hpVal: document.getElementById('hpVal'),
       ammoVal: document.getElementById('ammoVal'),
       magSize: document.getElementById('magSize'),
       className: document.getElementById('className'),
       levelNum: document.getElementById('levelNum'),
       enemyCount: document.getElementById('enemyCount'),
-      message: document.getElementById('message'),
-      preview: document.getElementById('previewClass'),
-      startScreen: document.getElementById('startScreen'),
-      startBtn: document.getElementById('startGame')
+      message: document.getElementById('message')
     };
 
-    /* -------- Player & Classes -------- */
-    const player = {
+    let scene, camera, renderer, controls;
+    const clock = new THREE.Clock();
+    let worldObjects = [];
+    let enemiesGroup;
+    let gameRunning = false;
+    let player = {
       pos: new THREE.Vector3(),
-      health: 100,
-      maxHealth: 100,
-      speed: 6,
-      sprintMultiplier: 1.7,
-      ammo: 0,
-      magSize: 0,
-      reloadTime: 1.6,
-      fireRate: 0.12,
-      lastShot: -9999,
-      reloading: false,
-      selectedClass: null,
-      level: 0,
+      health: 100, maxHealth: 100, speed: 6, sprintMultiplier: 1.7,
+      ammo: 0, magSize: 0, reloadTime: 1.6, fireRate: 0.12, lastShot: -9999, reloading: false,
+      selectedClass: null, level: 1
     };
 
-    // 5 Klassen (id,name,description,stats,color)
+    // class definitions with accent color for briefing
     const classes = [
-      { id:'assault',  name:'Assault',  desc:'Allround-Klasse. Stabil in Nah- & Mittelbereich.', hp:110, speed:6.0, fireRate:0.12, mag:30, reload:1.6, color:0xFF6B00 },
-      { id:'breacher', name:'Breacher', desc:'Robust & widerstandsfähig. Ideal für Türdurchstöße.', hp:150, speed:4.9, fireRate:0.16, mag:20, reload:2.0, color:0x8F00FF },
-      { id:'scout',    name:'Scout',    desc:'Schnell & wendig, perfekt für Flanken.', hp:80,  speed:8.2, fireRate:0.10, mag:24, reload:1.4, color:0x00FFD5 },
-      { id:'engineer', name:'Engineer', desc:'Spezialist für Gadgets, solide Verteidigung.', hp:120, speed:5.6, fireRate:0.14, mag:28, reload:1.5, color:0x4bc0c0 },
-      { id:'sniper',   name:'Sniper',   desc:'Fernkampf-Experte, hoher Schaden auf Distanz.', hp:90,  speed:5.0, fireRate:0.18, mag:10, reload:2.2, color:0x6b8cff }
+      { id:'assault', name:'Assault', desc:'Vielseitig — stark in Nah- & Mittelbereich.', hp:110, speed:6.0, fireRate:0.12, mag:30, reload:1.6, color:'#FF6B00', briefing:'Stärke: Vielseitigkeit. Mission: Gebäude säubern.' },
+      { id:'breacher', name:'Breacher', desc:'Robust — ideal für Türdurchstöße.', hp:150, speed:4.9, fireRate:0.16, mag:20, reload:2.0, color:'#8F00FF', briefing:'Stärke: Panzerung. Mission: Türen knacken.' },
+      { id:'scout', name:'Scout', desc:'Schnell — ideal für Flanken & Späher.', hp:80, speed:8.2, fireRate:0.10, mag:24, reload:1.4, color:'#00FFD5', briefing:'Stärke: Geschwindigkeit. Mission: Aufklärung.' },
+      { id:'engineer', name:'Engineer', desc:'Spezialist — Gadgets & Verteidigung.', hp:120, speed:5.6, fireRate:0.14, mag:28, reload:1.5, color:'#4BC0C0', briefing:'Stärke: Tools. Mission: Systeme sichern.' },
+      { id:'sniper', name:'Sniper', desc:'Fernkampf-Experte — Präzision auf Distanz.', hp:90, speed:5.0, fireRate:0.18, mag:10, reload:2.2, color:'#6B8CFF', briefing:'Stärke: Distanz. Mission: Deckung geben.' }
     ];
 
-    /* ====== Populate Startscreen - class buttons (FIX selection bug robustly) ====== */
-    const classSelectEl = document.getElementById('classSelect');
-
-    classes.forEach((c, idx) => {
+    // Fill class list UI (robust click handling)
+    const classSelect = document.getElementById('classSelect');
+    classes.forEach(c => {
       const btn = document.createElement('button');
       btn.className = 'classBtn';
       btn.type = 'button';
-      btn.dataset.classId = c.id;
-      const colorHex = '#' + c.color.toString(16).padStart(6,'0');
-
+      btn.dataset.id = c.id;
       btn.innerHTML = `
-        <div class="classIcon" style="background:${colorHex}">${c.name.charAt(0)}</div>
-        <div class="classInfo">
-          <b>${c.name}</b>
-          <div style="font-size:12px;opacity:0.85">${c.desc}</div>
-          <div style="font-size:12px;margin-top:6px;color:var(--muted)">
-            HP: ${c.hp} · Mag: ${c.mag} · Speed: ${c.speed}
-          </div>
+        <div class="classIcon" style="background:${c.color}">${c.name.charAt(0)}</div>
+        <div style="text-align:left">
+          <div style="font-weight:800">${c.name}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:4px">${c.desc}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">HP:${c.hp} · Mag:${c.mag} · Spd:${c.speed}</div>
         </div>
       `;
-
-      // Use delegation-safe event + dataset; closure not required
-      btn.addEventListener('click', () => {
-        // Visual highlight remove
-        document.querySelectorAll('.classBtn').forEach(b => b.classList.remove('selectedClass'));
-        btn.classList.add('selectedClass');
-        // Apply class selection to player
-        applyClassToPlayer(c);
+      btn.addEventListener('click', async (e) => {
+        await ensureAudioUnlocked();
+        applyClass(c, btn);
       });
-
-      classSelectEl.appendChild(btn);
+      classSelect.appendChild(btn);
     });
 
-    function applyClassToPlayer(c){
+    function applyClass(c, btn){
+      // visual
+      document.querySelectorAll('.classBtn').forEach(b => b.classList.remove('selectedClass'));
+      btn.classList.add('selectedClass');
+      // apply stats
       player.selectedClass = c;
-      player.health = c.hp;
-      player.maxHealth = c.hp;
+      player.health = player.maxHealth = c.hp;
       player.speed = c.speed;
       player.fireRate = c.fireRate;
       player.reloadTime = c.reload;
       player.magSize = c.mag;
       player.ammo = c.mag;
-      // Update UI preview & HUD
+      // UI
+      ui.preview.innerHTML = `<div style="font-weight:800;color:${c.color}">${c.name}</div><div style="color:var(--muted);font-size:13px">${c.desc}</div>`;
       ui.className.textContent = c.name;
-      ui.hpVal.textContent = player.health;
+      ui.hpVal.textContent = Math.floor(player.health);
       ui.ammoVal.textContent = player.ammo;
-      ui.magSize && (ui.magSize.textContent = player.magSize);
-      ui.preview.innerHTML = `<div style="font-weight:700;color:${'#'+c.color.toString(16).padStart(6,'0')}">${c.name}</div><div style="font-size:12px;color:var(--muted)">${c.desc}</div>`;
+      ui.magSize.textContent = player.magSize;
       ui.startBtn.disabled = false;
       ui.message.textContent = `Klasse ${c.name} ausgewählt`;
-      setTimeout(()=>{ if(!gameRunning) ui.message.textContent = 'Bereit'; }, 1200);
+      playBeep(1200,0.08);
+      setTimeout(()=>{ if (!gameRunning) ui.message.textContent = 'Bereit'; }, 1100);
     }
 
-    /* ===== START GAME BUTTON ===== */
-    ui.startBtn.addEventListener('click', () => {
-      if (!player.selectedClass) {
-        ui.message.textContent = 'Bitte zuerst eine Klasse wählen!';
-        return;
-      }
-      startGame();
+    /* Start -> show briefing modal */
+    ui.startBtn.addEventListener('click', async () => {
+      if (!player.selectedClass) { ui.message.textContent = 'Bitte zuerst eine Klasse wählen'; return; }
+      await ensureAudioUnlocked();
+      playRadioCrackle(0.6);
+      showBriefingForClass(player.selectedClass);
     });
 
-    /* ===================== CORE: init scene, objects, controls ===================== */
-    function startGame(){
+    document.getElementById('backToSelect').addEventListener('click', () => {
+      ui.briefing.style.display = 'none';
+      ui.startScreen.style.display = 'block';
+      playBeep(720,0.06);
+    });
+
+    document.getElementById('beginMission').addEventListener('click', async () => {
+      ui.briefing.style.display = 'none';
       ui.startScreen.style.display = 'none';
-      gameRunning = true;
-      gameOver = false;
+      await ensureAudioUnlocked();
+      playBeep(880,0.08);
+      startGame(); // begins level 1
+    });
+
+    function showBriefingForClass(c){
+      ui.startScreen.style.display = 'none';
+      ui.briefing.style.display = 'block';
+      ui.briefTitle.textContent = `Mission 01 — ${c.name}`;
+      ui.briefText.innerHTML = `<div style="font-weight:700;color:${c.color}">${c.briefing}</div>
+        <div style="margin-top:8px;color:var(--muted)">Du beginnst auf Level 1. Ziele: Eliminieren oder Überleben. Nutze Deckung & Klassenfähigkeiten.</div>`;
+      // style briefing border accent
+      ui.briefing.style.boxShadow = `0 20px 80px ${hexToRgba(c.color,0.12)}`;
+    }
+
+    function hexToRgba(hex, alpha){
+      const c = hex.slice(1);
+      const r = parseInt(c.substr(0,2),16);
+      const g = parseInt(c.substr(2,2),16);
+      const b = parseInt(c.substr(4,2),16);
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
+
+    /* ---------- CORE: init Three, spawns, controls ---------- */
+    function startGame(){
       player.level = 1;
       ui.levelNum.textContent = player.level;
+      ui.message.textContent = 'Starte Mission...';
       initThree();
       spawnLevel(player.level);
+      gameRunning = true;
       animate();
     }
 
     function initThree(){
-      // Scene
       scene = new THREE.Scene();
       scene.fog = new THREE.FogExp2(0x020205, 0.0025);
-
-      // Camera
       camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 1.75, 0);
-
-      // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.physicallyCorrectLights = true;
+      camera.position.set(0,1.75,0);
+      renderer = new THREE.WebGLRenderer({antialias:true});
+      renderer.setSize(window.innerWidth,window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
       document.body.appendChild(renderer.domElement);
 
-      // Lights (PBR friendly)
-      const hemi = new THREE.HemisphereLight(0xffffff, 0x080820, 0.35);
-      scene.add(hemi);
-      const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-      dir.position.set(10,20,10);
-      dir.castShadow = true;
-      scene.add(dir);
-      const amb = new THREE.AmbientLight(0xffffff, 0.12);
-      scene.add(amb);
+      // lights
+      const hemi = new THREE.HemisphereLight(0xffffff,0x080820,0.35); scene.add(hemi);
+      const dir = new THREE.DirectionalLight(0xffffff,0.9); dir.position.set(8,18,8); scene.add(dir);
+      const amb = new THREE.AmbientLight(0xffffff,0.08); scene.add(amb);
 
-      // Floor (PBR-ish)
-      const floorMat = new THREE.MeshStandardMaterial({ color: 0x0f1216, roughness: 0.85, metalness: 0.05 });
+      // floor PBR-ish
+      const floorMat = new THREE.MeshStandardMaterial({ color:0x0f1216, roughness:0.86, metalness:0.05 });
       const floor = new THREE.Mesh(new THREE.PlaneGeometry(400,400), floorMat);
-      floor.rotation.x = -Math.PI/2;
-      floor.receiveShadow = true;
-      scene.add(floor);
+      floor.rotation.x = -Math.PI/2; floor.receiveShadow = true; scene.add(floor);
       worldObjects.push(floor);
 
-      // Simple obstructing boxes (cover)
-      const coverMat = new THREE.MeshStandardMaterial({ color:0x1b1f24, roughness:0.6, metalness:0.1 });
-      for(let i=0;i<18;i++){
-        const w = 1+Math.random()*5, h = 0.8+Math.random()*2, d = 1+Math.random()*5;
+      // covers
+      const coverMat = new THREE.MeshStandardMaterial({ color:0x1b1f24, roughness:0.62, metalness:0.08 });
+      for (let i=0;i<16;i++){
+        const w = 1+Math.random()*6, h = 0.8+Math.random()*2, d = 1+Math.random()*6;
         const box = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), coverMat);
         box.position.set((Math.random()-0.5)*140, h/2, (Math.random()-0.5)*140);
-        box.castShadow = true; box.receiveShadow = true;
-        scene.add(box);
-        worldObjects.push(box);
+        scene.add(box); worldObjects.push(box);
       }
 
-      // PointerLockControls
+      // pointer lock controls - lock later after briefing Begin
       controls = new PointerLockControls(camera, document.body);
       scene.add(controls.getObject());
-      // Click to lock
-      document.body.addEventListener('click', () => { if (!controls.isLocked) controls.lock(); });
+      // we lock on user clicking BeginMission -> startGame then call lock on user gesture
+      // but also allow clicking canvas to lock if user desires (after mission started)
+      document.body.addEventListener('click', () => { try{ if (gameRunning && !controls.isLocked) controls.lock(); } catch(e){} });
 
-      controls.addEventListener('lock', () => ui.message.textContent = 'Feuer frei!');
-      controls.addEventListener('unlock', () => ui.message.textContent = 'Pausiert');
+      // enemy group
+      enemiesGroup = new THREE.Group(); scene.add(enemiesGroup);
 
-      // Enemies group
-      enemiesGroup = new THREE.Group();
-      scene.add(enemiesGroup);
-
-      // Event listeners
       window.addEventListener('resize', onWindowResize);
       document.addEventListener('keydown', onKeyDown);
       document.addEventListener('keyup', onKeyUp);
@@ -342,12 +379,12 @@
 
     function onWindowResize(){
       if (!camera || !renderer) return;
-      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.aspect = window.innerWidth/window.innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setSize(window.innerWidth,window.innerHeight);
     }
 
-    /* ===================== INPUT & MOVEMENT ===================== */
+    /* ---------- Input & movement ---------- */
     const moveState = { forward:false, back:false, left:false, right:false, sprint:false };
     function onKeyDown(e){
       if (e.code === 'KeyW') moveState.forward = true;
@@ -355,7 +392,7 @@
       if (e.code === 'KeyA') moveState.left = true;
       if (e.code === 'KeyD') moveState.right = true;
       if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') moveState.sprint = true;
-      if (e.code === 'Escape') controls && controls.unlock();
+      if (e.code === 'Escape' && controls) controls.unlock();
     }
     function onKeyUp(e){
       if (e.code === 'KeyW') moveState.forward = false;
@@ -365,161 +402,116 @@
       if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') moveState.sprint = false;
     }
 
-    /* ===================== SHOOTING / RAYCAST ===================== */
+    /* ---------- Shooting & audio ---------- */
+    const raycaster = new THREE.Raycaster();
     function onMouseDown(e){
       if (e.button !== 0) return;
       shoot();
     }
-
     function shoot(){
       if (!controls || !controls.isLocked) return;
       if (player.reloading) return;
       const t = clock.getElapsedTime();
       if (t - player.lastShot < player.fireRate) return;
-      if (player.ammo <= 0) { ui.message.textContent = 'Kein Magazin — R drücken zum Nachladen'; return; }
-      player.lastShot = t;
-      player.ammo--;
-      ui.ammoVal.textContent = player.ammo;
+      if (player.ammo <= 0){ ui.message.textContent = 'Leeres Magazin — R zum Nachladen'; return; }
+      player.lastShot = t; player.ammo--; ui.ammoVal.textContent = player.ammo;
+      playGunshot();
 
-      // muzzle flash (small ephemeral sphere)
-      const flash = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,6), new THREE.MeshBasicMaterial({color:0xFFD580}));
-      flash.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.6)).add(new THREE.Vector3(0,-0.15,0));
-      scene.add(flash);
-      setTimeout(()=>scene.remove(flash),80);
+      // muzzle flash ephemeral
+      const flash = new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6), new THREE.MeshBasicMaterial({color:0xFFD580}));
+      flash.position.copy(camera.position).add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(0.6)).add(new THREE.Vector3(0,-0.12,0));
+      scene.add(flash); setTimeout(()=>scene.remove(flash),80);
 
-      // Raycast from center of camera
+      // hit check
       raycaster.set(camera.getWorldPosition(new THREE.Vector3()), camera.getWorldDirection(new THREE.Vector3()));
-      const intersects = raycaster.intersectObjects(enemiesGroup.children, true);
-      if (intersects.length > 0){
-        const hit = intersects[0].object;
-        // 'Damage' — we keep each enemy with an hp property
+      const hits = raycaster.intersectObjects(enemiesGroup.children, true);
+      if (hits.length > 0){
+        const hit = hits[0].object;
         if (hit.userData && typeof hit.userData.hp === 'number'){
-          hit.userData.hp -= 50; // hit = 50 damage
+          hit.userData.hp -= 60; // damage
           if (hit.userData.hp <= 0){
-            // death: explosion puff
             spawnDeathPuff(hit.position);
             enemiesGroup.remove(hit);
             updateEnemyUI();
-            // if cleared, advance level or finish
-            if (enemiesGroup.children.length === 0) {
-              onLevelCleared();
-            }
+            if (enemiesGroup.children.length === 0) onLevelCleared();
           } else {
-            // small hit feedback
-            spawnHitMarker(intersects[0].point);
+            spawnHitMarker(hits[0].point);
+            playHitSound();
           }
         }
       }
     }
 
     function spawnHitMarker(pos){
-      const mark = new THREE.Mesh(new THREE.RingGeometry(0.02,0.06,8), new THREE.MeshBasicMaterial({color:0xFF6B00, side: THREE.DoubleSide}));
-      mark.position.copy(pos);
-      mark.lookAt(camera.position);
-      scene.add(mark);
-      setTimeout(()=>scene.remove(mark),220);
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.02,0.05,8), new THREE.MeshBasicMaterial({color:0xFF6B00, side:THREE.DoubleSide}));
+      ring.position.copy(pos); ring.lookAt(camera.position);
+      scene.add(ring); setTimeout(()=>scene.remove(ring),200);
     }
     function spawnDeathPuff(pos){
-      const geo = new THREE.SphereGeometry(0.6,8,8);
-      const mat = new THREE.MeshStandardMaterial({color:0xBB2222, transparent:true, opacity:0.85});
-      const s = new THREE.Mesh(geo, mat);
-      s.position.copy(pos);
-      scene.add(s);
-      setTimeout(()=> {
-        scene.remove(s);
-      }, 420);
+      const geo = new THREE.SphereGeometry(0.5,8,8);
+      const m = new THREE.MeshStandardMaterial({color:0xBB2222, transparent:true, opacity:0.85});
+      const s = new THREE.Mesh(geo, m); s.position.copy(pos);
+      scene.add(s); setTimeout(()=>scene.remove(s),420);
     }
 
-    /* ===================== RELOAD ===================== */
     function onReloadKey(e){
       if (e.code !== 'KeyR') return;
-      if (player.reloading) return;
-      if (player.ammo >= player.magSize) return;
-      player.reloading = true;
-      ui.message.textContent = 'Nachladen...';
-      setTimeout(()=>{
-        player.ammo = player.magSize;
-        ui.ammoVal.textContent = player.ammo;
-        player.reloading = false;
-        ui.message.textContent = 'Bereit';
-      }, Math.max(600, player.reloadTime*1000));
+      if (player.reloading || player.ammo >= player.magSize) return;
+      player.reloading = true; ui.message.textContent = 'Nachladen...';
+      setTimeout(()=>{ player.ammo = player.magSize; ui.ammoVal.textContent = player.ammo; player.reloading=false; ui.message.textContent='Bereit'; playBeep(1000,0.06); }, Math.max(500, player.reloadTime*1000));
     }
 
-    /* ===================== ENEMY SPAWN & AI ===================== */
+    /* ---------- Enemy spawn & level progression ---------- */
     function spawnLevel(level){
-      enemiesGroup.clear(); // remove any leftover
+      enemiesGroup.clear();
       const base = 4 + Math.floor(level * 1.5);
-      const count = Math.min(60, base); // cap for perf
-      for (let i=0;i<count;i++){
-        spawnEnemyAtRandom(level);
-      }
-      updateEnemyUI();
-      ui.levelNum.textContent = level;
+      const count = Math.min(50, base + Math.floor(level*0.5));
+      for (let i=0;i<count;i++) spawnEnemy(level);
+      updateEnemyUI(); ui.levelNum.textContent = level;
       ui.message.textContent = `Level ${level} — Eliminieren!`;
-      setTimeout(()=>{ ui.message.textContent = ''; }, 1600);
+      setTimeout(()=>ui.message.textContent = '', 1400);
     }
-
-    function spawnEnemyAtRandom(level){
+    function spawnEnemy(level){
       const size = 0.9 + Math.random()*0.8;
-      const geom = new THREE.BoxGeometry(0.8*size, 1.6*size, 0.6*size);
-      const mat = new THREE.MeshStandardMaterial({color:0x8b8b8b, roughness:0.7});
-      const enemy = new THREE.Mesh(geom, mat);
-      // position in ring around origin, avoid immediate spawn near player
-      const angle = Math.random() * Math.PI * 2;
-      const dist = 12 + Math.random()* (18 + level*2);
+      const geo = new THREE.BoxGeometry(0.8*size,1.6*size,0.6*size);
+      const mat = new THREE.MeshStandardMaterial({color:0x8f8f8f, roughness:0.7});
+      const enemy = new THREE.Mesh(geo, mat);
+      const angle = Math.random()*Math.PI*2;
+      const dist = 12 + Math.random()*(18 + level*2);
       enemy.position.set(Math.cos(angle)*dist, 0.8, Math.sin(angle)*dist);
-      enemy.userData = {
-        hp: 100 + Math.floor(level*12), // scale HP with level
-        speed: 1.2 + level*0.06 + Math.random()*0.6,
-        lastAttack: 0
-      };
+      enemy.userData = { hp: 90 + Math.floor(level*10), speed: 1.0 + level*0.06 + Math.random()*0.6, lastAttack:0 };
       enemiesGroup.add(enemy);
     }
-
-    function updateEnemyUI(){
-      ui.enemyCount.textContent = enemiesGroup.children.length;
-    }
+    function updateEnemyUI(){ ui.enemyCount.textContent = enemiesGroup.children.length; }
 
     function onLevelCleared(){
       if (player.level >= 20){
-        ui.message.textContent = 'Alle Missionen abgeschlossen — Du hast gewonnen!';
-        gameRunning = false;
-        controls.unlock();
-        return;
+        ui.message.textContent = 'ALLE MISSIONEN ABSOLVIERT — GEWONNEN!';
+        controls.unlock(); gameRunning=false; return;
       }
-      ui.message.textContent = `Level ${player.level} abgeschlossen! Nächste Welle...`;
-      setTimeout(()=>{
-        player.level++;
-        spawnLevel(player.level);
-      }, 1400);
+      ui.message.textContent = `Level ${player.level} abgeschlossen! Nächste Mission...`;
+      setTimeout(()=>{ player.level++; spawnLevel(player.level); }, 1400);
     }
 
-    /* ===================== AI/MOVEMENT + COLLISIONS ===================== */
+    /* ---------- Enemy AI step ---------- */
     function enemyStep(delta){
-      // update player position
       controls.getObject().getWorldPosition(player.pos);
-
-      // each enemy tries to move toward player, avoid obstacles simply
       enemiesGroup.children.forEach(enemy => {
         const dir = new THREE.Vector3().subVectors(player.pos, enemy.position);
         const dist = dir.length();
         dir.normalize();
-        // line-of-sight simple check: raycast from enemy to player against worldObjects
-        const sightRay = new THREE.Raycaster(enemy.position.clone().add(new THREE.Vector3(0,0.6,0)), dir, 0, dist);
-        const blockers = sightRay.intersectObjects(worldObjects, true);
-        const seesPlayer = blockers.length === 0;
-        if (seesPlayer){
-          // move towards player
-          const step = enemy.userData.speed * delta;
-          enemy.position.addScaledVector(dir, step);
+        // simplified LOS: raycast against worldObjects
+        const r = new THREE.Raycaster(enemy.position.clone().add(new THREE.Vector3(0,0.6,0)), dir, 0, dist);
+        const blockers = r.intersectObjects(worldObjects, true);
+        const sees = blockers.length === 0;
+        if (sees){
+          enemy.position.addScaledVector(dir, enemy.userData.speed * delta);
         } else {
-          // small random wander
-          const wander = new THREE.Vector3(Math.cos(performance.now()*0.001 + enemy.id),0,Math.sin(performance.now()*0.001 + enemy.id));
-          enemy.position.addScaledVector(wander.normalize(), 0.2*delta);
+          // small idle movement
+          enemy.position.x += Math.sin(performance.now()*0.0007 + enemy.id||0) * 0.02;
+          enemy.position.z += Math.cos(performance.now()*0.0006 + enemy.id||0) * 0.02;
         }
-        // attack if close
         if (enemy.position.distanceTo(player.pos) < 1.6){
-          // damage over time
           const now = clock.getElapsedTime();
           if (now - enemy.userData.lastAttack > 0.9){
             enemy.userData.lastAttack = now;
@@ -527,80 +519,58 @@
             player.health = Math.max(0, player.health);
             ui.hpVal.textContent = Math.floor(player.health);
             ui.message.textContent = 'Getroffen!';
-            setTimeout(()=>{ ui.message.textContent = '' }, 900);
-            if (player.health <= 0){
-              onPlayerDeath();
-            }
+            setTimeout(()=>ui.message.textContent = '',900);
+            if (player.health <= 0) onPlayerDeath();
           }
         }
       });
     }
 
     function onPlayerDeath(){
-      gameOver = true;
-      gameRunning = false;
-      ui.message.textContent = 'Mission gescheitert — Du bist gefallen.';
+      gameRunning=false; ui.message.textContent = 'Mission gescheitert — Du bist gefallen.';
       controls.unlock();
     }
 
-    /* ===================== ANIMATION / RENDER LOOP ===================== */
-    const velocity = new THREE.Vector3();
+    /* ---------- Main loop ---------- */
     function animate(){
       if (!gameRunning) return;
       requestAnimationFrame(animate);
       const delta = Math.min(0.05, clock.getDelta());
-      // Movement
       if (controls && controls.isLocked){
         let spd = player.speed * (moveState.sprint ? player.sprintMultiplier : 1);
-        // Forward/back based on camera direction
         if (moveState.forward) controls.moveForward(spd * delta);
         if (moveState.back) controls.moveForward(-spd * delta);
         if (moveState.left) controls.moveRight(-spd * delta);
         if (moveState.right) controls.moveRight(spd * delta);
       }
-      // enemy AI
-      if (enemiesGroup && enemiesGroup.children.length > 0){
-        enemyStep(delta);
-      }
-
-      // small ambient camera bob based on movement (for feel)
-      const time = performance.now()*0.001;
+      if (enemiesGroup && enemiesGroup.children.length > 0) enemyStep(delta);
+      // small camera bob
       if (controls && controls.isLocked){
-        camera.rotation.z = Math.sin(time*1.5)*0.002;
+        camera.rotation.z = Math.sin(performance.now()*0.0018) * 0.002;
       }
-
       renderer.render(scene, camera);
     }
 
-    /* ===================== BOOTSTRAP / UI INIT ===================== */
-    // Display classes requires no async resources, so selection should be immediate.
-    // Make sure start button is disabled until selection is done (done in applyClassToPlayer).
-
-    // initialize preview with default text
-    ui.preview.innerHTML = `<div style="color:var(--muted)">Keine Klasse gewählt</div>`;
-
-    // defensive: set some UI nodes if missing
-    ui.ammoVal.textContent = player.ammo;
+    /* ---------- small fx & util ---------- */
+    function playHitSound(){ playBeep(600,0.06); }
+    // helper to avoid stale UI
     ui.hpVal.textContent = player.health;
+    ui.ammoVal.textContent = player.ammo;
+    ui.magSize.textContent = player.magSize;
     ui.levelNum.textContent = player.level;
+    ui.enemyCount.textContent = 0;
 
-    /* ===================== Tidy up: ensure clickable on mobile + keyboard ===================== */
-    // prevent accidental selection
+    // prevent selection while playing
     document.addEventListener('selectstart', e => { if (gameRunning) e.preventDefault(); });
 
-    // ensure pointer lock instructions
-    ui.message.textContent = 'Wähle eine Klasse, dann Start Mission';
+    // expose small debug skip (L)
+    document.addEventListener('keydown', e => { if (!gameRunning) return; if (e.code === 'KeyL') { player.level++; spawnLevel(player.level); } });
 
-    // Expose a simple debug: pressing "L" will skip to next level (dev convenience)
-    document.addEventListener('keydown', (e) => {
-      if (!gameRunning) return;
-      if (e.code === 'KeyL') {
-        spawnLevel(++player.level);
-      }
-    });
+    // ensure canvas doesn't intercept start screen clicks: set renderer z-index below UI when created
+    // (renderer appended after UI, but canvas default z-index 0 keeps it behind UI which is z-index 40)
 
-    // final helper: ensure startscreen scroll into view
-    document.getElementById('startScreen').scrollIntoView();
+    // initial message
+    ui.message.textContent = 'Wähle eine Klasse und öffne das Briefing';
 
   </script>
 </body>
