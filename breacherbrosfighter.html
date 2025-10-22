@@ -5,28 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BREACHER BROS — FPS</title>
   <link rel="stylesheet" href="./style.css" />
-  <style>
-    html, body { margin: 0; padding: 0; overflow: hidden; font-family: Arial, sans-serif; background: #000; }
-    #menu, #briefing {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(20,20,20,0.8); color: #fff;
-      padding: 20px; border-radius: 10px; text-align: center;
-      border: 2px solid rgba(255,255,255,0.2);
-      backdrop-filter: blur(5px);
-    }
-    #menu h2, #briefing h2 { margin-bottom: 10px; }
-    #menu button, #briefing button {
-      display: block; width: 200px; margin: 10px auto;
-      padding: 10px; font-size: 16px;
-      background: rgba(255,165,0,0.3); border: 1px solid orange;
-      color: #fff; border-radius: 5px; cursor: pointer;
-    }
-    #menu button:hover, #briefing button:hover { background: rgba(255,165,0,0.5); }
-    #hud { position: fixed; top: 10px; left: 10px; color: #fff; font-size: 18px; line-height: 1.5em; text-shadow: 0 0 5px #000; display:none; }
-    #hud div { margin-bottom: 5px; }
-    canvas { display:block; }
-  </style>
 </head>
 <body>
   <!-- =========  SPIELMENÜ  ========= -->
@@ -43,17 +21,17 @@
   <div id="briefing" style="display:none;"></div>
 
   <!-- =========  HUD  ========= -->
-  <div id="hud">
-    <div id="health">Leben: 100</div>
-    <div id="ammo">Munition: 0/0</div>
-    <div id="ability">Fähigkeit: –</div>
-    <div id="level">Level: 1</div>
+  <div id="hud" style="display:none;">
+    <div id="health">Leben : 100</div>
+    <div id="ammo">Munition : 0/0</div>
+    <div id="ability">Fähigkeit : –</div>
+    <div id="level">Level : 1</div>
   </div>
 
-  <!-- Canvas für Three.js -->
+  <!-- =========  CANVAS  ========= -->
   <canvas id="gameCanvas"></canvas>
 
-  <!-- =========  SCRIPTS  ========= -->
+  <!-- =========  SCRIPT ========= -->
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
