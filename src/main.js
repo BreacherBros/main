@@ -38,6 +38,89 @@ const ammoEl     = document.getElementById('ammo');
 const abilityEl  = document.getElementById('ability');
 const levelEl    = document.getElementById('level');
 
+// ==========================
+// PointerLock erst nach Start
+// ==========================
+function initPointerLock() {
+    controls = new PointerLockControls(camera, document.body);
+    scene.add(controls.getObject());
+
+    // PointerLock erst beim Spielstart
+    document.body.addEventListener('click', () => {
+        if(!menuVisible()) controls.lock();
+    });
+
+    // Event: lock/unlock
+    controls.addEventListener('lock', () => {
+        console.log("PointerLock aktiviert");
+    });
+    controls.addEventListener('unlock', () => {
+        console.log("PointerLock deaktiviert");
+    });
+}
+
+// ==========================
+// Helper: Menü sichtbar?
+// ==========================
+function menuVisible() {
+    return menu.style.display !== 'none' || briefing.style.display !== 'none';
+}
+
+// ==========================
+// Update animate-Loop
+// ==========================
+function animate(){
+    requestAnimationFrame(animate);
+    const time = performance.now();
+    const delta = (time-prevTime)/1000;
+    prevTime = time;
+
+    // Nur bewegen wenn PointerLock aktiv und Menü weg
+    if(controls?.isLocked && !menuVisible()){
+        playerMovement(delta);
+
+        // Gegner AI
+        enemyAIs.forEach(ai=>ai.update(delta));
+
+        // Projektile
+        projectiles.forEach(p=>p.update(delta, enemies));
+    }
+
+    updateHUD();
+    renderer.render(scene,camera);
+}
+
+// ==========================
+// Menü-Klicks funktionieren jetzt
+// ==========================
+
+// Klassenauswahl Buttons
+classBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // verhindert, dass PointerLock klick blockiert
+        selectedClass = btn.dataset.class;
+        const cls = classes[selectedClass];
+
+        menu.style.display = 'none';
+        briefing.style.display = 'block';
+        briefing.innerHTML = `
+          <h2>${selectedClass}</h2>
+          <p><strong>Fähigkeit:</strong> ${cls.ability}</p>
+          <p><strong>Gesundheit:</strong> ${cls.health}</p>
+          <p><strong>Tempo:</strong> ${cls.speed}</p>
+          <p><strong>Munition:</strong> ${cls.ammo}</p>
+          <button id="startGame">Los geht’s!</button>
+        `;
+
+        const startBtn = document.getElementById('startGame');
+        startBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            startGame(selectedClass);
+            initPointerLock(); // PointerLock erst jetzt aktivieren
+        });
+    });
+});
+
 // ============================================================
 //   2  Menülogik – Klassenwahl & Briefing
 // ============================================================
