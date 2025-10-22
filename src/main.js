@@ -77,6 +77,27 @@ function startGame(clsName) {
   initScene();     // Szene initialisieren
   animate();       // Rendering-Loop starten
 }
+import { Weapon } from './weapons.js';
+import { Enemy } from './enemy.js';
+import { updateHUD } from './hud.js';
+
+// === Waffe initialisieren ===
+player.weapon = new Weapon(player, scene, {ammo: ammoEl});
+
+// === Gegnerliste initialisieren ===
+let enemies = [];
+function spawnEnemies(level){
+    enemies.forEach(e => scene.remove(e.mesh));
+    enemies = [];
+    const count = level * 3;
+    for(let i=0;i<count;i++){
+        const pos = new THREE.Vector3((Math.random()-0.5)*50,1,(Math.random()-0.5)*50);
+        enemies.push(new Enemy(scene, pos));
+    }
+}
+let level = 1;
+spawnEnemies(level);
+updateHUD(player, {health: healthEl, ammo: ammoEl, ability: abilityEl}, level);
 
 // ============================================================
 //   4  Three.js Grundszene
