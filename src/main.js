@@ -99,6 +99,25 @@ let level = 1;
 spawnEnemies(level);
 updateHUD(player, {health: healthEl, ammo: ammoEl, ability: abilityEl}, level);
 
+document.addEventListener('mousedown', e => {
+    if(controls.isLocked && e.button === 0){
+        player.weapon.shoot(enemies);
+    }
+});
+
+document.addEventListener('keydown', e => {
+    if(e.code === 'KeyR') player.weapon.reload();
+});
+
+enemies.forEach(enemy => enemy.update(player, delta));
+
+// Level-Up wenn alle Gegner weg
+if(enemies.length === 0){
+    level++;
+    spawnEnemies(level);
+}
+updateHUD(player, {health: healthEl, ammo: ammoEl, ability: abilityEl}, level);
+
 // ============================================================
 //   4  Three.js Grundszene
 // ============================================================
