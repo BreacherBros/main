@@ -2,300 +2,264 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Browser FPS Game - Breacher Demo</title>
+  <title>Browser FPS Game - Vollständige Version</title>
   <style>
     html, body { margin: 0; padding: 0; overflow: hidden; font-family: Arial, sans-serif; background: #000; height:100%; }
     #menu, #briefing {
       position: absolute; top: 50%; left: 50%;
       transform: translate(-50%,-50%);
-      background: rgba(20,20,20,0.9); color: #fff;
-      padding: 20px; border-radius: 10px; text-align: center;
-      border: 2px solid rgba(255,255,255,0.12);
-      backdrop-filter: blur(4px); z-index: 10;
-      width: 320px;
+      background: rgba(20,20,20,0.95); color: #fff;
+      padding: 18px; border-radius: 10px; text-align: center;
+      border: 2px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(3px); z-index: 50;
+      width: 360px;
     }
-    #menu h2, #briefing h2 { margin-bottom: 10px; }
+    #menu h1 { margin: 6px 0 12px; font-size: 22px; }
     #menu button, #briefing button {
-      display: block; width: 240px; margin: 8px auto;
+      display: block; width: 260px; margin: 8px auto;
       padding: 10px; font-size: 15px;
       background: rgba(255,165,0,0.18); border: 1px solid orange;
-      color: #fff; border-radius: 5px; cursor: pointer;
+      color: #fff; border-radius: 6px; cursor: pointer;
     }
-    #menu button:hover, #briefing button:hover {
-      background: rgba(255,165,0,0.34);
-    }
+    #menu button:hover, #briefing button:hover { background: rgba(255,165,0,0.34); }
     #briefing { display: none; }
     #hud {
       position: fixed; top: 10px; left: 10px;
-      color: #fff; font-size: 16px; line-height: 1.4em;
-      text-shadow: 0 0 5px #000; z-index: 9;
-      background: rgba(0,0,0,0.35); padding: 8px; border-radius: 6px;
+      color: #fff; font-size: 15px; line-height: 1.4em;
+      text-shadow: 0 0 6px #000; z-index: 40;
+      background: rgba(0,0,0,0.36); padding: 10px; border-radius: 8px;
       border: 1px solid rgba(255,255,255,0.06);
     }
-    #hud div { margin-bottom: 5px; }
+    #hud div { margin-bottom: 6px; }
     #crosshair {
       position: fixed; top: 50%; left: 50%;
-      width: 20px; height: 20px;
+      width: 18px; height: 18px;
       transform: translate(-50%, -50%);
-      pointer-events: none; z-index: 8;
+      pointer-events: none; z-index: 35;
     }
     #crosshair:before, #crosshair:after {
       content: '';
-      position: absolute; background: rgba(255,0,0,0.85);
+      position: absolute; background: rgba(255,0,0,0.9);
     }
-    #crosshair:before {
-      left: 50%; top: 0; width: 2px; height: 100%;
-      transform: translateX(-50%);
-    }
-    #crosshair:after {
-      top: 50%; left: 0; width: 100%; height: 2px;
-      transform: translateY(-50%);
-    }
-    canvas { display: block; }
-    #abilityHint { font-size: 13px; color: #ffd580; }
+    #crosshair:before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
+    #crosshair:after { top: 50%; left: 0; width: 100%; height: 2px; transform: translateY(-50%); }
+    canvas { display: block; width:100%; height:100%; }
+    #startupHint { position: fixed; bottom: 10px; left: 10px; color: #ccc; font-size: 13px; z-index: 40; }
   </style>
 </head>
 <body>
+  <!-- Menü -->
   <div id="menu">
-    <h2>Klassenwahl</h2>
-    <button data-class="Assault">Assault (Balanced)</button>
-    <button data-class="Breacher">Breacher (Heavy)</button>
-    <button data-class="Scout">Scout (Speed)</button>
-    <button data-class="Engineer">Engineer (Utility)</button>
-    <button data-class="Sniper">Sniper (Range)</button>
-    <p style="font-size:12px; color:#ccc; margin-top:12px;">Klicke eine Klasse an → dann "Los geht's!"</p>
+    <h1>Klassenwahl</h1>
+    <button class="class-btn" data-class="Assault">Assault (Balanced)</button>
+    <button class="class-btn" data-class="Breacher">Breacher (Heavy)</button>
+    <button class="class-btn" data-class="Scout">Scout (Speed)</button>
+    <button class="class-btn" data-class="Engineer">Engineer (Utility)</button>
+    <button class="class-btn" data-class="Sniper">Sniper (Range)</button>
+    <p style="font-size:12px; color:#ccc; margin-top:10px;">Klicke eine Klasse an, dann auf "Los geht's!" im Briefing.</p>
   </div>
-  <div id="briefing">
-    <h2 id="class-name"></h2>
-    <p id="class-desc"></p>
-    <button id="startGame">Los geht's!</button>
-    <p id="abilityHint">Fähigkeit: Taste F (Cooldown)</p>
-  </div>
+
+  <!-- Briefing (wird dynamisch gefüllt) -->
+  <div id="briefing" style="display:none;"></div>
+
+  <!-- HUD / Crosshair -->
   <div id="hud">
     <div id="health">Leben: 100</div>
     <div id="ammo">Munition: 0/0</div>
-    <div id="info">Klasse: - Level: - Gegner: -</div>
+    <div id="info">Klasse: -  Level: -  Gegner: -</div>
     <div id="ability">Fähigkeit: -</div>
   </div>
   <div id="crosshair"></div>
+  <div id="startupHint">WASD bewegen • Shift sprinten • Linksklick schießen • R nachladen • F Fähigkeit</div>
+
+  <!-- Canvas wird von Three.js erzeugt (renderer.domElement) -->
 
   <script type="module">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.148.0/build/three.module.js';
     import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.148.0/examples/jsm/controls/PointerLockControls.js';
 
-    // === SPIEL-MENÜ UND BRIEFING ===
-
-const classes = {
-  "Stürmer": { health: 120, speed: 1.2, ammo: 30, reloadTime: 1.5, ability: "Granate" },
-  "Verteidiger": { health: 180, speed: 0.9, ammo: 40, reloadTime: 2.0, ability: "Schild" },
-  "Sanitäter": { health: 150, speed: 1.0, ammo: 25, reloadTime: 1.2, ability: "Heilung" },
-  "Techniker": { health: 130, speed: 1.1, ammo: 35, reloadTime: 1.6, ability: "Turret" },
-  "Späher": { health: 100, speed: 1.4, ammo: 20, reloadTime: 1.0, ability: "Tarnung" }
-};
-
-let selectedClass = null;
-
-// HTML-Referenzen
-const menu = document.getElementById('menu');
-const briefing = document.getElementById('briefing');
-const classButtons = document.querySelectorAll('.class-btn');
-
-// Wenn man eine Klasse auswählt
-classButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    selectedClass = btn.dataset.class;
-    console.log(`Klasse gewählt: ${selectedClass}`);
-    menu.style.display = 'none';
-    briefing.style.display = 'block';
-    const cls = classes[selectedClass];
-    briefing.innerHTML = `
-      <h2>${selectedClass}</h2>
-      <p><strong>Fähigkeit:</strong> ${cls.ability}</p>
-      <p><strong>Gesundheit:</strong> ${cls.health}</p>
-      <p><strong>Tempo:</strong> ${cls.speed}</p>
-      <p><strong>Munition:</strong> ${cls.ammo}</p>
-      <button id="startGame">Los geht’s!</button>
-    `;
-
-    // Start-Button erzeugen
-    document.getElementById('startGame').addEventListener('click', () => {
-      startGame(selectedClass);
-    });
-  });
-});
-
-// Start des Spiels
-function startGame(clsName) {
-  const cls = classes[clsName];
-  briefing.style.display = 'none';
-  console.log(`Starte Spiel mit Klasse: ${clsName}`);
-  initGame(cls);
-}
-
-    // ----------------------------
-    // Klassen-Definitionen
-    // ----------------------------
+    // =====================
+    // SPIEL-MENÜ & KLASSEN
+    // =====================
     const classes = {
       'Assault': {
         health: 100, speed: 400, ammo: 30, reloadTime: 2000,
-        ability: { name: 'Medikit', cooldown: 10000 }, desc: "Ausgewogen. Fähigkeit: Heilt 50 HP." ,
+        ability: { name: 'Medikit', cooldown: 10000 }, desc: 'Ausgewogen. Fähigkeit: Heilt 50 HP.',
         color: 0x4aa3ff
       },
       'Breacher': {
         health: 150, speed: 350, ammo: 20, reloadTime: 3000,
-        ability: { name: 'Sprengladung', cooldown: 15000 }, desc: "Schwer gepanzert. Fähigkeit: Explosive Charge.",
+        ability: { name: 'Sprengladung', cooldown: 15000 }, desc: 'Schwer gepanzert. Fähigkeit: Explosive Charge.',
         color: 0xff8a4a
       },
       'Scout': {
         health: 80, speed: 500, ammo: 25, reloadTime: 1500,
-        ability: { name: 'Sprintboost', cooldown: 10000 }, desc: "Sehr schnell. Fähigkeit: Kurzzeit Sprintboost.",
+        ability: { name: 'Sprintboost', cooldown: 10000 }, desc: 'Sehr schnell. Fähigkeit: Kurzzeit Sprintboost.',
         color: 0x8eff7a
       },
       'Engineer': {
         health: 100, speed: 400, ammo: 30, reloadTime: 2000,
-        ability: { name: 'Mini-Turret', cooldown: 15000 }, desc: "Vielseitig. Fähigkeit: Setzt Minigeschütz.",
+        ability: { name: 'Mini-Turret', cooldown: 15000 }, desc: 'Vielseitig. Fähigkeit: Setzt Minigeschütz.',
         color: 0xffd24a
       },
       'Sniper': {
         health: 80, speed: 350, ammo: 10, reloadTime: 3000,
-        ability: { name: 'Fokus-Schuss', cooldown: 12000 }, desc: "Langstreckenspezialist. Fähigkeit: Soforttreffer.",
+        ability: { name: 'Fokus-Schuss', cooldown: 12000 }, desc: 'Langstreckenspezialist. Fähigkeit: Soforttreffer.',
         color: 0xcc88ff
       }
     };
 
-    // ----------------------------
-    // Globals & Spielstatus
-    // ----------------------------
     let selectedClass = null;
-    let player = { health: 100, maxHealth: 100, speed: 400, ammo: 0, maxAmmo: 0, reloadTime: 0, reloading: false, abilityNextUse: 0 };
-    let level = 0;
-    let enemies = [];
-    let turrets = [];
-    let projectiles = [];
-    let scene, camera, renderer, controls;
-    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, sprint = false;
-    let prevTime = performance.now();
-    let playerHitbox; // invisible mesh representing player for raycasting
-    const worldObstacles = []; // walls/kisten für LOS checks
 
-    // ----------------------------
-    // UI Elemente
-    // ----------------------------
-    const menu = document.getElementById('menu');
-    const briefing = document.getElementById('briefing');
-    const classNameEl = document.getElementById('class-name');
-    const classDescEl = document.getElementById('class-desc');
-    const startButton = document.getElementById('startGame');
+    // UI-Elemente (HTML)
+    const menuEl = document.getElementById('menu');
+    const briefingEl = document.getElementById('briefing');
     const healthEl = document.getElementById('health');
     const ammoEl = document.getElementById('ammo');
     const infoEl = document.getElementById('info');
     const abilityEl = document.getElementById('ability');
 
-    // Klassenwahl UI
-    document.querySelectorAll('#menu button').forEach(btn => {
+    // Klassenbuttons initial mit Listenern
+    document.querySelectorAll('.class-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        selectedClass = btn.getAttribute('data-class');
+        selectedClass = btn.dataset.class;
         const cls = classes[selectedClass];
-        classNameEl.innerText = selectedClass;
-        classDescEl.innerText = cls.desc;
-        briefing.style.display = 'block';
-        menu.style.display = 'none';
-        abilityEl.innerText = `Fähigkeit: ${cls.ability.name} (Cooldown: ${Math.round(cls.ability.cooldown/1000)}s)`;
+        // Briefing anzeigen und Menü verbergen
+        menuEl.style.display = 'none';
+        briefingEl.style.display = 'block';
+        briefingEl.innerHTML = `
+          <h2 style="margin-bottom:6px">${selectedClass}</h2>
+          <p style="color:#ddd; margin:6px 0;">${cls.desc}</p>
+          <p style="font-size:13px; color:#ffdca8"><strong>Fähigkeit:</strong> ${cls.ability.name} (CD ${Math.round(cls.ability.cooldown/1000)}s)</p>
+          <p style="font-size:13px; color:#ccc; margin-top:6px;"><strong>Leben:</strong> ${cls.health} • <strong>Speed:</strong> ${cls.speed} • <strong>Ammo:</strong> ${cls.ammo}</p>
+          <button id="startGame">Los geht's!</button>
+          <p style="font-size:12px; color:#999; margin-top:8px;">Tipp: Nach dem Start klick ins Spiel, damit die Maus freigegeben wird (Pointer Lock).</p>
+        `;
+
+        // Start-Button Listener (dynamisch)
+        const startBtn = document.getElementById('startGame');
+        if (startBtn) {
+          startBtn.addEventListener('click', () => {
+            briefingEl.style.display = 'none';
+            startGame(selectedClass);
+          });
+        }
       });
     });
 
-  startButton.addEventListener('click', () => {
-  const cls = classes[selectedClass];
-  player.health = cls.health;
-  player.maxHealth = cls.health;
-  player.speed = cls.speed;
-  player.ammo = cls.ammo;
-  player.maxAmmo = cls.ammo;
-  player.reloadTime = cls.reloadTime;
-  player.abilityNextUse = 0;
-  updateHUD();
-  briefing.style.display = 'none';
-  
-  // Jetzt: Spiel initialisieren
-  initGame();
+    // =====================
+    // GLOBALS / SPIELSTATUS
+    // =====================
+    let player = {
+      health: 100,
+      maxHealth: 100,
+      speed: 400,
+      ammo: 0,
+      maxAmmo: 0,
+      reloadTime: 0,
+      reloading: false,
+      abilityNextUse: 0
+    };
 
-  // Sofort PointerLock aktivieren
-  document.body.requestPointerLock = 
-    document.body.requestPointerLock ||
-    document.body.mozRequestPointerLock ||
-    document.body.webkitRequestPointerLock;
-    
-  document.body.requestPointerLock();
+    let level = 0;
+    let enemies = [];
+    let turrets = [];
+    let worldObstacles = []; // Wände/Kisten für LOS checks
 
-  // Falls der Browser Interaktion verlangt, klick nochmal:
-  document.body.addEventListener('click', () => {
-    if (!controls.isLocked) controls.lock();
-  });
-});
+    // Three.js core
+    let scene, camera, renderer, controls;
+    let playerHitbox;
+    let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, sprint = false;
+    let prevTime = performance.now();
 
-    // ----------------------------
-    // Init Game (Three.js Szene)
-    // ----------------------------
+    // =====================
+    // START SPIEL
+    // =====================
+    function startGame(clsName) {
+      const cls = classes[clsName];
+      // Setze player Werte
+      player.health = cls.health;
+      player.maxHealth = cls.health;
+      player.speed = cls.speed;
+      player.ammo = cls.ammo;
+      player.maxAmmo = cls.ammo;
+      player.reloadTime = cls.reloadTime;
+      player.abilityNextUse = 0;
+      updateHUD();
+      // Init Szene & Start
+      initGame();
+      // Sofort PointerLock anfordern - manche Browser blocken, daher auch klick fallback
+      try {
+        if (document.body.requestPointerLock) {
+          document.body.requestPointerLock();
+        }
+      } catch (e) {}
+    }
+
+    // =====================
+    // INIT GAME (Three.js)
+    // =====================
     function initGame() {
-      // Basis Szene
+      // Szene & Kamera
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x111217);
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.set(0, 6, 18);
 
       // Licht
       const hemi = new THREE.HemisphereLight(0xffffee, 0x111122, 0.6);
       scene.add(hemi);
-      const dir = new THREE.DirectionalLight(0xffffff, 0.9);
-      dir.position.set(10, 20, 10);
-      scene.add(dir);
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+      dirLight.position.set(10, 20, 10);
+      scene.add(dirLight);
 
       // Boden
       const floorGeo = new THREE.PlaneGeometry(300, 300);
       const floorMat = new THREE.MeshPhongMaterial({ color: 0x1a1a1a });
       const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI/2;
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
       scene.add(floor);
 
       // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio ? window.devicePixelRatio : 1);
       document.body.appendChild(renderer.domElement);
 
       // Controls
       controls = new PointerLockControls(camera, document.body);
       scene.add(controls.getObject());
 
-      // Player-Hitbox (invisible) für Raycast-Ziele
+      // Player Hitbox (invisible mesh) für Raycast
       const phGeo = new THREE.SphereGeometry(0.6, 8, 8);
       const phMat = new THREE.MeshBasicMaterial({ visible: false });
       playerHitbox = new THREE.Mesh(phGeo, phMat);
       scene.add(playerHitbox);
 
-      // Map bauen (Wände, Räume, Cover)
+      // Map erstellen (Wände, Partitionen, Deckung)
       buildMap();
 
       // Events
-      window.addEventListener('resize', onWindowResize);
+      window.addEventListener('resize', handleResize);
       document.addEventListener('keydown', onKeyDown);
       document.addEventListener('keyup', onKeyUp);
       document.addEventListener('mousedown', onMouseDown);
 
-      // Start Level
+      // Controls: wenn PointerLock aktiviert, setze Kamera-Startposition
+      controls.addEventListener('lock', () => {
+        // Falls notwendig, zentrieren oder andere Startwerte setzen
+      });
+
+      // Level 1 Start
       nextLevel();
       prevTime = performance.now();
       animate();
     }
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    // ----------------------------
-    // Eingaben
-    // ----------------------------
+    // =====================
+    // INPUT HANDLER
+    // =====================
     function onKeyDown(event) {
       switch (event.code) {
         case 'KeyW': moveForward = true; break;
@@ -306,7 +270,7 @@ function startGame(clsName) {
         case 'KeyR':
           if (!player.reloading && player.ammo < player.maxAmmo) reloadWeapon();
           break;
-        case 'KeyF': // Fähigkeit aktivieren
+        case 'KeyF':
           tryActivateAbility();
           break;
       }
@@ -321,27 +285,30 @@ function startGame(clsName) {
       }
     }
     function onMouseDown(event) {
-      if (controls.isLocked && event.button === 0) {
+      if (controls && controls.isLocked && event.button === 0) {
         shoot();
+      } else {
+        // Falls pointer lock nicht aktiv ist, versuche es beim Klick
+        if (document.body.requestPointerLock) document.body.requestPointerLock();
       }
     }
 
-    // ----------------------------
-    // HUD Update
-    // ----------------------------
+    // =====================
+    // HUD
+    // =====================
     function updateHUD() {
       healthEl.innerText = `Leben: ${Math.max(0, Math.round(player.health))}`;
       ammoEl.innerText = player.reloading ? 'Nachladen...' : `Munition: ${player.ammo}/${player.maxAmmo}`;
-      infoEl.innerText = `Klasse: ${selectedClass}  Level: ${level}  Gegner: ${enemies.length}`;
-      const cls = classes[selectedClass];
+      infoEl.innerText = `Klasse: ${selectedClass ?? '-'}  Level: ${level}  Gegner: ${enemies.length}`;
+      const cls = selectedClass ? classes[selectedClass] : null;
       const now = performance.now();
-      const cd = Math.max(0, Math.round((player.abilityNextUse - now) / 1000));
-      abilityEl.innerText = `Fähigkeit: ${cls.ability.name} ${cd>0?`(CD: ${cd}s)`:'(bereit)'}`;
+      const cd = cls ? Math.max(0, Math.round((player.abilityNextUse - now) / 1000)) : 0;
+      abilityEl.innerText = cls ? `Fähigkeit: ${cls.ability.name} ${cd>0?`(CD: ${cd}s)`:'(bereit)'}` : 'Fähigkeit: -';
     }
 
-    // ----------------------------
-    // Nachladen & Schießen
-    // ----------------------------
+    // =====================
+    // WEAPON / SHOOT / RELOAD
+    // =====================
     function reloadWeapon() {
       player.reloading = true;
       updateHUD();
@@ -356,43 +323,35 @@ function startGame(clsName) {
       if (player.ammo <= 0 || player.reloading) return;
       player.ammo--;
       updateHUD();
-      // Raycast von Kamera
       const origin = camera.getWorldPosition(new THREE.Vector3());
-      const direction = new THREE.Vector3();
-      camera.getWorldDirection(direction);
-      const raycaster = new THREE.Raycaster(origin, direction, 0, 200);
-      // Prüfe Treffer an Gegner-Meshes
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      const raycaster = new THREE.Raycaster(origin, dir, 0, 400);
       const hitList = raycaster.intersectObjects(enemies.map(e => e.mesh), true);
       if (hitList.length > 0) {
-        const hitMesh = hitList[0].object;
-        const enemy = enemies.find(e => e.mesh === hitMesh || e.mesh.children.includes(hitMesh));
+        const hit = hitList[0];
+        const enemy = enemies.find(e => e.mesh === hit.object || (e.mesh.children && e.mesh.children.includes(hit.object)));
         if (enemy) {
           const dmg = (selectedClass === 'Sniper') ? 100 : 50;
           enemy.health -= dmg;
-          // Trefferfarbe kurz setzen
           if (enemy.mesh.material) {
             const orig = enemy.mesh.material.color.getHex();
             enemy.mesh.material.color.set(0xffff00);
             setTimeout(()=> { if (enemy.mesh.material) enemy.mesh.material.color.set(orig); }, 120);
           }
-          if (enemy.health <= 0) {
-            killEnemy(enemy);
-          }
+          if (enemy.health <= 0) killEnemy(enemy);
         }
-      } else {
-        // Tracer / Schuss-Effekt (optional) — derzeit nichts
       }
     }
 
-    // ----------------------------
-    // Ability Activation
-    // ----------------------------
+    // =====================
+    // ABILITIES
+    // =====================
     function tryActivateAbility() {
       const now = performance.now();
-      if (now < player.abilityNextUse) return; // noch CD
+      if (now < player.abilityNextUse) return; // CD aktiv
       const cls = classes[selectedClass];
       player.abilityNextUse = now + cls.ability.cooldown;
-      // Run ability
       switch (selectedClass) {
         case 'Assault':
           player.health = Math.min(player.maxHealth, player.health + 50);
@@ -415,30 +374,25 @@ function startGame(clsName) {
       updateHUD();
     }
 
-    // Explosion: einfache Kugel vor Spieler die Gegner Schaden zufügt
     function spawnExplosionInFront() {
       const origin = camera.getWorldPosition(new THREE.Vector3());
       const dir = new THREE.Vector3();
       camera.getWorldDirection(dir);
       const pos = origin.clone().add(dir.multiplyScalar(6));
-      // Visueller Effekt (kurze Sphere)
       const geo = new THREE.SphereGeometry(1.2, 8, 8);
       const mat = new THREE.MeshBasicMaterial({ color: 0xffaa44 });
       const sphere = new THREE.Mesh(geo, mat);
       sphere.position.copy(pos);
       scene.add(sphere);
       setTimeout(()=> scene.remove(sphere), 350);
-      // Schaden Gegner in Radius
       enemies.forEach(e => {
-        const d = e.mesh.position.distanceTo(pos);
-        if (d < 6) {
+        if (e.mesh.position.distanceTo(pos) < 6) {
           e.health -= 80;
           if (e.health <= 0) killEnemy(e);
         }
       });
     }
 
-    // Turret: statisches Geschütz, feuert automatisch auf Gegner
     function deployTurretAtPlayer() {
       const pos = controls.getObject().position.clone();
       const turretGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.8, 8);
@@ -448,14 +402,12 @@ function startGame(clsName) {
       scene.add(turretMesh);
       const turret = { mesh: turretMesh, cooldown: 0 };
       turrets.push(turret);
-      // Destroy turret after 18s
       setTimeout(() => {
-        scene.remove(turretMesh);
+        try { scene.remove(turretMesh); } catch(e){}
         turrets = turrets.filter(t => t !== turret);
       }, 18000);
     }
 
-    // Fokus-Schuss: töte ersten anvisierten Gegner
     function performFocusShot() {
       const origin = camera.getWorldPosition(new THREE.Vector3());
       const dir = new THREE.Vector3();
@@ -468,9 +420,9 @@ function startGame(clsName) {
       }
     }
 
-    // ----------------------------
-    // Enemy Handling
-    // ----------------------------
+    // =====================
+    // ENEMY: create, spawn, kill
+    // =====================
     function createEnemyMesh(color=0xff4444) {
       const geo = new THREE.BoxGeometry(1.2, 2, 1.2);
       const mat = new THREE.MeshPhongMaterial({ color });
@@ -500,22 +452,19 @@ function startGame(clsName) {
     }
 
     function killEnemy(enemy) {
-      try {
-        scene.remove(enemy.mesh);
-      } catch(e) {}
+      try { scene.remove(enemy.mesh); } catch(e){}
       enemies = enemies.filter(e => e !== enemy);
       updateHUD();
     }
 
-    // ----------------------------
-    // Map-Builder (simplifiziert)
-    // ----------------------------
+    // =====================
+    // MAP / OBSTACLES
+    // =====================
     function buildMap() {
-      // Room walls - simple boxes
       const wallMat = new THREE.MeshPhongMaterial({ color: 0x2b2b2b });
       const walls = [];
 
-      // Outer walls (4)
+      // Outer walls
       const north = new THREE.Mesh(new THREE.BoxGeometry(200, 12, 2), wallMat);
       north.position.set(0,6,-100); scene.add(north); walls.push(north);
       const south = north.clone(); south.position.set(0,6,100); scene.add(south); walls.push(south);
@@ -523,15 +472,16 @@ function startGame(clsName) {
       east.position.set(100,6,0); scene.add(east); walls.push(east);
       const west = east.clone(); west.position.set(-100,6,0); scene.add(west); walls.push(west);
 
-      // Inner partition walls to create rooms & corridors
+      // Inner partitions (simple)
       for (let i=0;i<6;i++) {
         const w = new THREE.Mesh(new THREE.BoxGeometry(60, 10, 2), wallMat);
+        if (i % 2 === 0) w.rotation.y = 0;
+        else w.rotation.y = Math.PI/2;
         w.position.set((i-2.5)*30,5,(i%2===0? -20:20));
-        w.rotation.y = (i%2)*Math.PI/2;
         scene.add(w); walls.push(w);
       }
 
-      // Randomized cover crates
+      // Crates as cover
       for (let i=0;i<28;i++) {
         const crate = new THREE.Mesh(new THREE.BoxGeometry(4,4,4), new THREE.MeshPhongMaterial({ color: 0x6b5746 }));
         crate.position.set((Math.random()-0.5)*140, 2, (Math.random()-0.5)*140);
@@ -539,57 +489,53 @@ function startGame(clsName) {
         worldObstacles.push(crate);
       }
 
-      // Add walls to obstacle list for LOS
+      // Add partition walls to obstacles
       walls.forEach(w => worldObstacles.push(w));
     }
 
-    // ----------------------------
-    // Level Management
-    // ----------------------------
+    // =====================
+    // LEVEL MANAGEMENT
+    // =====================
     function nextLevel() {
       level++;
       if (level > 20) {
         alert('Glückwunsch! Alle 20 Level abgeschlossen.');
-        // Reset/stopp
+        // Stop further spawning
         return;
       }
-      // Entferne alte Gegner & Turrets
-      enemies.forEach(e => scene.remove(e.mesh));
+
+      // Clean up previous
+      enemies.forEach(e => { try { scene.remove(e.mesh); } catch(e){} });
       enemies = [];
-      turrets.forEach(t => scene.remove(t.mesh));
+      turrets.forEach(t => { try { scene.remove(t.mesh); } catch(e){} });
       turrets = [];
-      // Spawn Gegner basierend auf Level (skalierend)
-      const count = Math.min(60, Math.floor(level * 2.5 + 3)); // bis ~60 max
+
+      // Spawn amount scales with level
+      const count = Math.min(60, Math.floor(level * 2.5 + 3));
       for (let i=0;i<count;i++) {
         const hp = 40 + Math.floor(level * 2);
         const spd = 0.9 + (level * 0.02);
         const ranged = Math.random() < Math.min(0.6, 0.2 + level*0.02);
-        // Spawne in Räumen (versuche nicht zu nah an Spieler)
         const pos = new THREE.Vector3((Math.random()-0.5)*120, 1, (Math.random()-0.5)*120);
         spawnEnemy(pos, hp, spd, ranged);
       }
       updateHUD();
-      // Kurze Meldung
-      console.log(`Level ${level} gestartet mit ${count} Gegnern.`);
     }
 
-    // ----------------------------
-    // Enemy AI Update (Patrol, LOS, Attack)
-    // ----------------------------
+    // =====================
+    // ENEMY AI UPDATE
+    // =====================
     function updateEnemies(delta) {
       const playerPos = controls.getObject().position;
-      // Update playerHitbox position
-      playerHitbox.position.copy(playerPos).y = 1; // ensure roughly correct height
+      playerHitbox.position.copy(playerPos).y = 1.0;
 
       enemies.forEach(enemy => {
-        // Cooldowns
         if (enemy.attackCooldown > 0) enemy.attackCooldown -= delta;
 
-        // Determine direction to player
         const dirToPlayer = new THREE.Vector3().subVectors(playerPos, enemy.mesh.position);
         const dist = dirToPlayer.length();
 
-        // Line of sight check (raycast from enemy to playerHitbox)
+        // LOS check
         const ray = new THREE.Raycaster(enemy.mesh.position.clone().setY(1.0), dirToPlayer.clone().normalize());
         const hits = ray.intersectObjects(worldObstacles, true);
         let hasLOS = true;
@@ -598,24 +544,18 @@ function startGame(clsName) {
           if (first.distance < dist) hasLOS = false;
         }
 
-        // Wenn Sicht: aggressiv werden (Fernkampf wenn möglich)
         if (hasLOS && dist < 80) {
           enemy.lastSeen = performance.now();
-          // Wenn Distanz groß und rangedChance -> feuern (Fernkampf)
           if (dist > 8 && Math.random() < enemy.rangedChance) {
-            // Schuss per Raycast (Feuerrate über cooldown)
             if (enemy.attackCooldown <= 0) {
-              enemy.attackCooldown = 1.2; // Zeit bis zum nächsten Schuss
-              // Ray von enemy Kopf zur playerHitbox
+              enemy.attackCooldown = 1.2;
               const origin = enemy.mesh.position.clone().setY(1.2);
               const dir = new THREE.Vector3().subVectors(playerHitbox.position, origin).normalize();
               const r = new THREE.Raycaster(origin, dir, 0, 200);
               const playerHits = r.intersectObject(playerHitbox);
               const obstacleHits = r.intersectObjects(worldObstacles, true);
-              if (playerHits.length > 0 && (obstacleHits.length === 0 || playerHits[0].distance < obstacleHits[0].distance)) {
-                // Treffer: nehme Schaden
-                player.health -= 6 + Math.random()*4; // leichter Schaden (Fernkampf)
-                // visuelles Feedback: flash screen? aktuell nur HUD update
+              if (playerHits.length > 0 && (obstacleHits.length === 0 || playerHits[0].distance < (obstacleHits[0]?.distance ?? Infinity))) {
+                player.health -= 6 + Math.random()*4;
                 if (player.health <= 0) {
                   alert('Game Over!');
                   window.location.reload();
@@ -623,18 +563,15 @@ function startGame(clsName) {
                 updateHUD();
               }
             }
-            // Gegner könnte strafing/backstep machen: leichter strafing-Move
             const sidestep = (Math.random() > 0.5) ? 1 : -1;
             enemy.mesh.position.x += sidestep * 0.2 * enemy.speed * delta;
           } else {
-            // Nahkampfverhalten: nähere dich und schlage zu
             if (dist > 2.2) {
-              const m = dirToPlayer.normalize().multiplyScalar(enemy.speed * delta * 1.5);
+              const m = dirToPlayer.normalize().multiplyScalar(enemy.speed * delta);
               enemy.mesh.position.add(m);
             } else {
-              // Nahschaden (cooldown)
               if (enemy.attackCooldown <= 0) {
-                enemy.attackCooldown = 1.8; // Nahkampfcooldown
+                enemy.attackCooldown = 1.8;
                 player.health -= 12 + Math.random()*6;
                 if (player.health <= 0) {
                   alert('Game Over!');
@@ -645,67 +582,62 @@ function startGame(clsName) {
             }
           }
         } else {
-          // Kein LOS -> Patrouillieren oder Suche
           if (!enemy.patrolTarget || enemy.mesh.position.distanceTo(enemy.patrolTarget) < 1) {
-            // wähle neues Patrolziel
-            enemy.patrolTarget = new THREE.Vector3(
-              (Math.random()-0.5)*120,
-              1,
-              (Math.random()-0.5)*120
-            );
+            enemy.patrolTarget = new THREE.Vector3((Math.random()-0.5)*120,1,(Math.random()-0.5)*120);
             enemy.state = 'patrol';
           }
-          // Bewege in Richtung patrolTarget
           const dir = new THREE.Vector3().subVectors(enemy.patrolTarget, enemy.mesh.position);
           if (dir.length() > 0.1) {
             dir.normalize();
             enemy.mesh.position.add(dir.multiplyScalar(enemy.speed * delta));
           }
         }
-        // einfache collision avoidance gegen worldObstacles (keep above floor)
+
+        // Simple collision avoidance with obstacles
         worldObstacles.forEach(obs => {
           const dist2 = enemy.mesh.position.distanceTo(obs.position);
           if (dist2 < 2.2) {
-            // push back
             const push = enemy.mesh.position.clone().sub(obs.position).normalize().multiplyScalar(0.6);
             enemy.mesh.position.add(push);
           }
         });
       });
 
-      // Turret behavior
+      // Turrets auto-fire
       turrets.forEach(t => {
         if (t.cooldown > 0) t.cooldown -= delta;
         else {
-          // find nearest enemy
           if (enemies.length > 0) {
-            const target = enemies.reduce((a,b) => (a && a.mesh.position.distanceTo(t.mesh.position) < b.mesh.position.distanceTo(t.mesh.position)) ? a : b);
-            if (target) {
-              // Fire: reduce enemy health
-              target.health -= 24;
+            // pick nearest enemy
+            let nearest = null;
+            let nearestDist = Infinity;
+            enemies.forEach(e => {
+              const d = e.mesh.position.distanceTo(t.mesh.position);
+              if (d < nearestDist) { nearestDist = d; nearest = e; }
+            });
+            if (nearest) {
+              nearest.health -= 24;
               t.cooldown = 0.5;
-              if (target.health <= 0) killEnemy(target);
+              if (nearest.health <= 0) killEnemy(nearest);
             }
           }
         }
       });
 
-      // Check level complete
       if (enemies.length === 0) {
         setTimeout(nextLevel, 900);
       }
     }
 
-    // ----------------------------
-    // Animation Loop
-    // ----------------------------
+    // =====================
+    // ANIMATE LOOP
+    // =====================
     function animate() {
       requestAnimationFrame(animate);
       const time = performance.now();
       const delta = (time - prevTime) / 1000;
       prevTime = time;
 
-      // Update movement only if controls locked (player captured)
       if (controls && controls.isLocked) {
         const actualSpeed = player.speed * (sprint ? 1.6 : 1);
         if (moveForward) controls.moveForward(actualSpeed * delta);
@@ -713,40 +645,34 @@ function startGame(clsName) {
         if (moveLeft) controls.moveRight(-actualSpeed * delta);
         if (moveRight) controls.moveRight(actualSpeed * delta);
 
-        // Gravity / clamp Y
         const pos = controls.getObject().position;
         if (pos.y < 1.0) pos.y = 1.0;
       }
 
-      // Update enemies & turrets
-      updateEnemies(delta);
-
-      // Update HUD frequently
+      if (scene) updateEnemies(delta);
       updateHUD();
-
-      renderer.render(scene, camera);
+      if (renderer && scene && camera) renderer.render(scene, camera);
     }
 
-    // ----------------------------
-    // Utilities
-    // ----------------------------
-
-    function onWindowResize() {
+    // =====================
+    // UTIL: Fenstergröße
+    // =====================
+    function handleResize() {
+      if (!camera || !renderer) return;
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     }
 
-    // Safety: if player falls below map, reposition
-    function resetPlayerIfOutOfBounds() {
-      if (controls && controls.getObject().position.y < -50) {
-        controls.getObject().position.set(0,4,0);
-      }
-    }
+    // =====================
+    // SAFETY: Falls Start nicht erfolgt (initGame nicht vorhanden)
+    // =====================
+    // (keine Aktion nötig hier; startGame ruft initGame())
 
-    // ----------------------------
-    // Start: nothing to do until class chosen
-    // ----------------------------
+    // =====================
+    // ENDE SCRIPT - keine weiteren globalen Aktionen
+    // =====================
+
   </script>
 </body>
 </html>
