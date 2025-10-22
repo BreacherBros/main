@@ -9,6 +9,16 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
 import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/PointerLockControls.js';
 
+import { Weapon } from './weapons.js';
+import { Enemy } from './enemy.js';
+import { EnemyAI } from './enemyAI.js';
+import { Ability } from './abilities.js';
+import { Map } from './map.js';
+import { AudioManager } from './audio.js';
+import { LevelManager } from './levels.js';
+import { HUD } from './hud.js';
+import { Projectile } from './physics.js';
+
 // ==========================
 // 1. Klassen-Definitionen + UI-Referenzen
 // ==========================
