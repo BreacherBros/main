@@ -1,5 +1,5 @@
 // ============================================================
-// BREACHER BROS — 3D FPS BROWSERGAME (KORRIGIERT)
+// BREACHER BROS — 3D FPS BROWSERGAME (KORRIGIERT & FUNKTIONSFÄHIG)
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ammoEl     = document.getElementById('ammo');
   const abilityEl  = document.getElementById('ability');
   const levelEl    = document.getElementById('level');
+  const canvas     = document.getElementById('gameCanvas');
 
   // ==========================
   // 2. PointerLock
@@ -56,13 +57,23 @@ document.addEventListener('DOMContentLoaded', () => {
   function initPointerLock(){
       controls = new PointerLockControls(camera, document.body);
       scene.add(controls.getObject());
-      document.body.addEventListener('click', ()=>{
-          if(!menuVisible()) controls.lock();
-      });
-      controls.addEventListener('lock', ()=>console.log("PointerLock aktiviert"));
-      controls.addEventListener('unlock', ()=>console.log("PointerLock deaktiviert"));
+
+      const lockHandler = ()=>{
+          if(!menuVisible()){
+              controls.lock();
+          }
+      };
+
+      document.body.addEventListener('click', lockHandler);
+      canvas.addEventListener('click', lockHandler);
+
+      controls.addEventListener('lock', ()=>console.log("🔒 PointerLock aktiviert"));
+      controls.addEventListener('unlock', ()=>console.log("🔓 PointerLock deaktiviert"));
   }
-  function menuVisible(){ return menu.style.display!=='none' || briefing.style.display!=='none'; }
+
+  function menuVisible(){ 
+      return menu.style.display!=='none' || briefing.style.display!=='none'; 
+  }
 
   // ==========================
   // 3. Klassenauswahl Buttons
@@ -88,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
               briefing.style.display = 'none';
               hud.style.display = 'block';
               startGame(selectedClass);
-              initPointerLock();
           });
       });
   });
@@ -107,8 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
           abilityObj:null,
           mesh:null
       };
-      initScene();
-      initPlayer();
+
+      initScene();         // Szene & Kamera erstellen
+      initPointerLock();   // Jetzt PointerLock, weil Kamera existiert
+      initPlayer();        // Spieler, Waffen, Gegner usw.
       animate();
   }
 
@@ -170,6 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 7. Player Bewegung
   // ==========================
   function playerMovement(delta){
+      if(!controls) return;
+
       const speed = 5 * player.speed;
       const direction = new THREE.Vector3();
       direction.z = Number(move.backward)-Number(move.forward);
@@ -247,8 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
           case 'KeyS': move.backward=true; break;
           case 'KeyD': move.right=true; break;
           case 'Space': if(player.canJump){player.velocity.y+=5;player.canJump=false;} break;
-          case 'KeyR': player.weapon.reload(); break;
-          case 'KeyF': player.abilityObj.use(enemies); break;
+          case 'KeyR': player.weapon?.reload(); break;
+          case 'KeyF': player.abilityObj?.use(enemies); break;
       }
   });
   document.addEventListener('keyup', e=>{
@@ -265,10 +279,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================
   document.addEventListener('mousedown', e=>{
       if(controls?.isLocked && e.button===0){
-          player.weapon.shoot(enemies);
-          audioManager.play('shoot');
+          player.weapon?.shoot(enemies);
+          audioManager?.play('shoot');
       }
   });
 
-  console.log("Breacher Bros FPS ready! Wähle zuerst eine Klasse im Menü.");
+  console.log("✅ Breacher Bros FPS ready! Wähle zuerst eine Klasse im Menü.");
 });
