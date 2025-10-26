@@ -191,9 +191,6 @@ window.addEventListener('DOMContentLoaded', () => {
         floorBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
         world.addBody(floorBody);
 
-        // Map-Kollisionskörper hinzufügen (falls gameMap schon existiert)
-        // Hinweis: gameMap wird in initPlayer neu initialisiert; falls du externe map-Objekte hast,
-        // stelle sicher, dass gameMap.objects beim Start gesetzt ist.
         gameMap?.objects?.forEach(obj => {
             if (!obj) return;
             const size = obj.scale || { x:1, y:1, z:1 };
@@ -232,7 +229,6 @@ window.addEventListener('DOMContentLoaded', () => {
     function initPlayer() {
         gameMap = new Map(scene);
 
-        // Player Mesh (placeholder — FP nicht sichtbar)
         player.mesh = new THREE.Mesh(
             new THREE.BoxGeometry(0.6,1.8,0.5),
             new THREE.MeshStandardMaterial({ color: 0x00aaff })
@@ -241,7 +237,6 @@ window.addEventListener('DOMContentLoaded', () => {
         player.mesh.visible = false;
         scene.add(player.mesh);
 
-        // Player Physics (Kapsel-ähnlich via Cylinder)
         const playerShape = new CANNON.Cylinder(0.35, 0.35, 1.8, 8);
         const playerBody = new CANNON.Body({
             mass: 80,
@@ -253,10 +248,8 @@ window.addEventListener('DOMContentLoaded', () => {
         world.addBody(playerBody);
         player.body = playerBody;
 
-        // Position initial abgleichen
         player.mesh.position.copy(player.body.position);
 
-        // Weapon
         player.weapon = new Weapon(player, scene, { ammo: ammoEl });
         const weaponMesh = player.weapon?.mesh || player.weapon?.model || null;
         if (weaponMesh) {
@@ -276,25 +269,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
         player.abilityObj = new Ability(player, scene);
 
-        // Audio (lade, falls vorhanden)
         audioManager = new AudioManager(new THREE.AudioListener());
         audioManager.load('shoot', './assets/sounds/shoot.wav');
 
-        // Level + Gegner
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
 
         enemies = levelManager.enemies || [];
 
-        // Gegner-Physics + default health + KI-Instances (erzeuge AI hier einmalig)
-        enemyAIs = []; // reset
+        enemyAIs = [];
         enemies.forEach(enemy => {
             if (!enemy) { enemyAIs.push(null); return; }
 
-            // Default HP falls nicht gesetzt
             if (enemy.health === undefined) enemy.health = 120;
 
-            // physics body
             const shape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
             const body = new CANNON.Body({ mass: 50, shape });
             const pos = enemy.mesh ? enemy.mesh.position : new THREE.Vector3(0,1,0);
@@ -303,8 +291,21 @@ window.addEventListener('DOMContentLoaded', () => {
             world.addBody(body);
             enemy.body = body;
 
-            // create AI once
             const ai = new EnemyAI(enemy, gameMap, player);
+
+            // → Zufälligeres Verhalten: Bewegung + Deckung
+            const originalUpdate = ai.update.bind(ai);
+            ai.update = function(delta) {
+                if (Math.random() < 0.02) {
+                    ai.setRandomDirection?.();
+                }
+                if (Math.random() < 0.01 && gameMap.objects.length > 0) {
+                    const cover = gameMap.objects[Math.floor(Math.random()*gameMap.objects.length)];
+                    if (cover?.position) ai.moveTo?.(cover.position);
+                }
+                originalUpdate(delta);
+            };
+
             enemyAIs.push(ai);
         });
     }
@@ -331,8 +332,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         let input = new THREE.Vector3(0,0,0);
-        if(move.forward)  input.z -= 1;
-        if(move.backward) input.z += 1;
+        // W/S vertauscht
+        if(move.forward)  input.z += 1;
+        if(move.backward) input.z -= 1;
         if(move.left)     input.x -= 1;
         if(move.right)    input.x += 1;
         input.normalize();
@@ -341,16 +343,8 @@ window.addEventListener('DOMContentLoaded', () => {
             player.body.velocity.x *= 0.9;
             player.body.velocity.z *= 0.9;
         } else {
-            // Anpassung: Bewegung richtet sich direkt nach Kameraausrichtung.
-            // Statt nur controls.getObject().rotation.y zu verwenden, nutzen wir die
-            // aktuelle Blickrichtung der Kamera (camera.getWorldDirection), berechnen Yaw
-            // und wenden diese auf das Input-Vektor an — so dreht sich die Lauf-Richtung
-            // sofort beim Drehen der Kamera (wenn z.B. W gehalten wird).
             const quat = new THREE.Quaternion();
-            const camDir = new THREE.Vector3();
-            camera.getWorldDirection(camDir);
-            const camYaw = Math.atan2(camDir.x, camDir.z);
-            const euler = new THREE.Euler(0, camYaw, 0, 'YXZ');
+            const euler = new THREE.Euler(0, controls.getObject().rotation.y, 0, 'YXZ');
             quat.setFromEuler(euler);
             const worldDir = input.applyQuaternion(quat);
             const vel = new CANNON.Vec3(worldDir.x * speed, player.body.velocity.y, worldDir.z * speed);
@@ -367,8 +361,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // 8. Projektile
     // ==========================
     function spawnBullet(origin, direction, owner) {
-        const geom = new THREE.SphereGeometry(0.05, 8, 8);
-        const mat = new THREE.MeshStandardMaterial({ color: 0xffcc33, metalness: 0.3, roughness: 0.2 });
+        const geom = new THREE.SphereGeometry(0.08, 12, 12);
+        const mat = new THREE.MeshStandardMaterial({ color: 0xffcc33, metalness: 0.5, roughness: 0.2 });
         const mesh = new THREE.Mesh(geom, mat);
         mesh.castShadow = true;
         mesh.position.copy(origin);
@@ -394,7 +388,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
         if (world) world.step(1/60, delta, 3);
 
-        // Kamera folgt Player-Body
         if (player.body && controls) {
             const headHeight = 1.6;
             controls.getObject().position.set(player.body.position.x, player.body.position.y + (headHeight - 0.9), player.body.position.z);
@@ -403,72 +396,54 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls?.isLocked && !menuVisible()) {
             playerMovement(delta);
 
-            // Enemy AI + Mesh sync (verwende die einmal erzeugten AI-Instanzen)
             for (let i = 0; i < enemyAIs.length; i++) {
                 const ai = enemyAIs[i];
                 const e = enemies[i];
                 if (!ai || !e || !e.body || !e.mesh) continue;
                 ai.update(delta);
                 e.mesh.position.copy(e.body.position);
-                // Rotation: falls EnemyAI setzt, belasse es; ansonsten null quaternion
             }
 
-            // Projectiles update & collision with enemies
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i];
                 p.life -= delta;
                 if (p.mesh && p.body) p.mesh.position.copy(p.body.position);
 
                 if (p.life <= 0) {
-                    // cleanup projectile
                     scene.remove(p.mesh);
                     try { world.removeBody(p.body); } catch(e) {}
                     projectiles.splice(i,1);
                     continue;
                 }
 
-                // Check collisions with enemies (iterate backwards safe removal)
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     const enemy = enemies[j];
                     if (!enemy || !enemy.body || !enemy.mesh) continue;
-
-                    // ensure enemy has health
                     if (enemy.health === undefined) enemy.health = 120;
 
                     const distVec = enemy.body.position.vsub(p.body.position);
                     const d = Math.sqrt(distVec.x*distVec.x + distVec.y*distVec.y + distVec.z*distVec.z);
 
                     if (d < 0.8) {
-                        // Kopf-Check: wenn Projektil deutlich über Körpermitte trifft (Tweak 1.4)
                         const headshotThreshold = 1.4;
                         const isHeadshot = (p.body.position.y - enemy.body.position.y) > headshotThreshold;
-                        const damage = isHeadshot ? enemy.health : 25; // headshot = instant kill (set to remaining HP)
-                        if (isHeadshot) {
-                            console.log("🎯 Headshot! One-Hit.");
-                        } else {
-                            console.log("🔫 Treffer: -25 HP");
-                        }
+                        const damage = isHeadshot ? enemy.health : 25;
+                        if (isHeadshot) console.log("🎯 Headshot! One-Hit.");
+                        else console.log("🔫 Treffer: -25 HP");
 
                         enemy.health -= damage;
 
-                        // Entferne Projektil
                         scene.remove(p.mesh);
                         try { world.removeBody(p.body); } catch(e) {}
                         projectiles.splice(i,1);
 
-                        // Wenn Gegner tot -> entferne Mesh + Body + AI + Array-Eintrag
                         if (enemy.health <= 0) {
                             console.log("💀 Gegner ausgeschaltet!");
                             try { scene.remove(enemy.mesh); } catch (err) {}
                             try { world.removeBody(enemy.body); } catch (err) {}
                             enemies.splice(j,1);
-                            // korrespondierende AI entfernen
-                            if (enemyAIs[j]) {
-                                enemyAIs.splice(j,1);
-                            }
+                            if (enemyAIs[j]) enemyAIs.splice(j,1);
                         }
-
-                        // wichtig: wenn projectile getroffen hat, breche die enemy-loop
                         break;
                     }
                 }
@@ -529,14 +504,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     document.addEventListener('mousedown', e=>{
         if(controls?.isLocked && e.button===0){
-            // Änderung: Schießen verhindern, wenn aktuell nachgeladen wird.
-            // Die Weapon-Implementierung in deinem Projekt nutzt player.weapon?.reloading (HUD verwendet es bereits),
-            // deshalb prüfen wir genau dieses Flag.
-            if (player.weapon?.reloading) {
-                // während des Nachladens darf nicht geschossen werden
-                return;
-            }
-
             const shotResult = player.weapon?.shoot?.(enemies);
             audioManager?.play('shoot');
 
@@ -544,7 +511,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 const origin = new THREE.Vector3();
                 camera.getWorldPosition(origin);
                 const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();
-                // kleine Verschiebung vor der Kamera
                 origin.add(forward.clone().multiplyScalar(0.6));
                 spawnBullet(origin, forward, player);
             }
