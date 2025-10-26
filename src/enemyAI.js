@@ -1,65 +1,54 @@
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
-
+import * as THREE from 'three';
 
 export class EnemyAI {
     constructor(enemy, map, player) {
         this.enemy = enemy;
         this.map = map;
         this.player = player;
-        this.state = "seek"; // "seek" | "cover" | "attack"
-        this.targetCover = null;
-        this.attackCooldown = 0;
+        this.speed = 2.5;
+        this.attackRange = 2.0;
     }
 
     update(delta) {
-        const playerPos = this.player.position;
-        const dir = new THREE.Vector3().subVectors(playerPos, this.enemy.mesh.position);
-        const dist = dir.length();
+        if (!this.enemy || !this.enemy.body || !this.enemy.mesh) return;
+        if (!this.player || !this.player.body) return;
 
-        // Attack oder Cover
-        if(dist < 10){
-            if(Math.random()<0.3){
-                this.state = "cover";
-                this.targetCover = this.findNearestCover();
-            }else{
-                this.state = "attack";
-            }
-        }else{
-            this.state = "seek";
+        const enemyPos = this.enemy.body.position;
+        const playerPos = this.player.body.position;
+
+        if (!enemyPos || !playerPos) return;
+
+        // Richtung zum Spieler berechnen
+        const direction = new THREE.Vector3(
+            playerPos.x - enemyPos.x,
+            playerPos.y - enemyPos.y,
+            playerPos.z - enemyPos.z
+        );
+
+        const distance = direction.length();
+
+        if (distance > this.attackRange) {
+            direction.normalize();
+            this.enemy.body.velocity.x = direction.x * this.speed;
+            this.enemy.body.velocity.z = direction.z * this.speed;
+        } else {
+            // im Nahkampf oder stoppen
+            this.enemy.body.velocity.x = 0;
+            this.enemy.body.velocity.z = 0;
         }
 
-        switch(this.state){
-            case "seek":
-                dir.normalize();
-                this.enemy.mesh.position.add(dir.multiplyScalar(2*delta));
-                break;
-            case "cover":
-                if(this.targetCover){
-                    const coverDir = new THREE.Vector3().subVectors(this.targetCover.position,this.enemy.mesh.position);
-                    if(coverDir.length()>0.5){
-                        coverDir.normalize();
-                        this.enemy.mesh.position.add(coverDir.multiplyScalar(2*delta));
-                    }
-                }
-                break;
-            case "attack":
-                if(this.attackCooldown <= 0){
-                    this.player.health -= 5; // Schaden
-                    this.attackCooldown = 2;
-                }
-                break;
+        // Optional: Gegner drehen, damit er "schaut"
+        if (distance > 0) {
+            const quaternion = new THREE.Quaternion();
+            quaternion.setFromRotationMatrix(
+                new THREE.Matrix4().lookAt(
+                    new THREE.Vector3(enemyPos.x, enemyPos.y, enemyPos.z),
+                    new THREE.Vector3(playerPos.x, enemyPos.y, playerPos.z),
+                    new THREE.Vector3(0,1,0)
+                )
+            );
+            this.enemy.mesh.quaternion.copy(quaternion);
         }
-
-        if(this.attackCooldown>0) this.attackCooldown -= delta;
-    }
-
-    findNearestCover(){
-        let nearest = null;
-        let minDist = Infinity;
-        this.map.cover.forEach(c=>{
-            const d = this.enemy.mesh.position.distanceTo(c.position);
-            if(d<minDist){ nearest = c; minDist=d; }
-        });
-        return nearest;
     }
 }
+
