@@ -8,28 +8,24 @@
 </head>
 <body>
   <!-- =========  SPIELMENÜ  ========= -->
-  <div id="menu">
-    <h2>Klassenwahl</h2>
-    <button class="class-btn" data-class="Stürmer">Stürmer</button>
-    <button class="class-btn" data-class="Verteidiger">Verteidiger</button>
-    <button class="class-btn" data-class="Sanitäter">Sanitäter</button>
-    <button class="class-btn" data-class="Techniker">Techniker</button>
-    <button class="class-btn" data-class="Späher">Späher</button>
-  </div>
+<div id="menu">
+  <button class="class-btn" data-class="Stürmer">Stürmer</button>
+  <button class="class-btn" data-class="Verteidiger">Verteidiger</button>
+  <button class="class-btn" data-class="Sanitäter">Sanitäter</button>
+  <button class="class-btn" data-class="Techniker">Techniker</button>
+  <button class="class-btn" data-class="Späher">Späher</button>
+</div>
 
-  <!-- =========  BRIEFING  ========= -->
-  <div id="briefing" style="display:none;"></div>
+<div id="briefing" style="display:none;"></div>
+<div id="hud" style="display:none;">
+  <div id="health"></div>
+  <div id="ammo"></div>
+  <div id="ability"></div>
+  <div id="level"></div>
+</div>
 
-  <!-- =========  HUD  ========= -->
-  <div id="hud" style="display:none;">
-    <div id="health">Leben : 100</div>
-    <div id="ammo">Munition : 0/0</div>
-    <div id="ability">Fähigkeit : –</div>
-    <div id="level">Level : 1</div>
-  </div>
+<canvas id="gameCanvas"></canvas>
 
-  <!-- =========  CANVAS  ========= -->
-  <canvas id="gameCanvas"></canvas>
 
   <!-- =========  SCRIPT ========= -->
   <script type="module" src="./src/main.js"></script>
