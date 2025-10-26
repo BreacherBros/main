@@ -40,6 +40,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let prevTime = performance.now();
     let projectiles = [];
     let enemies = [];
+    let enemyAIs = [];
     let levelManager;
     let gameMap;
     let audioManager;
@@ -152,7 +153,6 @@ window.addEventListener('DOMContentLoaded', () => {
         renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        // PhysicallyCorrectLights & useLegacyLights entfernt
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
@@ -254,6 +254,8 @@ window.addEventListener('DOMContentLoaded', () => {
         levelManager.startLevel();
 
         enemies = levelManager.enemies || [];
+        enemyAIs = enemies.map(e => e ? new EnemyAI(e, gameMap, player) : null);
+
         enemies.forEach(enemy => {
             if (!enemy) return;
             const shape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
@@ -338,12 +340,11 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls?.isLocked && !menuVisible()) {
             playerMovement(delta);
 
-            enemies.forEach(e=>{
-                if (!e || !e.body || !e.mesh) return;
-                const ai = new EnemyAI(e, gameMap, player);
+            enemyAIs.forEach((ai, idx)=>{
+                const enemy = enemies[idx];
+                if (!ai || !enemy || !enemy.body || !enemy.mesh) return;
                 ai.update(delta);
-                e.mesh.position.copy(e.body.position);
-                e.mesh.quaternion.copy(new THREE.Quaternion());
+                enemy.mesh.position.copy(enemy.body.position);
             });
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
