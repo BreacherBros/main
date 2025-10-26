@@ -1,10 +1,5 @@
+import { Euler, EventDispatcher, Vector3 } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
-
-import {
-	Euler,
-	EventDispatcher,
-	Vector3
-
 
 
 const _euler = new Euler( 0, 0, 0, 'YXZ' );
