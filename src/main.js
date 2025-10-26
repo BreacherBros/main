@@ -1,5 +1,5 @@
 // ============================================================
-// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT)
+// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT + KOLLISIONEN)
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
@@ -184,10 +184,22 @@ window.addEventListener('DOMContentLoaded', () => {
         world.gravity.set(0, -9.82, 0);
         world.solver.iterations = 10;
 
+        // Boden
         const floorShape = new CANNON.Plane();
         const floorBody = new CANNON.Body({ mass: 0, shape: floorShape });
         floorBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
         world.addBody(floorBody);
+
+        // Map-Kollisionskörper hinzufügen
+        gameMap?.objects?.forEach(obj => {
+            if (!obj) return;
+            const size = obj.scale || { x:1, y:1, z:1 };
+            const shape = new CANNON.Box(new CANNON.Vec3(size.x/2, size.y/2, size.z/2));
+            const body = new CANNON.Body({ mass: 0, shape });
+            body.position.set(obj.position.x, obj.position.y, obj.position.z);
+            world.addBody(body);
+            obj.body = body;
+        });
     }
 
     // ==========================
@@ -277,14 +289,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================
-    // 7. Player Movement mit Sprint
+    // 7. Player Movement mit Sprint + Kollisions-Logik
     // ==========================
     function playerMovement(delta) {
         if (!player.body) return;
 
         let speed = 5 * player.speed * SPEED_MULTIPLIER;
 
-        // Sprint
         if(sprinting && sprintCooldownTimer <= 0) {
             speed *= SPRINT_MULTIPLIER;
             sprintTimer += delta;
@@ -313,18 +324,18 @@ window.addEventListener('DOMContentLoaded', () => {
             const euler = new THREE.Euler(0, controls.getObject().rotation.y, 0, 'YXZ');
             quat.setFromEuler(euler);
             const worldDir = input.applyQuaternion(quat);
-            player.body.velocity.x = worldDir.x * speed;
-            player.body.velocity.z = worldDir.z * speed;
+            const vel = new CANNON.Vec3(worldDir.x * speed, player.body.velocity.y, worldDir.z * speed);
+            player.body.velocity.copy(vel);
         }
 
         const onGround = Math.abs(player.body.position.y - 1.0) < 0.6;
         if(move.jump && onGround) player.body.velocity.y = 8;
 
-        if(player.mesh) player.mesh.position.copy(player.body.position);
+        player.mesh.position.copy(player.body.position);
     }
 
     // ==========================
-    // 8. Projektile (Fallback sichtbar)
+    // 8. Projektile
     // ==========================
     function spawnBullet(origin, direction, owner) {
         const geom = new THREE.SphereGeometry(0.05, 8, 8);
