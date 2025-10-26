@@ -341,8 +341,16 @@ window.addEventListener('DOMContentLoaded', () => {
             player.body.velocity.x *= 0.9;
             player.body.velocity.z *= 0.9;
         } else {
+            // Anpassung: Bewegung richtet sich direkt nach Kameraausrichtung.
+            // Statt nur controls.getObject().rotation.y zu verwenden, nutzen wir die
+            // aktuelle Blickrichtung der Kamera (camera.getWorldDirection), berechnen Yaw
+            // und wenden diese auf das Input-Vektor an — so dreht sich die Lauf-Richtung
+            // sofort beim Drehen der Kamera (wenn z.B. W gehalten wird).
             const quat = new THREE.Quaternion();
-            const euler = new THREE.Euler(0, controls.getObject().rotation.y, 0, 'YXZ');
+            const camDir = new THREE.Vector3();
+            camera.getWorldDirection(camDir);
+            const camYaw = Math.atan2(camDir.x, camDir.z);
+            const euler = new THREE.Euler(0, camYaw, 0, 'YXZ');
             quat.setFromEuler(euler);
             const worldDir = input.applyQuaternion(quat);
             const vel = new CANNON.Vec3(worldDir.x * speed, player.body.velocity.y, worldDir.z * speed);
@@ -521,6 +529,14 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     document.addEventListener('mousedown', e=>{
         if(controls?.isLocked && e.button===0){
+            // Änderung: Schießen verhindern, wenn aktuell nachgeladen wird.
+            // Die Weapon-Implementierung in deinem Projekt nutzt player.weapon?.reloading (HUD verwendet es bereits),
+            // deshalb prüfen wir genau dieses Flag.
+            if (player.weapon?.reloading) {
+                // während des Nachladens darf nicht geschossen werden
+                return;
+            }
+
             const shotResult = player.weapon?.shoot?.(enemies);
             audioManager?.play('shoot');
 
