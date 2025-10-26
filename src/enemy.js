@@ -1,7 +1,9 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
 
 
+
 export class Enemy {
+    
     constructor(scene, position) {
         this.mesh = new THREE.Mesh(
             new THREE.BoxGeometry(1, 2, 1),
