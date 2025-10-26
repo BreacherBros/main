@@ -1,12 +1,16 @@
 // ============================================================
-// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX)
+// BREACHER BROS — 3D FPS BROWSERGAME (FPV-MODELLE, PHYSICS, ANIMATION)
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
-window.THREE = THREE; // Safari braucht manchmal globale THREE
+window.THREE = THREE; // Safari: globaler THREE-Workaround
 
 import { PointerLockControls } from './PointerLockControls.js';
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
+
+// GLTF Loader für Modelle + (optional) RGBELoader für HDR
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/GLTFLoader.js';
+// import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/RGBELoader.js';
 
 import { Weapon } from './weapons.js';
 import { Enemy } from './enemy.js';
@@ -46,12 +50,13 @@ window.addEventListener('DOMContentLoaded', () => {
     let audioManager;
     let controls;
     let world; // Physics World
+    let mixers = []; // AnimationMixers (Arms, Enemies, etc.)
 
     // kleine Geschwindigkeitsanpassung (1.0 = default, >1 = schneller)
     const SPEED_MULTIPLIER = 1.15;
 
     // Projektil-Parameter
-    const BULLET_SPEED = 60; // initialgeschwindigkeit der Kugeln
+    const BULLET_SPEED = 70; // initialgeschwindigkeit der Kugeln
     const BULLET_LIFETIME = 4.0; // Sekunden bis zur Entsorgung
 
     // ==========================
@@ -123,7 +128,8 @@ window.addEventListener('DOMContentLoaded', () => {
             abilityObj: null,
             mesh: null,
             body: null,
-            canJump: false
+            canJump: false,
+            mixer: null,
         };
 
         initScene();
@@ -141,7 +147,7 @@ window.addEventListener('DOMContentLoaded', () => {
         scene.background = new THREE.Color(0x101010);
 
         camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        // nicht fest setzen — Kamera wird an Player-Body gebunden
+        // Kamera sitzt in den Controls (First Person). Initial Position wird in animate an Player gebunden.
         camera.position.set(0, 1.6, 0);
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
@@ -157,23 +163,29 @@ window.addEventListener('DOMContentLoaded', () => {
         renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        renderer.physicallyCorrectLights = true;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.outputEncoding = THREE.sRGBEncoding;
+
+        // Neuer API (Three r155+)
+        // remove old properties - use recommended replacements
+        try {
+          renderer.useLegacyLights = false; // ersetzt physicallyCorrectLights
+          renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          renderer.outputColorSpace = THREE.SRGBColorSpace; // ersetzt outputEncoding
+        } catch (e) {
+          // In älteren Three-Versionen diese props fehlen eventuell
+          console.warn("Renderer property set failed:", e);
+        }
 
         window.addEventListener('resize', onWindowResize);
 
         // Boden-Mesh (PBR-ready)
-        const geometry = new THREE.PlaneGeometry(100, 100);
+        const geometry = new THREE.PlaneGeometry(200, 200);
         const material = new THREE.MeshStandardMaterial({ color: 0x333333 });
         floor = new THREE.Mesh(geometry, material);
         floor.rotation.x = -Math.PI / 2;
         floor.receiveShadow = true;
         scene.add(floor);
 
-        // Hinweis: für wirklich hochwertige Grafik lade HDR-Environment & hochwertige GLTF-Modelle.
-        // Beispiel (auskommentiert — benötigt RGBELoader + HDR file):
-        // import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/loaders/RGBELoader.js';
+        // Optional: HDRI-Umgebung (auskommentiert)
         // const pmremGen = new THREE.PMREMGenerator(renderer);
         // new RGBELoader().load('assets/hdr/studio_small_03_4k.hdr', (tex) => {
         //    const env = pmremGen.fromEquirectangular(tex).texture;
@@ -197,11 +209,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================
-    // 5. PointerLock
+    // 5. PointerLock (erst nach Scene + Camera)
     // ==========================
     function initPointerLock() {
         controls = new PointerLockControls(camera, document.body);
-        scene.add(controls.getObject());
+        scene.add(controls.getObject()); // Controls setzen (Camera ist intern referenziert)
 
         const lockHandler = () => {
             if (!menuVisible()) controls.lock();
@@ -218,21 +230,59 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================
-    // 6. Player + Gegner
+    // 6. Player + Gegner (Modelle + Physik + Animation)
     // ==========================
     function initPlayer() {
         gameMap = new Map(scene);
+        const loader = new GLTFLoader();
 
-        // Player Mesh (placeholder — ersetzen durch GLTF-Charakter für realistischen Look)
+        // --- Player FirstPerson-Arms (GLTF) ---
+        loader.load(
+            './assets/models/arms.glb',
+            (gltf) => {
+                const arms = gltf.scene;
+                // arms usually contain skinned meshes and animations (Idle/Fire)
+                arms.traverse(obj=>{
+                    if(obj.isMesh){
+                        obj.castShadow = true;
+                        obj.frustumCulled = false;
+                    }
+                });
+                // Attach arms to camera so they move with camera rotation
+                camera.add(arms);
+                arms.position.set(0.05, -0.35, -0.45); // tweak for correct FP placement
+                arms.rotation.set(0, 0, 0);
+                player.armModel = arms;
+
+                // Animation mixer for arms
+                if (gltf.animations && gltf.animations.length > 0) {
+                    const mixer = new THREE.AnimationMixer(arms);
+                    mixers.push(mixer);
+                    player.mixer = mixer;
+                    // play first animation (often "Idle")
+                    const idle = mixer.clipAction(gltf.animations[0]);
+                    idle.play();
+                    // store fire clip if exists (gltf.animations[1] maybe)
+                    player.armFireClip = gltf.animations[1] || null;
+                }
+            },
+            undefined,
+            (err) => {
+                console.warn('Arms model load failed — using fallback weapon mesh.', err);
+                // fallback handled below via weapon fallback
+            }
+        );
+
+        // --- Player placeholder mesh (invisible in FP, useful for collisions/3rd-person) ---
         player.mesh = new THREE.Mesh(
             new THREE.BoxGeometry(0.6,1.8,0.5),
             new THREE.MeshStandardMaterial({ color: 0x00aaff })
         );
         player.mesh.castShadow = true;
-        player.mesh.visible = false; // in FP normalerweise nicht sichtbar; setze true für debug
+        player.mesh.visible = false; // FP -> hide body
         scene.add(player.mesh);
 
-        // Player Physics (Kapsel-ähnlich via Cylinder)
+        // --- Player Physics Body (capsule-like using cylinder) ---
         const playerShape = new CANNON.Cylinder(0.35, 0.35, 1.8, 8);
         const playerBody = new CANNON.Body({
             mass: 80,
@@ -240,57 +290,114 @@ window.addEventListener('DOMContentLoaded', () => {
             position: new CANNON.Vec3(0, 2, 0),
             fixedRotation: true
         });
-        // optional: etwas Dämpfung
         playerBody.linearDamping = 0.1;
         world.addBody(playerBody);
         player.body = playerBody;
 
-        // Position initial abgleichen
-        player.mesh.position.copy(player.body.position);
-
-        // Weapon
+        // --- Weapon (try use Weapon class mesh, else load weapon model or fallback) ---
         player.weapon = new Weapon(player, scene, { ammo: ammoEl });
-        // Falls Weapon eine mesh-Eigenschaft hat, parenten wir sie an die Kamera (FirstPerson)
-        // Viele Implementationen nennen es "mesh" oder "model" — wir prüfen beides.
+
+        // if Weapon supplies a mesh/model property, attach it to camera (so visible in FP)
         const weaponMesh = player.weapon?.mesh || player.weapon?.model || null;
         if (weaponMesh) {
-            // mache die Waffe zur Kamera-Child, damit sie immer in Sicht bleibt
             camera.add(weaponMesh);
-            // relative Position (leicht rechts/unten vor der Kamera)
-            weaponMesh.position.set(0.25, -0.35, -0.6);
+            weaponMesh.position.set(0.22, -0.35, -0.55);
             weaponMesh.rotation.set(0, 0, 0);
             weaponMesh.castShadow = true;
+            player.weaponMesh = weaponMesh;
         } else {
-            // Fallback-Gun anzeigen (falls Weapon-Klasse keine Mesh erzeugt)
-            const gunGeom = new THREE.BoxGeometry(0.1,0.06,0.5);
-            const gunMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.4 });
-            const gunMesh = new THREE.Mesh(gunGeom, gunMat);
-            gunMesh.position.set(0.25, -0.35, -0.6);
-            gunMesh.castShadow = true;
-            camera.add(gunMesh);
-            // Minimal-API für Weapon: set weapon.fallbackMesh falls nötig
-            player.weapon.fallbackMesh = gunMesh;
+            // try load a weapon GLTF and parent to camera
+            loader.load(
+                './assets/models/weapon.glb',
+                (gltf) => {
+                    const weap = gltf.scene;
+                    weap.traverse(o=>{ if(o.isMesh){ o.castShadow=true; }});
+                    camera.add(weap);
+                    weap.position.set(0.22, -0.35, -0.55);
+                    weap.rotation.set(0,0,0);
+                    player.weaponMesh = weap;
+                    // optional animation mixer for weapon (recoil)
+                    if (gltf.animations && gltf.animations.length) {
+                        const wm = new THREE.AnimationMixer(weap);
+                        mixers.push(wm);
+                        player.weaponMixer = wm;
+                        // don't auto-play recoil
+                    }
+                },
+                undefined,
+                (err) => {
+                    // fallback simple gun
+                    const gunGeom = new THREE.BoxGeometry(0.12,0.07,0.5);
+                    const gunMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7, roughness: 0.3 });
+                    const gunMesh = new THREE.Mesh(gunGeom, gunMat);
+                    gunMesh.position.set(0.22, -0.35, -0.55);
+                    gunMesh.castShadow = true;
+                    camera.add(gunMesh);
+                    player.weaponMesh = gunMesh;
+                    player.weapon.fallbackMesh = gunMesh;
+                }
+            );
         }
 
+        // Abilities & Audio
         player.abilityObj = new Ability(player, scene);
-
         audioManager = new AudioManager(new THREE.AudioListener());
-        audioManager.load('shoot', './assets/sounds/shoot.wav');
+        // try loading shoot sound but don't crash if missing
+        try {
+            audioManager.load('shoot', './assets/sounds/shoot.wav');
+        } catch (e) {
+            console.warn("shoot.wav load failed (will continue without sound).", e);
+        }
 
+        // Levels & enemies
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
 
-        // Gegner: falls levelManager.enemies bereits gefüllt ist, physik bodies anlegen
         enemies = levelManager.enemies || [];
-        enemies.forEach(enemy => {
-            // falls enemy.mesh existiert, setzen wir physik-box auf die mesh-position
+
+        // load enemy models (GLTF) and create phys bodies; play idle animation if present
+        enemies.forEach((enemy, idx) => {
+            // spawn positions — if enemy.mesh exists from levelManager, use pos; else random
+            const pos = (enemy.mesh && enemy.mesh.position) ? enemy.mesh.position.clone() : new THREE.Vector3(Math.random()*6-3,0,Math.random()*6-3);
             const shape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
             const body = new CANNON.Body({ mass: 50, shape });
-            const pos = enemy.mesh ? enemy.mesh.position : new THREE.Vector3(0,1,0);
-            body.position.set(pos.x, pos.y, pos.z);
+            body.position.set(pos.x, pos.y+1, pos.z);
             body.linearDamping = 0.9;
             world.addBody(body);
             enemy.body = body;
+
+            // load model
+            loader.load(
+                './assets/models/enemy.glb',
+                (gltf) => {
+                    const model = gltf.scene.clone();
+                    model.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; }});
+                    model.position.set(pos.x, pos.y, pos.z);
+                    scene.add(model);
+                    enemy.mesh = model;
+
+                    // animation mixer for enemy
+                    if (gltf.animations && gltf.animations.length) {
+                        const mixer = new THREE.AnimationMixer(model);
+                        mixers.push(mixer);
+                        enemy.mixer = mixer;
+                        // try play idle anim
+                        const idle = mixer.clipAction(gltf.animations[0]);
+                        idle.play();
+                        // store walk/attack if available
+                        enemy.animations = gltf.animations;
+                    }
+                },
+                undefined,
+                (err) => {
+                    console.warn("Enemy model failed to load; using box fallback.", err);
+                    const fallback = new THREE.Mesh(new THREE.BoxGeometry(0.8,1.8,0.6), new THREE.MeshStandardMaterial({ color: 0x884444 }));
+                    fallback.position.set(pos.x, pos.y, pos.z);
+                    fallback.castShadow = true;
+                    scene.add(fallback);
+                    enemy.mesh = fallback;
+                }
+            );
         });
     }
 
@@ -313,15 +420,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Wenn kein Input -> langsames Abbremsen (nicht Autorun)
         if (input.length() === 0) {
-            // optional: nicht abrupt stoppen, sondern dämpfen
             player.body.velocity.x *= 0.9;
             player.body.velocity.z *= 0.9;
         } else {
-            // Rotate input according to camera yaw
-            const quat = new THREE.Quaternion();
-            // Nutze nur yaw (y-Rotation) der Kamera
-            const euler = new THREE.Euler(0, controls.getObject().rotation.y, 0, 'YXZ');
-            quat.setFromEuler(euler);
+            // Rotate input according to camera yaw (use controls rotation)
+            // controls.getObject().rotation.y is used by PointerLockControls to track yaw/pitch
+            const yaw = controls.getObject().rotation.y;
+            const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0, 'YXZ'));
             const worldDir = input.applyQuaternion(quat);
 
             // Setze horizontale velocity (Y bleibt durch Physics)
@@ -330,34 +435,33 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         // Springen: setze Y-Velocity, nur wenn auf dem Boden (vereinfachte Bodenprüfung)
-        // Hier prüfen wir, ob die Spieler-Body nahe am Boden ist
-        const onGround = Math.abs(player.body.position.y - 1.0) < 0.6; // grobe Prüfung
+        const onGround = Math.abs(player.body.position.y - 1.0) < 0.7;
         if (move.jump && onGround) {
             player.body.velocity.y = 8;
         }
 
-        // Sync mesh (falls du 3rd person nutzen willst)
+        // Sync mesh (falls 3rd person)
         if (player.mesh) player.mesh.position.copy(player.body.position);
     }
 
     // ==========================
-    // 8. Projektile (Fallback sichtbar)
+    // 8. Projektile (sichtbar + physisch)
     // ==========================
     function spawnBullet(origin, direction, owner) {
         // Three.js Mesh
-        const geom = new THREE.SphereGeometry(0.05, 8, 8);
-        const mat = new THREE.MeshStandardMaterial({ color: 0xffcc33, metalness: 0.3, roughness: 0.2 });
+        const geom = new THREE.SphereGeometry(0.04, 8, 8);
+        const mat = new THREE.MeshStandardMaterial({ color: 0xffcc33, metalness: 0.2, roughness: 0.2 });
         const mesh = new THREE.Mesh(geom, mat);
         mesh.castShadow = true;
         mesh.position.copy(origin);
         scene.add(mesh);
 
         // Cannon Body
-        const shape = new CANNON.Sphere(0.05);
+        const shape = new CANNON.Sphere(0.04);
         const body = new CANNON.Body({ mass: 0.2, shape });
         body.position.set(origin.x, origin.y, origin.z);
-        // set initial velocity
         body.velocity.set(direction.x * BULLET_SPEED, direction.y * BULLET_SPEED, direction.z * BULLET_SPEED);
+        body.linearDamping = 0;
         world.addBody(body);
 
         const proj = {
@@ -386,23 +490,40 @@ window.addEventListener('DOMContentLoaded', () => {
             // position the controls' object (camera parent) at player's head height
             const headHeight = 1.6; // Augenhöhe
             controls.getObject().position.set(player.body.position.x, player.body.position.y + (headHeight - 0.9), player.body.position.z);
-            // Ensures camera uses pointer rotation while position follows physics body
+        }
+
+        // update mixers (arms/enemies/weapons)
+        if (mixers.length) {
+            mixers.forEach(m => m.update(delta));
         }
 
         if (controls?.isLocked && !menuVisible()) {
             playerMovement(delta);
 
-            // Enemy AI + Mesh sync
+            // Enemy AI + Mesh sync (guard against missing objects)
             enemies.forEach(e=>{
-                const ai = new EnemyAI(e, gameMap, player);
-                ai.update(delta);
+                if (!e) return;
+                if (!e.body) return;
+                // run AI only if e.mesh and player exist
+                try {
+                    if (typeof EnemyAI === 'function' && e.mesh && player) {
+                        const ai = new EnemyAI(e, gameMap, player);
+                        ai.update?.(delta);
+                    }
+                } catch (err) {
+                    // safe guard — avoid breaking render loop
+                    // console.warn("EnemyAI update failed:", err);
+                }
                 if (e.body && e.mesh) {
                     e.mesh.position.copy(e.body.position);
-                    e.mesh.quaternion.copy(e.body.quaternion || new CANNON.Quaternion().toEuler ? new THREE.Quaternion() : new THREE.Quaternion());
+                    // try to copy quaternion (convert CANNON quaternion to THREE)
+                    if (e.body.quaternion) {
+                        e.mesh.quaternion.set(e.body.quaternion.x, e.body.quaternion.y, e.body.quaternion.z, e.body.quaternion.w);
+                    }
                 }
             });
 
-            // Projectiles update & lifetime
+            // Projectiles update & lifetime + simple enemy hit detection
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i];
                 p.life -= delta;
@@ -414,27 +535,30 @@ window.addEventListener('DOMContentLoaded', () => {
                     scene.remove(p.mesh);
                     try { world.removeBody(p.body); } catch(e) {}
                     projectiles.splice(i,1);
-                } else {
-                    // simple collision test with enemies (AABB)
-                    enemies.forEach(enemy=>{
-                        if (!enemy.body || !enemy.mesh) return;
-                        const dist = enemy.body.position.vsub(p.body.position);
-                        const d = Math.sqrt(dist.x*dist.x + dist.y*dist.y + dist.z*dist.z);
-                        if (d < 0.8) {
-                            // Treffer -> reduziere Leben falls vorhanden
-                            if (enemy.health !== undefined) enemy.health -= 25;
-                            // entferne Projektil
-                            scene.remove(p.mesh);
-                            try { world.removeBody(p.body); } catch(e){}
-                            projectiles.splice(i,1);
+                    continue;
+                }
+                // collision with enemies (distance check)
+                for (const enemy of enemies) {
+                    if (!enemy || !enemy.body) continue;
+                    const dx = enemy.body.position.x - p.body.position.x;
+                    const dy = enemy.body.position.y - p.body.position.y;
+                    const dz = enemy.body.position.z - p.body.position.z;
+                    const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    if (dist < 1.0) {
+                        // hit
+                        if (typeof enemy.health === 'number') {
+                            enemy.health -= 25;
+                        } else {
+                            enemy.health = (enemy.health || 100) - 25;
                         }
-                    });
+                        // remove projectile
+                        scene.remove(p.mesh);
+                        try { world.removeBody(p.body); } catch(e) {}
+                        projectiles.splice(i,1);
+                        break;
+                    }
                 }
             }
-
-            projectiles.forEach(p => {
-                // optional: trail, sound, etc.
-            });
 
             // Abklingzeit der Fähigkeit
             player.abilityObj.updateCooldown?.(delta);
@@ -484,26 +608,42 @@ window.addEventListener('DOMContentLoaded', () => {
             case 'Space': move.jump=false; break;
         }
     });
+
+    // Mausklick -> schießen (Weapon.shoot preferred, else fallback projectile)
     document.addEventListener('mousedown', e=>{
         if(controls?.isLocked && e.button===0){
-            // Falls Weapon.shoot() selbst Projektile erzeugt, lasse es laufen
-            const shotResult = player.weapon?.shoot?.(enemies);
-            audioManager?.play('shoot');
+            // Versuche die Weapon-Klasse zu verwenden (sie könnte bereits Effekte/Proj. erzeugen)
+            let shotResult = null;
+            try {
+                shotResult = player.weapon?.shoot?.(enemies);
+            } catch (err) {
+                console.warn("player.weapon.shoot threw:", err);
+                shotResult = null;
+            }
 
-            // Wenn Weapon.shoot nicht sichtbar macht (oder nicht existiert), spawn fallback bullet:
-            // Wir erzeugen eine Kugel aus der Kamera-Position in Blickrichtung
+            // Play sound if available
+            try { audioManager?.play('shoot'); } catch (err) { /* noop */ }
+
             if (!shotResult) {
-                // Erzeuge Origin nahe der Kamera (Barrel)
+                // spawn fallback bullet from camera forward
                 const origin = new THREE.Vector3();
                 camera.getWorldPosition(origin);
                 const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();
-                // kleine Verschiebung vor der Kamera
                 origin.add(forward.clone().multiplyScalar(0.6));
                 spawnBullet(origin, forward, player);
+
+                // play arm fire animation if exists
+                if (player.mixer && player.armFireClip) {
+                    const action = player.mixer.clipAction(player.armFireClip);
+                    action.reset().play();
+                }
+                // weapon recoil animation if exists
+                player.weaponMixer?.clipAction?.(player.weaponMixer._actions?.[0])?.play?.();
             }
         }
     });
 
     console.log("✅ Breacher Bros FPS ready!");
 });
+
 
