@@ -3,7 +3,7 @@
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
-window.THREE = THREE; // Safari braucht manchmal globale THREE
+window.THREE = THREE;
 
 import { PointerLockControls } from './PointerLockControls.js';
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
@@ -40,7 +40,7 @@ window.addEventListener('DOMContentLoaded', () => {
     let prevTime = performance.now();
     let projectiles = [];
     let enemies = [];
-    let enemyAIs = []; // <-- KI-Instanzen einmalig erzeugt
+    let enemyAIs = [];
     let levelManager;
     let gameMap;
     let audioManager;
@@ -56,8 +56,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Sprint
     let sprinting = false;
-    let sprintDuration = 2.0;      // Sekunden maximal sprinten
-    let sprintCooldown = 3.0;      // Sekunden Abklingzeit
+    let sprintDuration = 2.0;
+    let sprintCooldown = 3.0;
     let sprintTimer = 0;
     let sprintCooldownTimer = 0;
     const SPRINT_MULTIPLIER = 1.5;
@@ -185,7 +185,6 @@ window.addEventListener('DOMContentLoaded', () => {
         world.gravity.set(0, -9.82, 0);
         world.solver.iterations = 10;
 
-        // Boden
         const floorShape = new CANNON.Plane();
         const floorBody = new CANNON.Body({ mass: 0, shape: floorShape });
         floorBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
@@ -270,7 +269,8 @@ window.addEventListener('DOMContentLoaded', () => {
         player.abilityObj = new Ability(player, scene);
 
         audioManager = new AudioManager(new THREE.AudioListener());
-        audioManager.load('shoot', './assets/sounds/shoot.wav');
+        audioManager.load('shoot', './assets/sounds/shoot.wav')
+            .catch(err => console.warn("❌ shoot.wav konnte nicht geladen werden:", err));
 
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
@@ -292,14 +292,10 @@ window.addEventListener('DOMContentLoaded', () => {
             enemy.body = body;
 
             const ai = new EnemyAI(enemy, gameMap, player);
-
-            // → Zufälligeres Verhalten: Bewegung + Deckung
             const originalUpdate = ai.update.bind(ai);
             ai.update = function(delta) {
-                if (Math.random() < 0.02) {
-                    ai.setRandomDirection?.();
-                }
-                if (Math.random() < 0.01 && gameMap.objects.length > 0) {
+                if (Math.random() < 0.02) ai.setRandomDirection?.();
+                if (Math.random() < 0.01 && gameMap?.objects?.length > 0) {
                     const cover = gameMap.objects[Math.floor(Math.random()*gameMap.objects.length)];
                     if (cover?.position) ai.moveTo?.(cover.position);
                 }
@@ -311,7 +307,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================
-    // 7. Player Movement mit Sprint + Kollisions-Logik
+    // 7. Player Movement
     // ==========================
     function playerMovement(delta) {
         if (!player.body) return;
@@ -393,7 +389,7 @@ window.addEventListener('DOMContentLoaded', () => {
             controls.getObject().position.set(player.body.position.x, player.body.position.y + (headHeight - 0.9), player.body.position.z);
         }
 
-        if (controls?.isLocked && !menuVisible()) {
+        if (controls?.isLocked && !menuVisible() && player && player.body) {
             playerMovement(delta);
 
             for (let i = 0; i < enemyAIs.length; i++) {
@@ -406,12 +402,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i];
+                if (!p || !p.mesh || !p.body) continue;
                 p.life -= delta;
-                if (p.mesh && p.body) p.mesh.position.copy(p.body.position);
+                p.mesh.position.copy(p.body.position);
 
                 if (p.life <= 0) {
                     scene.remove(p.mesh);
-                    try { world.removeBody(p.body); } catch(e) {}
+                    try { world.removeBody(p.body); } catch(e){}
                     projectiles.splice(i,1);
                     continue;
                 }
@@ -428,19 +425,15 @@ window.addEventListener('DOMContentLoaded', () => {
                         const headshotThreshold = 1.4;
                         const isHeadshot = (p.body.position.y - enemy.body.position.y) > headshotThreshold;
                         const damage = isHeadshot ? enemy.health : 25;
-                        if (isHeadshot) console.log("🎯 Headshot! One-Hit.");
-                        else console.log("🔫 Treffer: -25 HP");
-
                         enemy.health -= damage;
 
                         scene.remove(p.mesh);
-                        try { world.removeBody(p.body); } catch(e) {}
+                        try { world.removeBody(p.body); } catch(e){}
                         projectiles.splice(i,1);
 
                         if (enemy.health <= 0) {
-                            console.log("💀 Gegner ausgeschaltet!");
-                            try { scene.remove(enemy.mesh); } catch (err) {}
-                            try { world.removeBody(enemy.body); } catch (err) {}
+                            try { scene.remove(enemy.mesh); } catch(e){}
+                            try { world.removeBody(enemy.body); } catch(e){}
                             enemies.splice(j,1);
                             if (enemyAIs[j]) enemyAIs.splice(j,1);
                         }
@@ -503,11 +496,11 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
     document.addEventListener('mousedown', e=>{
-        if(controls?.isLocked && e.button===0){
+        if(controls?.isLocked && e.button===0 && player && camera){
             const shotResult = player.weapon?.shoot?.(enemies);
             audioManager?.play('shoot');
 
-            if (!shotResult) {
+            if (!shotResult && camera) {
                 const origin = new THREE.Vector3();
                 camera.getWorldPosition(origin);
                 const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();
