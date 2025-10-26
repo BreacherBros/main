@@ -1,5 +1,5 @@
 // ============================================================
-// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX)
+// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT)
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
@@ -40,16 +40,26 @@ window.addEventListener('DOMContentLoaded', () => {
     let prevTime = performance.now();
     let projectiles = [];
     let enemies = [];
-    let enemyAIs = [];
     let levelManager;
     let gameMap;
     let audioManager;
     let controls;
     let world;
 
+    // ==========================
+    // Geschwindigkeits-Parameter
+    // ==========================
     const SPEED_MULTIPLIER = 1.15;
     const BULLET_SPEED = 60;
     const BULLET_LIFETIME = 4.0;
+
+    // Sprint
+    let sprinting = false;
+    let sprintDuration = 2.0;      // Sekunden maximal sprinten
+    let sprintCooldown = 3.0;      // Sekunden Abklingzeit
+    let sprintTimer = 0;
+    let sprintCooldownTimer = 0;
+    const SPRINT_MULTIPLIER = 1.5;
 
     // ==========================
     // HTML ELEMENTE
@@ -248,14 +258,12 @@ window.addEventListener('DOMContentLoaded', () => {
         player.abilityObj = new Ability(player, scene);
 
         audioManager = new AudioManager(new THREE.AudioListener());
-        audioManager.load('shoot', './assets/sounds/shoot.wav'); // Pfad prüfen
+        audioManager.load('shoot', './assets/sounds/shoot.wav');
 
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
 
         enemies = levelManager.enemies || [];
-        enemyAIs = enemies.map(e => e ? new EnemyAI(e, gameMap, player) : null);
-
         enemies.forEach(enemy => {
             if (!enemy) return;
             const shape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
@@ -269,21 +277,35 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================
-    // 7. Player Movement
+    // 7. Player Movement mit Sprint
     // ==========================
     function playerMovement(delta) {
         if (!player.body) return;
 
-        const speed = 5 * player.speed * SPEED_MULTIPLIER;
+        let speed = 5 * player.speed * SPEED_MULTIPLIER;
+
+        // Sprint
+        if(sprinting && sprintCooldownTimer <= 0) {
+            speed *= SPRINT_MULTIPLIER;
+            sprintTimer += delta;
+            if(sprintTimer >= sprintDuration){
+                sprinting = false;
+                sprintCooldownTimer = sprintCooldown;
+                sprintTimer = 0;
+            }
+        } else {
+            sprintCooldownTimer -= delta;
+            if(sprintCooldownTimer < 0) sprintCooldownTimer = 0;
+        }
 
         let input = new THREE.Vector3(0,0,0);
-        if (move.forward)  input.z -= 1;
-        if (move.backward) input.z += 1;
-        if (move.left)     input.x -= 1;
-        if (move.right)    input.x += 1;
+        if(move.forward)  input.z -= 1;
+        if(move.backward) input.z += 1;
+        if(move.left)     input.x -= 1;
+        if(move.right)    input.x += 1;
         input.normalize();
 
-        if (input.length() === 0) {
+        if(input.length() === 0) {
             player.body.velocity.x *= 0.9;
             player.body.velocity.z *= 0.9;
         } else {
@@ -296,9 +318,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         const onGround = Math.abs(player.body.position.y - 1.0) < 0.6;
-        if (move.jump && onGround) player.body.velocity.y = 8;
+        if(move.jump && onGround) player.body.velocity.y = 8;
 
-        if (player.mesh) player.mesh.position.copy(player.body.position);
+        if(player.mesh) player.mesh.position.copy(player.body.position);
     }
 
     // ==========================
@@ -340,11 +362,12 @@ window.addEventListener('DOMContentLoaded', () => {
         if (controls?.isLocked && !menuVisible()) {
             playerMovement(delta);
 
-            enemyAIs.forEach((ai, idx)=>{
-                const enemy = enemies[idx];
-                if (!ai || !enemy || !enemy.body || !enemy.mesh) return;
+            enemies.forEach(e=>{
+                if (!e || !e.body || !e.mesh) return;
+                const ai = new EnemyAI(e, gameMap, player);
                 ai.update(delta);
-                enemy.mesh.position.copy(enemy.body.position);
+                e.mesh.position.copy(e.body.position);
+                e.mesh.quaternion.copy(new THREE.Quaternion());
             });
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -404,6 +427,10 @@ window.addEventListener('DOMContentLoaded', () => {
             case 'KeyA': move.left=true; break;
             case 'KeyD': move.right=true; break;
             case 'Space': move.jump=true; break;
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                if(sprintCooldownTimer <= 0) sprinting = true;
+                break;
             case 'KeyR': player.weapon?.reload(); break;
             case 'KeyF': player.abilityObj?.use(enemies); break;
         }
@@ -415,6 +442,8 @@ window.addEventListener('DOMContentLoaded', () => {
             case 'KeyA': move.left=false; break;
             case 'KeyD': move.right=false; break;
             case 'Space': move.jump=false; break;
+            case 'ShiftLeft':
+            case 'ShiftRight': sprinting = false; break;
         }
     });
     document.addEventListener('mousedown', e=>{
