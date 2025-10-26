@@ -215,32 +215,35 @@ window.addEventListener('DOMContentLoaded', () => {
   // ==========================
   // 7. Bewegung
   // ==========================
-  function playerMovement(delta) {
+function playerMovement(delta) {
     if (!controls) return;
 
     const speed = 5 * player.speed;
     const direction = new THREE.Vector3();
-    direction.z = Number(move.backward) - Number(move.forward);
+
+    direction.z = Number(move.forward) - Number(move.backward); // <-- korrekt
     direction.x = Number(move.right) - Number(move.left);
     direction.normalize();
 
-    if (move.forward || move.backward) player.velocity.z -= direction.z * speed * delta;
-    if (move.left || move.right) player.velocity.x -= direction.x * speed * delta;
+    // Geschwindigkeit nur setzen, wenn Taste gedrückt
+    player.velocity.x = direction.x * speed;
+    player.velocity.z = direction.z * speed;
 
     player.velocity.y -= 9.8 * 10 * delta;
 
-    controls.moveRight(-player.velocity.x * delta);
-    controls.moveForward(-player.velocity.z * delta);
+    controls.moveRight(player.velocity.x * delta);
+    controls.moveForward(player.velocity.z * delta);
     controls.getObject().position.y += player.velocity.y * delta;
 
     if (controls.getObject().position.y < 2) {
-      player.velocity.y = 0;
-      controls.getObject().position.y = 2;
-      player.canJump = true;
+        player.velocity.y = 0;
+        controls.getObject().position.y = 2;
+        player.canJump = true;
     }
 
     player.mesh.position.copy(controls.getObject().position);
-  }
+}
+
 
   // ==========================
   // 8. Animation
