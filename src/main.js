@@ -269,8 +269,11 @@ window.addEventListener('DOMContentLoaded', () => {
         player.abilityObj = new Ability(player, scene);
 
         audioManager = new AudioManager(new THREE.AudioListener());
-        audioManager.load('shoot', './assets/sounds/shoot.wav')
-            .catch(err => console.warn("❌ shoot.wav konnte nicht geladen werden:", err));
+        try {
+            audioManager.load('shoot', './assets/sounds/shoot.wav');
+        } catch(err) {
+            console.warn("❌ shoot.wav konnte nicht geladen werden:", err);
+        }
 
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
