@@ -152,9 +152,9 @@ window.addEventListener('DOMContentLoaded', () => {
         renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        renderer.physicallyCorrectLights = true;
+        // PhysicallyCorrectLights & useLegacyLights entfernt
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.outputEncoding = THREE.sRGBEncoding;
 
         window.addEventListener('resize', onWindowResize);
 
@@ -233,6 +233,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (weaponMesh) {
             camera.add(weaponMesh);
             weaponMesh.position.set(0.25, -0.35, -0.6);
+            weaponMesh.rotation.set(0, 0, 0);
             weaponMesh.castShadow = true;
         } else {
             const gunGeom = new THREE.BoxGeometry(0.1,0.06,0.5);
@@ -247,13 +248,14 @@ window.addEventListener('DOMContentLoaded', () => {
         player.abilityObj = new Ability(player, scene);
 
         audioManager = new AudioManager(new THREE.AudioListener());
-        audioManager.load('shoot', './assets/sounds/shoot.wav');
+        audioManager.load('shoot', './assets/sounds/shoot.wav'); // Pfad prüfen
 
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
 
         enemies = levelManager.enemies || [];
         enemies.forEach(enemy => {
+            if (!enemy) return;
             const shape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
             const body = new CANNON.Body({ mass: 50, shape });
             const pos = enemy.mesh ? enemy.mesh.position : new THREE.Vector3(0,1,0);
@@ -279,15 +281,14 @@ window.addEventListener('DOMContentLoaded', () => {
         if (move.right)    input.x += 1;
         input.normalize();
 
-        const quat = new THREE.Quaternion();
-        const euler = new THREE.Euler(0, controls.getObject().rotation.y, 0, 'YXZ');
-        quat.setFromEuler(euler);
-        const worldDir = input.applyQuaternion(quat);
-
         if (input.length() === 0) {
             player.body.velocity.x *= 0.9;
             player.body.velocity.z *= 0.9;
         } else {
+            const quat = new THREE.Quaternion();
+            const euler = new THREE.Euler(0, controls.getObject().rotation.y, 0, 'YXZ');
+            quat.setFromEuler(euler);
+            const worldDir = input.applyQuaternion(quat);
             player.body.velocity.x = worldDir.x * speed;
             player.body.velocity.z = worldDir.z * speed;
         }
@@ -338,12 +339,11 @@ window.addEventListener('DOMContentLoaded', () => {
             playerMovement(delta);
 
             enemies.forEach(e=>{
+                if (!e || !e.body || !e.mesh) return;
                 const ai = new EnemyAI(e, gameMap, player);
                 ai.update(delta);
-                if (e.body && e.mesh) {
-                    e.mesh.position.copy(e.body.position);
-                    e.mesh.quaternion.copy(new THREE.Quaternion());
-                }
+                e.mesh.position.copy(e.body.position);
+                e.mesh.quaternion.copy(new THREE.Quaternion());
             });
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -352,11 +352,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 if (p.mesh && p.body) p.mesh.position.copy(p.body.position);
                 if (p.life <= 0) {
                     scene.remove(p.mesh);
-                    try { world.removeBody(p.body); } catch(e){}
+                    try { world.removeBody(p.body); } catch(e) {}
                     projectiles.splice(i,1);
                 } else {
                     enemies.forEach(enemy=>{
-                        if (!enemy.body || !enemy.mesh) return;
+                        if (!enemy || !enemy.body || !enemy.mesh) return;
                         const dist = enemy.body.position.vsub(p.body.position);
                         const d = Math.sqrt(dist.x*dist.x + dist.y*dist.y + dist.z*dist.z);
                         if (d < 0.8) {
@@ -420,6 +420,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if(controls?.isLocked && e.button===0){
             const shotResult = player.weapon?.shoot?.(enemies);
             audioManager?.play('shoot');
+
             if (!shotResult) {
                 const origin = new THREE.Vector3();
                 camera.getWorldPosition(origin);
