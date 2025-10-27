@@ -264,26 +264,24 @@ window.addEventListener('DOMContentLoaded', () => {
     // --------------------------
     // Boden für Physics
     // --------------------------
-    const floorShape = new CANNON.Plane();
-    const floorBody = new CANNON.Body({ mass: 0, shape: floorShape });
-    floorBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
-    world?.addBody(floorBody);
-
-    // --------------------------
-    // Grass-Instancing mit Wind-Animation
-    // --------------------------
-  const grassCount = 5000;
+const grassCount = 5000;
 const grassGeometry = new THREE.PlaneGeometry(0.1, 0.5, 1, 4); // 4 Segmente für Wackel
 
-// Array für individuelle Phasen
-const offsets = [];
-for (let i = 0; i < grassCount; i++) offsets.push(Math.random() * Math.PI * 2);
+// InstancedMesh
+const instancedGrass = new THREE.InstancedMesh(grassGeometry, null, grassCount);
 
+// Instanz-Offsets als Buffer
+const offsets = new Float32Array(grassCount);
+for (let i = 0; i < grassCount; i++) offsets[i] = Math.random() * Math.PI * 2;
+
+// Setze das Attribut auf die Geometry
+grassGeometry.setAttribute('instanceOffset', new THREE.InstancedBufferAttribute(offsets, 1));
+
+// ShaderMaterial
 const grassMaterial = new THREE.ShaderMaterial({
     uniforms: {
         time: { value: 0 },
-        color: { value: new THREE.Color(0x33aa33) },
-        offsets: { value: offsets }
+        color: { value: new THREE.Color(0x33aa33) }
     },
     vertexShader: `
         uniform float time;
@@ -303,6 +301,29 @@ const grassMaterial = new THREE.ShaderMaterial({
     `,
     side: THREE.DoubleSide
 });
+
+// Material zuweisen
+instancedGrass.material = grassMaterial;
+
+// Position der Halme
+const dummy = new THREE.Object3D();
+for (let i = 0; i < grassCount; i++) {
+    dummy.position.set((Math.random() - 0.5) * 100, 0, (Math.random() - 0.5) * 100);
+    dummy.rotation.y = Math.random() * Math.PI * 2;
+    dummy.updateMatrix();
+    instancedGrass.setMatrixAt(i, dummy.matrix);
+}
+
+instancedGrass.receiveShadow = true;
+scene.add(instancedGrass);
+
+// In der animate-Funktion:
+animate = function() {
+    grassMaterial.uniforms.time.value = performance.now() * 0.001;
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+};
+
 
 const instancedGrass = new THREE.InstancedMesh(grassGeometry, grassMaterial, grassCount);
 const dummy = new THREE.Object3D();
