@@ -316,17 +316,26 @@ scene.add(grassMesh);
 // In der animate-Funktion:
 function animate() {
     requestAnimationFrame(animate);
+
     const time = performance.now();
-    const delta = (time - prevTime) / 1000;
+    let delta = (time - prevTime) / 1000;
     prevTime = time;
 
-    // Grass swaying
-    if (grassMaterial) grassMaterial.uniforms.time.value = time * 0.001;
+    // Sicherstellen, dass delta nicht zu groß wird (FPS-Drops)
+    delta = Math.min(delta, 0.1);
 
+    // Physics-Step
     if (world) world.step(1/60, delta, 3);
 
-    // Kamera folgt Player-Body
-    if (player.body && controls) {
+    // --------------------------
+    // Grass Animation
+    // --------------------------
+    if (grassMaterial) grassMaterial.uniforms.time.value = time * 0.001;
+
+    // --------------------------
+    // Kamera folgt Player
+    // --------------------------
+    if (player?.body && controls) {
         const headHeight = 1.6;
         controls.getObject().position.set(
             player.body.position.x,
@@ -334,6 +343,149 @@ function animate() {
             player.body.position.z
         );
     }
+
+    // --------------------------
+    // Player Input + Movement
+    // --------------------------
+    if (controls?.isLocked && !menuVisible() && player?.body) {
+        playerMovement(delta);
+    }
+
+    // --------------------------
+    // Gegner-AI Updates
+    // --------------------------
+    for (let i = 0; i < enemyAIs.length; i++) {
+        const ai = enemyAIs[i];
+        const e = enemies[i];
+        if (!ai || !e || !e.body || !e.mesh) continue;
+        ai.update(delta);
+        // Mesh nach Physics positionieren
+        e.mesh.position.copy(e.body.position);
+    }
+
+    // --------------------------
+    // Projektile Updates
+    // --------------------------
+    for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
+        if (!p?.mesh || !p?.body) continue;
+
+        p.life -= delta;
+        p.mesh.position.copy(p.body.position);
+        if (p.light) p.light.position.copy(p.body.position);
+
+        if (p.life <= 0) {
+            scene.remove(p.mesh);
+            if (p.light) scene.remove(p.light);
+            try { world.removeBody(p.body); } catch(e){}
+            projectiles.splice(i, 1);
+            continue;
+        }
+
+        // Map-Kollision
+        const from = p.body.position.clone();
+        const to = from.vadd(p.body.velocity.scale(delta));
+        const ray = new CANNON.Ray(from, to);
+        ray.skipBackfaces = true;
+        let hitObject = false;
+
+        if (Array.isArray(gameMap?.objects)) {
+            for (const obj of gameMap.objects) {
+                if (!obj?.body) continue;
+                try { ray.intersectBody(obj.body, r => { if(r.hasHit) hitObject = true; }); } catch(e){}
+                if (hitObject) break;
+            }
+        }
+
+        if (hitObject) {
+            scene.remove(p.mesh);
+            if (p.light) scene.remove(p.light);
+            try { world.removeBody(p.body); } catch(e){}
+            projectiles.splice(i,1);
+            continue;
+        }
+
+        // Gegner-Kollision
+        for (let j = enemies.length -1; j >=0; j--) {
+            const enemy = enemies[j];
+            if (!enemy?.body || !enemy?.mesh) continue;
+
+            const distVec = enemy.body.position.vsub(p.body.position);
+            const d = Math.sqrt(distVec.x**2 + distVec.y**2 + distVec.z**2);
+
+            if (d < 0.8) {
+                const headshotThreshold = 0.9;
+                const isHeadshot = (p.body.position.y - enemy.body.position.y) > headshotThreshold;
+                const damage = isHeadshot ? enemy.health : 25;
+
+                enemy.health -= damage;
+
+                // Treffer-Anzeige
+                const div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.color = isHeadshot ? 'red' : 'yellow';
+                div.style.fontWeight = 'bold';
+                div.style.fontSize = '20px';
+                div.style.pointerEvents = 'none';
+                div.style.transform = 'translate(-50%, -50%) scale(0)';
+                div.style.transition = 'transform 0.15s ease-out, opacity 0.8s ease-out';
+                div.innerText = isHeadshot ? 'HEADSHOT!' : `-${damage}`;
+                document.body.appendChild(div);
+
+                const startTime = performance.now();
+                function updatePosition() {
+                    const now = performance.now();
+                    const deltaAnim = (now - startTime) / 1000;
+
+                    const screenPos = enemy.mesh.position.clone();
+                    screenPos.y += 1.8 + deltaAnim*0.8;
+                    screenPos.project(camera);
+                    const x = (screenPos.x*0.5 + 0.5) * window.innerWidth;
+                    const y = (-screenPos.y*0.5 +0.5) * window.innerHeight;
+                    div.style.left = `${x}px`;
+                    div.style.top = `${y}px`;
+
+                    if (deltaAnim < 0.15) div.style.transform = `translate(-50%, -50%) scale(${1 + deltaAnim*2})`;
+                    else div.style.transform = 'translate(-50%, -50%) scale(1)';
+                    if (deltaAnim>=0.15) div.style.opacity = `${Math.max(1 - (deltaAnim-0.15)/0.65,0)}`;
+
+                    if (deltaAnim < 0.8) requestAnimationFrame(updatePosition);
+                    else div.remove();
+                }
+                updatePosition();
+
+                // Projektil entfernen
+                scene.remove(p.mesh);
+                if (p.light) scene.remove(p.light);
+                try { world.removeBody(p.body);} catch(e){}
+                projectiles.splice(i,1);
+
+                if (enemy.health <=0) {
+                    try{ scene.remove(enemy.mesh); } catch(e){}
+                    try{ world.removeBody(enemy.body);} catch(e){}
+                    enemies.splice(j,1);
+                    if (enemyAIs[j]) enemyAIs.splice(j,1);
+                }
+                break;
+            }
+        }
+    }
+
+    // --------------------------
+    // Ability Cooldown Update
+    // --------------------------
+    player?.abilityObj?.updateCooldown?.(delta);
+
+    // --------------------------
+    // HUD Update
+    // --------------------------
+    updateHUD();
+
+    // --------------------------
+    // Render
+    // --------------------------
+    renderer.render(scene, camera);
+}
 
     // Rest des animate-Codes ...
     renderer.render(scene, camera);
