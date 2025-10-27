@@ -1,6 +1,6 @@
 // ============================================================
 // BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT + KOLLISIONEN + HEADSHOT)
-// (angepasst: WASD bewegt sich immer relativ zur Blickrichtung, hält nicht die erste Richtung; Map erhält mehr Objekte)
+// (angepasst: Gegner sehen menschlich aus (low-poly humanoid))
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
@@ -120,6 +120,97 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================
+    // Hilfsfunktion: Erzeuge simples humanoides Mesh (low-poly)
+    // ==========================
+    function createHumanMesh(options = {}) {
+        // options: skinColor, outfitColor, scale
+        const skinColor = options.skinColor || 0xffd1b3; // default hellere Haut
+        const outfitColor = options.outfitColor || 0x2a6f97;
+        const hairColor = options.hairColor || 0x333333;
+        const scale = options.scale || 1.0;
+
+        const group = new THREE.Group();
+
+        // Torso (Box)
+        const torsoGeom = new THREE.BoxGeometry(0.5 * scale, 0.7 * scale, 0.25 * scale);
+        const torsoMat = new THREE.MeshStandardMaterial({ color: outfitColor, metalness: 0.1, roughness: 0.8 });
+        const torso = new THREE.Mesh(torsoGeom, torsoMat);
+        torso.position.set(0, 0.9 * scale, 0);
+        torso.castShadow = true;
+        torso.receiveShadow = true;
+        group.add(torso);
+
+        // Head (Sphere)
+        const headGeom = new THREE.SphereGeometry(0.18 * scale, 16, 12);
+        const headMat = new THREE.MeshStandardMaterial({ color: skinColor, metalness: 0.0, roughness: 0.9 });
+        const head = new THREE.Mesh(headGeom, headMat);
+        head.position.set(0, 1.52 * scale, 0);
+        head.castShadow = true;
+        head.receiveShadow = true;
+        group.add(head);
+
+        // Hair (simple cap)
+        const hairGeom = new THREE.SphereGeometry(0.185 * scale, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.6);
+        const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, metalness: 0.0, roughness: 0.9 });
+        const hair = new THREE.Mesh(hairGeom, hairMat);
+        hair.position.set(0, 1.55 * scale, 0.03 * scale);
+        hair.castShadow = true;
+        group.add(hair);
+
+        // Eyes (small spheres)
+        const eyeGeom = new THREE.SphereGeometry(0.03 * scale, 8, 6);
+        const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+        const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
+        const rightEye = leftEye.clone();
+        leftEye.position.set(-0.06 * scale, 1.55 * scale, 0.16 * scale);
+        rightEye.position.set(0.06 * scale, 1.55 * scale, 0.16 * scale);
+        group.add(leftEye);
+        group.add(rightEye);
+
+        // Arms
+        const armGeom = new THREE.CylinderGeometry(0.06 * scale, 0.06 * scale, 0.6 * scale, 8);
+        const armMat = new THREE.MeshStandardMaterial({ color: outfitColor, metalness: 0.05, roughness: 0.85 });
+        const leftArm = new THREE.Mesh(armGeom, armMat);
+        const rightArm = leftArm.clone();
+        leftArm.position.set(-0.37 * scale, 0.95 * scale, 0);
+        leftArm.rotation.z = Math.PI / 8;
+        rightArm.position.set(0.37 * scale, 0.95 * scale, 0);
+        rightArm.rotation.z = -Math.PI / 8;
+        leftArm.castShadow = true;
+        rightArm.castShadow = true;
+        group.add(leftArm);
+        group.add(rightArm);
+
+        // Legs
+        const legGeom = new THREE.CylinderGeometry(0.08 * scale, 0.08 * scale, 0.8 * scale, 8);
+        const legMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.05, roughness: 0.9 });
+        const leftLeg = new THREE.Mesh(legGeom, legMat);
+        const rightLeg = leftLeg.clone();
+        leftLeg.position.set(-0.14 * scale, 0.3 * scale, 0);
+        rightLeg.position.set(0.14 * scale, 0.3 * scale, 0);
+        leftLeg.castShadow = true;
+        rightLeg.castShadow = true;
+        group.add(leftLeg);
+        group.add(rightLeg);
+
+        // option: small backpack / gear box on torso
+        const gearGeom = new THREE.BoxGeometry(0.28 * scale, 0.36 * scale, 0.08 * scale);
+        const gearMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.1, roughness: 0.8 });
+        const gear = new THREE.Mesh(gearGeom, gearMat);
+        gear.position.set(0, 0.95 * scale, -0.17 * scale);
+        gear.castShadow = true;
+        group.add(gear);
+
+        // shift pivot so group origin corresponds to feet-ground contact near y = 0
+        group.position.y = 0;
+
+        // set a simple userData so other code can identify as humanoid
+        group.userData.isHumanoid = true;
+
+        return group;
+    }
+
+    // ==========================
     // 3. Spielstart
     // ==========================
     function startGame(clsName) {
@@ -237,21 +328,19 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!gameMap.objects) gameMap.objects = [];
 
         // --- Zusätzliche Map-Objekte hinzufügen (dichtere Map) ---
-        // Wir erzeugen einige zusätzliche statische Boxen zufällig verteilt, damit die Map "mehr Fahrt" bekommt / dichter wirkt.
         for (let i = 0; i < 12; i++) {
             const size = { x: 1 + Math.random() * 3, y: 1 + Math.random() * 2, z: 1 + Math.random() * 3 };
             const mesh = new THREE.Mesh(
                 new THREE.BoxGeometry(size.x, size.y, size.z),
                 new THREE.MeshStandardMaterial({ color: 0x444444 })
             );
-            const posX = (Math.random() - 0.5) * 60; // verteilt in größerem Bereich
+            const posX = (Math.random() - 0.5) * 60;
             const posZ = (Math.random() - 0.5) * 60;
             mesh.position.set(posX, size.y / 2, posZ);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             scene.add(mesh);
 
-            // Füge als Map-Objekt hinzu (Position + Scale), wird weiter unten in Physics als Body registriert
             gameMap.objects.push({ mesh, position: { x: posX, y: size.y / 2, z: posZ }, scale: size });
         }
 
@@ -314,7 +403,6 @@ window.addEventListener('DOMContentLoaded', () => {
         // AudioManager optional nutzen, Fehler vermeiden
         try {
             audioManager = new AudioManager(new THREE.AudioListener());
-            // only attempt to load if method exists and file path is likely valid; errors handled by catch
             if (typeof audioManager.load === 'function') {
                 audioManager.load('shoot', './assets/sounds/shoot.wav')
                     .catch(err => console.warn("❌ shoot.wav konnte nicht geladen werden:", err));
@@ -332,20 +420,57 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Gegner-Physics + default health + KI-Instances (erzeuge AI hier einmalig)
         enemyAIs = []; // reset
-        enemies.forEach(enemy => {
+        enemies.forEach((enemy, idx) => {
             if (!enemy) { enemyAIs.push(null); return; }
 
             // Default HP falls nicht gesetzt
             if (enemy.health === undefined) enemy.health = 120;
 
-            // physics body
-            const shape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
-            const body = new CANNON.Body({ mass: 50, shape });
-            const pos = enemy.mesh ? enemy.mesh.position : new THREE.Vector3(0,1,0);
-            body.position.set(pos.x, pos.y, pos.z);
-            body.linearDamping = 0.9;
-            world.addBody(body);
-            enemy.body = body;
+            // Wenn enemy.mesh nicht vorhanden oder nicht humanoid, ersetze/escalate mit humanoidem Mesh
+            // So behalten wir vorhandene Positionen/Infos, aber geben den Gegnern einen menschlichen Look
+            let humanoid = null;
+            if (enemy.mesh && enemy.mesh.userData && enemy.mesh.userData.isHumanoid) {
+                humanoid = enemy.mesh;
+            } else {
+                // create a humanoid with slight randomization in outfit/skin
+                const skinTones = [0xffd1b3, 0xe6b089, 0xd1a16b, 0xca8f6b, 0xbc7a5a];
+                const outfits = [0x2a6f97, 0x7a2a2a, 0x2a7a3a, 0x6f2a97];
+                const hairColors = [0x222222, 0x663300, 0x111111, 0x444444];
+                const skin = skinTones[Math.floor(Math.random()*skinTones.length)];
+                const outfit = outfits[Math.floor(Math.random()*outfits.length)];
+                const hair = hairColors[Math.floor(Math.random()*hairColors.length)];
+                humanoid = createHumanMesh({ skinColor: skin, outfitColor: outfit, hairColor: hair, scale: 1.0 });
+            }
+
+            // if there was an old mesh (like a box) remove it
+            if (enemy.mesh && enemy.mesh !== humanoid) {
+                try { scene.remove(enemy.mesh); } catch(e){}
+            }
+
+            // place humanoid at enemy position (or fallback)
+            const pos = enemy.mesh?.position || (enemy.body ? new THREE.Vector3(enemy.body.position.x, enemy.body.position.y, enemy.body.position.z) : new THREE.Vector3(0,1,0));
+            humanoid.position.copy(pos);
+            humanoid.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+
+            // attach new mesh to scene if not already
+            if (!humanoid.parent) scene.add(humanoid);
+
+            // ensure enemy.mesh refers to humanoid
+            enemy.mesh = humanoid;
+
+            // physics body: replace/create box/capsule consistent with humanoid size
+            // keep previous body if exists, otherwise create body matching humanoid
+            if (!enemy.body) {
+                const shape = new CANNON.Box(new CANNON.Vec3(0.35, 0.9, 0.25));
+                const body = new CANNON.Body({ mass: 50, shape });
+                body.position.set(pos.x, pos.y, pos.z);
+                body.linearDamping = 0.9;
+                world.addBody(body);
+                enemy.body = body;
+            } else {
+                // sync existing body to humanoid position
+                enemy.body.position.set(pos.x, pos.y, pos.z);
+            }
 
             // create AI and wrap update for hiding behavior
             const ai = new EnemyAI(enemy, gameMap, player);
@@ -377,16 +502,12 @@ window.addEventListener('DOMContentLoaded', () => {
                             const ray = new CANNON.Ray(from, to);
                             ray.skipBackfaces = true;
                             let hit = false;
-                            // intersectBody is synchronous callback style in cannon-es build used earlier
                             try {
                                 ray.intersectBody(obj.body, (result) => {
                                     if (result.hasHit) hit = true;
                                 });
-                            } catch (err) {
-                                // some builds may not support intersectBody with callback - skip if so
-                            }
+                            } catch (err) {}
                             if (hit) {
-                                // move to cover position (slightly offset)
                                 const coverPos = new CANNON.Vec3(obj.position.x, obj.position.y, obj.position.z);
                                 ai.moveTo?.({ x: coverPos.x, y: coverPos.y, z: coverPos.z });
                                 coverChosen = true;
@@ -396,7 +517,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if (!coverChosen && distance < 20) {
-                        // do not blindly run at player; orient and possibly step closer slowly
+                        // orient toward player
                         enemy.body.velocity.x = 0;
                         enemy.body.velocity.z = 0;
                         const dir = toPlayer.clone().normalize();
@@ -406,6 +527,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 }
 
                 originalUpdate(delta);
+
+                // update mesh position from physics
+                if (enemy.mesh && enemy.body) {
+                    enemy.mesh.position.copy(enemy.body.position);
+                }
             };
 
             enemyAIs.push(ai);
@@ -435,20 +561,16 @@ window.addEventListener('DOMContentLoaded', () => {
             if (sprintCooldownTimer < 0) sprintCooldownTimer = 0;
         }
 
-        // Build input vector (camera-relative movement will be computed below)
-        // Standard mapping: W = forward, S = backward, A = left, D = right
         let input = new THREE.Vector3(0,0,0);
         if (move.forward)  input.z -= 1; // W -> forward
         if (move.backward) input.z += 1; // S -> backward
         if (move.left)     input.x -= 1; // A -> left
         if (move.right)    input.x += 1; // D -> right
 
-        // If no input, apply damping
         if (input.length() === 0) {
             player.body.velocity.x *= 0.9;
             player.body.velocity.z *= 0.9;
         } else {
-            // compute camera-aligned directions each frame (so rotating the view while holding keys updates movement)
             const camForward = new THREE.Vector3();
             camera.getWorldDirection(camForward);
             camForward.y = 0;
@@ -458,18 +580,14 @@ window.addEventListener('DOMContentLoaded', () => {
             const camRight = new THREE.Vector3();
             camRight.crossVectors(camForward, new THREE.Vector3(0,1,0)).normalize();
 
-            // Map input to world direction: forward/back along camForward, left/right along camRight
-            // Note: input.z is -1 when pressing forward (W), so we invert sign to get positive forward movement
             const worldDir = new THREE.Vector3();
             worldDir.addScaledVector(camForward, -input.z);
             worldDir.addScaledVector(camRight, input.x);
 
-            // normalize to avoid faster diagonal movement
             if (worldDir.lengthSq() > 0) worldDir.normalize();
 
-            // Raycast a short step ahead to prevent walking through thin objects
             const from = player.body.position.clone();
-            const step = 0.5; // step distance to test
+            const step = 0.5;
             const to = from.vadd(new CANNON.Vec3(worldDir.x * speed * delta * step * 10, 0, worldDir.z * speed * delta * step * 10));
             const ray = new CANNON.Ray(from, to);
             ray.skipBackfaces = true;
@@ -480,7 +598,6 @@ window.addEventListener('DOMContentLoaded', () => {
                     if (result.hasHit) blocked = true;
                 });
             } catch (err) {
-                // Some cannon versions differ; fall back to no-block check
                 blocked = false;
             }
 
@@ -488,8 +605,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 player.body.velocity.x = worldDir.x * speed;
                 player.body.velocity.z = worldDir.z * speed;
             } else {
-                // slide along obstacle attempt: try to slide by projecting velocity onto tangent
-                // simpler fallback: zero out velocity
                 player.body.velocity.x = 0;
                 player.body.velocity.z = 0;
             }
@@ -518,7 +633,6 @@ window.addEventListener('DOMContentLoaded', () => {
         mesh.position.copy(origin);
         scene.add(mesh);
 
-        // kleine Lichtspur hinter der Kugel
         const light = new THREE.PointLight(0xffaa00, 0.8, 3);
         light.position.copy(origin);
         scene.add(light);
@@ -562,7 +676,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 const e = enemies[i];
                 if (!ai || !e || !e.body || !e.mesh) continue;
                 ai.update(delta);
-                e.mesh.position.copy(e.body.position);
+                // sync mesh at frame end (if not updated already by AI wrapper)
+                if (e.mesh && e.body) e.mesh.position.copy(e.body.position);
             }
 
             // Projectiles update & collisions
@@ -594,9 +709,7 @@ window.addEventListener('DOMContentLoaded', () => {
                             ray.intersectBody(obj.body, (result) => {
                                 if (result.hasHit) hitObject = true;
                             });
-                        } catch (err) {
-                            // some cannon builds may not support intersectBody callback - ignore
-                        }
+                        } catch (err) {}
                         if (hitObject) break;
                     }
                 }
@@ -617,7 +730,8 @@ window.addEventListener('DOMContentLoaded', () => {
                     const d = Math.sqrt(distVec.x*distVec.x + distVec.y*distVec.y + distVec.z*distVec.z);
 
                     if (d < 0.8) {
-                        const headshotThreshold = 1.4;
+                        // Kopf-Höhe nun anhand humanoider Proportionen etwas niedriger ansetzen
+                        const headshotThreshold = 0.9; // fühlt sich bei humanoid-Modell besser an
                         const isHeadshot = (p.body.position.y - enemy.body.position.y) > headshotThreshold;
                         const damage = isHeadshot ? enemy.health : 25;
                         if (isHeadshot) console.log("🎯 Headshot! One-Hit.");
@@ -681,7 +795,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 if (sprintCooldownTimer <= 0) sprinting = true;
                 break;
             case 'KeyR':
-                // trigger reload on weapon if available
                 player.weapon?.reload?.();
                 break;
             case 'KeyF':
@@ -704,29 +817,21 @@ window.addEventListener('DOMContentLoaded', () => {
     // Sichtbarer Schuss (mit Bullet Spawn) — Schießen nur wenn nicht nachgeladen
     document.addEventListener('mousedown', e=>{
         if (controls?.isLocked && e.button === 0 && player && camera) {
-            // keine Schüsse während Nachladen
             if (player.weapon?.reloading) return;
-            // keine Schüsse ohne Munition
             if (typeof player.weapon?.ammo === 'number' && player.weapon.ammo <= 0) return;
 
-            // Sound (optional, safe-call)
             audioManager?.play?.('shoot');
 
-            // Kamera-Position + Richtung
             const origin = new THREE.Vector3();
             camera.getWorldPosition(origin);
             const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();
             origin.add(forward.clone().multiplyScalar(0.6));
 
-            // Sichtbares Projektil erzeugen
             spawnBullet(origin, forward, player);
 
-            // Interne Schuss-Logik (Ammo reduzieren, hitscan etc.)
             player.weapon?.shoot?.(enemies);
         }
     });
 
     console.log("✅ Breacher Bros FPS ready!");
 });
-
-
