@@ -272,44 +272,49 @@ window.addEventListener('DOMContentLoaded', () => {
     // --------------------------
     // Grass-Instancing mit Wind-Animation
     // --------------------------
-    const grassCount = 5000;
-    const grassGeometry = new THREE.PlaneGeometry(0.1, 0.5, 1, 4); // 4 Segmente für Wackel
-    const grassMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            time: { value: 0 },
-            color: { value: new THREE.Color(0x33aa33) }
-        },
-        vertexShader: `
-            uniform float time;
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                vec3 pos = position;
-                float sway = sin((position.y + time) * 5.0) * 0.05;
-                pos.x += sway;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-            }
-        `,
-        fragmentShader: `
-            uniform vec3 color;
-            varying vec2 vUv;
-            void main() {
-                gl_FragColor = vec4(color, 1.0);
-            }
-        `,
-        side: THREE.DoubleSide
-    });
+  const grassCount = 5000;
+const grassGeometry = new THREE.PlaneGeometry(0.1, 0.5, 1, 4); // 4 Segmente für Wackel
 
-    const instancedGrass = new THREE.InstancedMesh(grassGeometry, grassMaterial, grassCount);
-    const dummy = new THREE.Object3D();
-    for (let i = 0; i < grassCount; i++) {
-        dummy.position.set((Math.random() - 0.5) * 100, 0, (Math.random() - 0.5) * 100);
-        dummy.rotation.y = Math.random() * Math.PI * 2;
-        dummy.updateMatrix();
-        instancedGrass.setMatrixAt(i, dummy.matrix);
-    }
-    instancedGrass.receiveShadow = true;
-    scene.add(instancedGrass);
+// Array für individuelle Phasen
+const offsets = [];
+for (let i = 0; i < grassCount; i++) offsets.push(Math.random() * Math.PI * 2);
+
+const grassMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+        time: { value: 0 },
+        color: { value: new THREE.Color(0x33aa33) },
+        offsets: { value: offsets }
+    },
+    vertexShader: `
+        uniform float time;
+        attribute float instanceOffset;
+        void main() {
+            vec3 pos = position;
+            float sway = sin((position.y + time + instanceOffset) * 5.0) * 0.05;
+            pos.x += sway;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform vec3 color;
+        void main() {
+            gl_FragColor = vec4(color,1.0);
+        }
+    `,
+    side: THREE.DoubleSide
+});
+
+const instancedGrass = new THREE.InstancedMesh(grassGeometry, grassMaterial, grassCount);
+const dummy = new THREE.Object3D();
+for (let i = 0; i < grassCount; i++) {
+    dummy.position.set((Math.random() - 0.5) * 100, 0, (Math.random() - 0.5) * 100);
+    dummy.rotation.y = Math.random() * Math.PI * 2;
+    dummy.updateMatrix();
+    instancedGrass.setMatrixAt(i, dummy.matrix);
+    instancedGrass.setAttribute('instanceOffset', new THREE.InstancedBufferAttribute(new Float32Array([offsets[i]]), 1));
+}
+scene.add(instancedGrass);
+
 
     // --------------------------
     // Animation Loop: Zeit aktualisieren für Shader
