@@ -313,6 +313,7 @@ grassMesh.receiveShadow = true;
 scene.add(grassMesh);
 
 // In der animate-Funktion:
+// In der animate-Funktion:
 function animate() {
     requestAnimationFrame(animate);
     const time = performance.now();
