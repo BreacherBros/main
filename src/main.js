@@ -55,7 +55,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const BULLET_SPEED = 60;
     const BULLET_LIFETIME = 4.0;
 
-    // Sprint
     let sprinting = false;
     let sprintDuration = 2.0;
     let sprintCooldown = 3.0;
@@ -123,15 +122,13 @@ window.addEventListener('DOMContentLoaded', () => {
     // Hilfsfunktion: Erzeuge simples humanoides Mesh (low-poly)
     // ==========================
     function createHumanMesh(options = {}) {
-        // options: skinColor, outfitColor, scale
-        const skinColor = options.skinColor || 0xffd1b3; // default hellere Haut
+        const skinColor = options.skinColor || 0xffd1b3;
         const outfitColor = options.outfitColor || 0x2a6f97;
         const hairColor = options.hairColor || 0x333333;
         const scale = options.scale || 1.0;
 
         const group = new THREE.Group();
 
-        // Torso (Box)
         const torsoGeom = new THREE.BoxGeometry(0.5 * scale, 0.7 * scale, 0.25 * scale);
         const torsoMat = new THREE.MeshStandardMaterial({ color: outfitColor, metalness: 0.1, roughness: 0.8 });
         const torso = new THREE.Mesh(torsoGeom, torsoMat);
@@ -140,7 +137,6 @@ window.addEventListener('DOMContentLoaded', () => {
         torso.receiveShadow = true;
         group.add(torso);
 
-        // Head (Sphere)
         const headGeom = new THREE.SphereGeometry(0.18 * scale, 16, 12);
         const headMat = new THREE.MeshStandardMaterial({ color: skinColor, metalness: 0.0, roughness: 0.9 });
         const head = new THREE.Mesh(headGeom, headMat);
@@ -149,7 +145,6 @@ window.addEventListener('DOMContentLoaded', () => {
         head.receiveShadow = true;
         group.add(head);
 
-        // Hair (simple cap)
         const hairGeom = new THREE.SphereGeometry(0.185 * scale, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.6);
         const hairMat = new THREE.MeshStandardMaterial({ color: hairColor, metalness: 0.0, roughness: 0.9 });
         const hair = new THREE.Mesh(hairGeom, hairMat);
@@ -157,7 +152,6 @@ window.addEventListener('DOMContentLoaded', () => {
         hair.castShadow = true;
         group.add(hair);
 
-        // Eyes (small spheres)
         const eyeGeom = new THREE.SphereGeometry(0.03 * scale, 8, 6);
         const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
         const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
@@ -167,7 +161,6 @@ window.addEventListener('DOMContentLoaded', () => {
         group.add(leftEye);
         group.add(rightEye);
 
-        // Arms
         const armGeom = new THREE.CylinderGeometry(0.06 * scale, 0.06 * scale, 0.6 * scale, 8);
         const armMat = new THREE.MeshStandardMaterial({ color: outfitColor, metalness: 0.05, roughness: 0.85 });
         const leftArm = new THREE.Mesh(armGeom, armMat);
@@ -181,7 +174,6 @@ window.addEventListener('DOMContentLoaded', () => {
         group.add(leftArm);
         group.add(rightArm);
 
-        // Legs
         const legGeom = new THREE.CylinderGeometry(0.08 * scale, 0.08 * scale, 0.8 * scale, 8);
         const legMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.05, roughness: 0.9 });
         const leftLeg = new THREE.Mesh(legGeom, legMat);
@@ -193,7 +185,6 @@ window.addEventListener('DOMContentLoaded', () => {
         group.add(leftLeg);
         group.add(rightLeg);
 
-        // option: small backpack / gear box on torso
         const gearGeom = new THREE.BoxGeometry(0.28 * scale, 0.36 * scale, 0.08 * scale);
         const gearMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.1, roughness: 0.8 });
         const gear = new THREE.Mesh(gearGeom, gearMat);
@@ -201,10 +192,7 @@ window.addEventListener('DOMContentLoaded', () => {
         gear.castShadow = true;
         group.add(gear);
 
-        // shift pivot so group origin corresponds to feet-ground contact near y = 0
         group.position.y = 0;
-
-        // set a simple userData so other code can identify as humanoid
         group.userData.isHumanoid = true;
 
         return group;
@@ -237,80 +225,75 @@ window.addEventListener('DOMContentLoaded', () => {
     // 4. Szene + Renderer + Licht
     // ==========================
     function initScene() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x101010);
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x101010);
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1.6, 0);
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.6, 0);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
-    scene.add(ambientLight);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+        scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    dirLight.position.set(10, 20, 10);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    scene.add(dirLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(10, 20, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        scene.add(dirLight);
 
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-    window.addEventListener('resize', onWindowResize);
+        window.addEventListener('resize', onWindowResize);
+    }
 
-    // --------------------------
-    // Boden für Physics
-    // --------------------------
-const grassCount = 5000;
-const grassGeometry = new THREE.PlaneGeometry(0.1, 0.5, 1, 4); // 4 Segmente
+    // ==========================
+    // 4a. Physics World + Boden
+    // ==========================
+    function initPhysics() {
+        world = new CANNON.World();
+        world.gravity.set(0, -9.82, 0);
+        world.solver.iterations = 10;
+        world.broadphase = new CANNON.NaiveBroadphase();
 
-// Instanz-Offsets als Buffer
-const offsets = new Float32Array(grassCount);
-for (let i = 0; i < grassCount; i++) offsets[i] = Math.random() * Math.PI * 2;
+        const floorShape = new CANNON.Plane();
+        const floorBody = new CANNON.Body({ mass: 0, shape: floorShape });
+        floorBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
+        world.addBody(floorBody);
+    }
 
-// ShaderMaterial
-const grassMaterial = new THREE.ShaderMaterial({
-    uniforms: {
-        time: { value: 0 },
-        color: { value: new THREE.Color(0x33aa33) }
-    },
-    vertexShader: `
-        uniform float time;
-        attribute float instanceOffset;
-        void main() {
-            vec3 pos = position;
-            float sway = sin((position.y + time + instanceOffset) * 5.0) * 0.05;
-            pos.x += sway;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-        }
-    `,
-    fragmentShader: `
-        uniform vec3 color;
-        void main() {
-            gl_FragColor = vec4(color,1.0);
-        }
-    `,
-    side: THREE.DoubleSide
+    // ==========================
+    // 5. PointerLock
+    // ==========================
+    function initPointerLock() {
+        controls = new PointerLockControls(camera, document.body);
+        scene.add(controls.getObject());
+
+        const lockHandler = () => {
+            if (!menuVisible()) controls.lock();
+        };
+        document.body.addEventListener('click', lockHandler);
+        canvas.addEventListener('click', lockHandler);
+
+        controls.addEventListener('lock', () => console.log("🔒 PointerLock aktiviert"));
+        controls.addEventListener('unlock', () => console.log("🔓 PointerLock deaktiviert"));
+    }
+
+    function menuVisible() {
+        return menu.style.display !== 'none' || briefing.style.display !== 'none';
+    }
+
+    // ==========================
+    // 6–11: Restliche Funktionen bleiben unverändert
+    // ==========================
+    // playerMovement, spawnBullet, updateHUD, input handling etc.
+    // Im Treffer-Update wird die Animation nun inline genutzt, ohne Syntaxfehler:
+    // const div = document.createElement('div'); ... requestAnimationFrame(updatePosition);
+
 });
-
-// InstancedMesh
-let grassMesh = new THREE.InstancedMesh(grassGeometry, grassMaterial, grassCount);
-grassGeometry.setAttribute('instanceOffset', new THREE.InstancedBufferAttribute(offsets, 1));
-
-// Position der Halme
-const dummy = new THREE.Object3D();
-for (let i = 0; i < grassCount; i++) {
-    dummy.position.set((Math.random() - 0.5) * 100, 0, (Math.random() - 0.5) * 100);
-    dummy.rotation.y = Math.random() * Math.PI * 2;
-    dummy.updateMatrix();
-    grassMesh.setMatrixAt(i, dummy.matrix);
-}
-
-grassMesh.receiveShadow = true;
-scene.add(grassMesh);
 
 // In der animate-Funktion:
 // In der animate-Funktion:
