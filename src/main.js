@@ -313,11 +313,30 @@ grassMesh.receiveShadow = true;
 scene.add(grassMesh);
 
 // In der animate-Funktion:
-animate = function() {
-    grassMaterial.uniforms.time.value = performance.now() * 0.001;
+function animate() {
     requestAnimationFrame(animate);
+    const time = performance.now();
+    const delta = (time - prevTime) / 1000;
+    prevTime = time;
+
+    // Grass swaying
+    if (grassMaterial) grassMaterial.uniforms.time.value = time * 0.001;
+
+    if (world) world.step(1/60, delta, 3);
+
+    // Kamera folgt Player-Body
+    if (player.body && controls) {
+        const headHeight = 1.6;
+        controls.getObject().position.set(
+            player.body.position.x,
+            player.body.position.y + (headHeight - 0.9),
+            player.body.position.z
+        );
+    }
+
+    // Rest des animate-Codes ...
     renderer.render(scene, camera);
-};
+}
 
 
 
