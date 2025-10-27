@@ -1,5 +1,7 @@
 // ============================================================
 // BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT + KOLLISIONEN + HEADSHOT)
+// (vollständig angepasst: W/S vertauscht, sichtbare Patronen, Projektile kollidieren mit Map-Objekten,
+//  Gegner suchen Deckung, Schießen deaktiviert beim Nachladen, Audio optional)
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
@@ -184,14 +186,18 @@ window.addEventListener('DOMContentLoaded', () => {
         world = new CANNON.World();
         world.gravity.set(0, -9.82, 0);
         world.solver.iterations = 10;
+        world.broadphase = new CANNON.NaiveBroadphase();
 
         const floorShape = new CANNON.Plane();
         const floorBody = new CANNON.Body({ mass: 0, shape: floorShape });
         floorBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
         world.addBody(floorBody);
 
+        // Falls Map-Objekte bereits existieren (werden beim initPlayer gesetzt), füge sie als statische Körper hinzu.
+        // initPlayer fügt gameMap.objects später erneut hinzu — hier nur safety wenn vorhanden.
         gameMap?.objects?.forEach(obj => {
             if (!obj) return;
+            if (obj.body) return; // falls bereits erzeugt
             const size = obj.scale || { x:1, y:1, z:1 };
             const shape = new CANNON.Box(new CANNON.Vec3(size.x/2, size.y/2, size.z/2));
             const body = new CANNON.Body({ mass: 0, shape });
@@ -228,6 +234,22 @@ window.addEventListener('DOMContentLoaded', () => {
     function initPlayer() {
         gameMap = new Map(scene);
 
+        // ensure gameMap.objects exist as array
+        if (!gameMap.objects) gameMap.objects = [];
+
+        // register map objects in physics world (static bodies) and make them collidable
+        gameMap.objects.forEach(obj => {
+            if (!obj) return;
+            if (obj.body) return;
+            const size = obj.scale || { x:1, y:1, z:1 };
+            const shape = new CANNON.Box(new CANNON.Vec3(size.x/2, size.y/2, size.z/2));
+            const body = new CANNON.Body({ mass: 0, shape });
+            body.position.set(obj.position.x, obj.position.y, obj.position.z);
+            world.addBody(body);
+            obj.body = body;
+        });
+
+        // Player Mesh (placeholder — FP nicht sichtbar)
         player.mesh = new THREE.Mesh(
             new THREE.BoxGeometry(0.6,1.8,0.5),
             new THREE.MeshStandardMaterial({ color: 0x00aaff })
@@ -236,6 +258,7 @@ window.addEventListener('DOMContentLoaded', () => {
         player.mesh.visible = false;
         scene.add(player.mesh);
 
+        // Player Physics (Kapsel-ähnlich via Cylinder)
         const playerShape = new CANNON.Cylinder(0.35, 0.35, 1.8, 8);
         const playerBody = new CANNON.Body({
             mass: 80,
@@ -247,8 +270,10 @@ window.addEventListener('DOMContentLoaded', () => {
         world.addBody(playerBody);
         player.body = playerBody;
 
+        // Position initial abgleichen
         player.mesh.position.copy(player.body.position);
 
+        // Weapon
         player.weapon = new Weapon(player, scene, { ammo: ammoEl });
         const weaponMesh = player.weapon?.mesh || player.weapon?.model || null;
         if (weaponMesh) {
@@ -271,24 +296,31 @@ window.addEventListener('DOMContentLoaded', () => {
         // AudioManager optional nutzen, Fehler vermeiden
         try {
             audioManager = new AudioManager(new THREE.AudioListener());
-            audioManager.load?.('shoot', './assets/sounds/shoot.wav')
-                .catch(err => console.warn("❌ shoot.wav konnte nicht geladen werden:", err));
+            // only attempt to load if method exists and file path is likely valid; errors handled by catch
+            if (typeof audioManager.load === 'function') {
+                audioManager.load('shoot', './assets/sounds/shoot.wav')
+                    .catch(err => console.warn("❌ shoot.wav konnte nicht geladen werden:", err));
+            }
         } catch(e) {
             console.warn("❌ AudioManager konnte nicht initialisiert werden:", e);
             audioManager = null;
         }
 
+        // Level + Gegner
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
 
         enemies = levelManager.enemies || [];
 
-        enemyAIs = [];
+        // Gegner-Physics + default health + KI-Instances (erzeuge AI hier einmalig)
+        enemyAIs = []; // reset
         enemies.forEach(enemy => {
             if (!enemy) { enemyAIs.push(null); return; }
 
+            // Default HP falls nicht gesetzt
             if (enemy.health === undefined) enemy.health = 120;
 
+            // physics body
             const shape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
             const body = new CANNON.Body({ mass: 50, shape });
             const pos = enemy.mesh ? enemy.mesh.position : new THREE.Vector3(0,1,0);
@@ -297,51 +329,67 @@ window.addEventListener('DOMContentLoaded', () => {
             world.addBody(body);
             enemy.body = body;
 
+            // create AI and wrap update for hiding behavior
             const ai = new EnemyAI(enemy, gameMap, player);
             const originalUpdate = ai.update.bind(ai);
-            ai.update = function(delta){
-                if(enemy.health <= 0) return;
+            ai.update = function(delta) {
+                if (enemy.health <= 0) return;
 
-                if(Math.random() < 0.01) ai.setRandomDirection?.();
+                // occasional random moves to make movement less predictable
+                if (Math.random() < 0.02) ai.setRandomDirection?.();
 
-                if(player.body){
+                // try to find cover if near player
+                if (player?.body) {
                     const toPlayer = new THREE.Vector3().subVectors(player.body.position, enemy.body.position);
                     const distance = toPlayer.length();
 
                     let coverChosen = false;
-                    if(distance < 15 && gameMap?.objects?.length > 0){
-                        for(const obj of gameMap.objects){
-                            if(!obj?.position) continue;
-
+                    if (distance < 15 && Array.isArray(gameMap?.objects) && gameMap.objects.length > 0) {
+                        // shuffle small sample for performance
+                        const objs = gameMap.objects.slice();
+                        for (let k = objs.length - 1; k > 0; k--) {
+                            const r = Math.floor(Math.random() * (k + 1));
+                            [objs[k], objs[r]] = [objs[r], objs[k]];
+                        }
+                        for (const obj of objs) {
+                            if (!obj?.position || !obj?.body) continue;
+                            // cast a ray from enemy to player, see if obj blocks line of sight
                             const from = enemy.body.position.clone();
                             const to = player.body.position.clone();
                             const ray = new CANNON.Ray(from, to);
                             ray.skipBackfaces = true;
                             let hit = false;
-                            ray.intersectBody(obj.body, (result)=>{
-                                if(result.hasHit) hit = true;
-                            });
-
-                            if(hit){ 
-                                ai.moveTo?.(obj.position); 
-                                coverChosen = true; 
+                            // intersectBody is synchronous callback style in cannon-es build used earlier
+                            try {
+                                ray.intersectBody(obj.body, (result) => {
+                                    if (result.hasHit) hit = true;
+                                });
+                            } catch (err) {
+                                // some builds may not support intersectBody with callback - skip if so
+                            }
+                            if (hit) {
+                                // move to cover position (slightly offset)
+                                const coverPos = new CANNON.Vec3(obj.position.x, obj.position.y, obj.position.z);
+                                ai.moveTo?.({ x: coverPos.x, y: coverPos.y, z: coverPos.z });
+                                coverChosen = true;
                                 break;
                             }
                         }
                     }
 
-                    if(!coverChosen && distance < 20){
-                        // Gegner nur schauen, nicht blind laufen
+                    if (!coverChosen && distance < 20) {
+                        // do not blindly run at player; orient and possibly step closer slowly
                         enemy.body.velocity.x = 0;
                         enemy.body.velocity.z = 0;
                         const dir = toPlayer.clone().normalize();
                         const angle = Math.atan2(dir.x, dir.z);
-                        enemy.mesh.rotation.y = angle;
+                        if (enemy.mesh) enemy.mesh.rotation.y = angle;
                     }
                 }
 
                 originalUpdate(delta);
             };
+
             enemyAIs.push(ai);
         });
     }
@@ -354,78 +402,101 @@ window.addEventListener('DOMContentLoaded', () => {
 
         let speed = 5 * player.speed * SPEED_MULTIPLIER;
 
-        if(sprinting && sprintCooldownTimer <= 0) {
+        if (sprinting && sprintCooldownTimer <= 0) {
             speed *= SPRINT_MULTIPLIER;
             sprintTimer += delta;
-            if(sprintTimer >= sprintDuration){
+            if (sprintTimer >= sprintDuration) {
                 sprinting = false;
                 sprintCooldownTimer = sprintCooldown;
                 sprintTimer = 0;
             }
         } else {
             sprintCooldownTimer -= delta;
-            if(sprintCooldownTimer < 0) sprintCooldownTimer = 0;
+            if (sprintCooldownTimer < 0) sprintCooldownTimer = 0;
         }
 
         let input = new THREE.Vector3(0,0,0);
-        if(move.forward)  input.z -= 1; // W/S vertauscht
-        if(move.backward) input.z += 1;
-        if(move.left)     input.x -= 1;
-        if(move.right)    input.x += 1;
+        // W/S vertauscht: W führt jetzt die "forward" flag, aber wir wollen sie als rückwärts -> make W move backwards
+        // So: when move.forward (W pressed) we move +z (backwards), when move.backward (S pressed) we move -z (forwards)
+        if (move.forward)  input.z += 1; // W => backwards relative to camera (swapped)
+        if (move.backward) input.z -= 1; // S => forwards relative to camera (swapped)
+        if (move.left)     input.x -= 1;
+        if (move.right)    input.x += 1;
         input.normalize();
 
-        if(input.length() === 0) {
+        if (input.length() === 0) {
             player.body.velocity.x *= 0.9;
             player.body.velocity.z *= 0.9;
         } else {
             const quat = new THREE.Quaternion();
-            const euler = new THREE.Euler(0, controls.getObject().rotation.y, 0, 'YXZ');
+            // Use camera yaw so movement follows camera orientation
+            const yaw = controls?.getObject?.().rotation?.y ?? camera.rotation.y;
+            const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
             quat.setFromEuler(euler);
             const worldDir = input.applyQuaternion(quat);
 
-            // Kollisionsprüfung
+            // Raycast a short step ahead to prevent walking through thin objects
             const from = player.body.position.clone();
-            const to = from.vadd(new CANNON.Vec3(worldDir.x*speed*delta, 0, worldDir.z*speed*delta));
+            const step = 0.5; // step distance to test
+            const to = from.vadd(new CANNON.Vec3(worldDir.x * speed * delta * step * 10, 0, worldDir.z * speed * delta * step * 10));
             const ray = new CANNON.Ray(from, to);
             ray.skipBackfaces = true;
-            let blocked = false;
-            ray.intersectWorld(world, { collisionFilterMask: -1 }, (result)=>{
-                if(result.hasHit) blocked = true;
-            });
 
-            if(!blocked){
+            let blocked = false;
+            try {
+                ray.intersectWorld(world, { collisionFilterMask: -1 }, (result) => {
+                    if (result.hasHit) blocked = true;
+                });
+            } catch (err) {
+                // Some cannon versions differ; fall back to no-block check
+                blocked = false;
+            }
+
+            if (!blocked) {
                 player.body.velocity.x = worldDir.x * speed;
                 player.body.velocity.z = worldDir.z * speed;
             } else {
+                // slide along obstacle attempt: zero velocity for simplicity
                 player.body.velocity.x = 0;
                 player.body.velocity.z = 0;
             }
         }
 
         const onGround = Math.abs(player.body.position.y - 1.0) < 0.6;
-        if(move.jump && onGround) player.body.velocity.y = 8;
+        if (move.jump && onGround) player.body.velocity.y = 8;
 
         player.mesh.position.copy(player.body.position);
     }
 
     // ==========================
-    // 8. Projektile mit Kollisionsprüfung
+    // 8. Projektile mit Lichtspur & Kollision
     // ==========================
     function spawnBullet(origin, direction, owner) {
         const geom = new THREE.SphereGeometry(0.08, 12, 12);
-        const mat = new THREE.MeshStandardMaterial({ color: 0xffcc33, metalness: 0.5, roughness: 0.2 });
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0xffcc33,
+            emissive: 0xffaa33,
+            emissiveIntensity: 1.8,
+            metalness: 0.7,
+            roughness: 0.2
+        });
         const mesh = new THREE.Mesh(geom, mat);
         mesh.castShadow = true;
         mesh.position.copy(origin);
         scene.add(mesh);
 
+        // kleine Lichtspur hinter der Kugel
+        const light = new THREE.PointLight(0xffaa00, 0.8, 3);
+        light.position.copy(origin);
+        scene.add(light);
+
         const shape = new CANNON.Sphere(0.05);
-        const body = new CANNON.Body({ mass: 0.2, shape });
+        const body = new CANNON.Body({ mass: 0.05, shape });
         body.position.set(origin.x, origin.y, origin.z);
         body.velocity.set(direction.x * BULLET_SPEED, direction.y * BULLET_SPEED, direction.z * BULLET_SPEED);
         world.addBody(body);
 
-        projectiles.push({ mesh, body, life: BULLET_LIFETIME, owner });
+        projectiles.push({ mesh, body, light, life: BULLET_LIFETIME, owner });
     }
 
     // ==========================
@@ -434,19 +505,25 @@ window.addEventListener('DOMContentLoaded', () => {
     function animate() {
         requestAnimationFrame(animate);
         const time = performance.now();
-        const delta = (time - prevTime)/1000;
+        const delta = (time - prevTime) / 1000;
         prevTime = time;
 
         if (world) world.step(1/60, delta, 3);
 
+        // Kamera folgt Player-Body
         if (player.body && controls) {
             const headHeight = 1.6;
-            controls.getObject().position.set(player.body.position.x, player.body.position.y + (headHeight - 0.9), player.body.position.z);
+            controls.getObject().position.set(
+                player.body.position.x,
+                player.body.position.y + (headHeight - 0.9),
+                player.body.position.z
+            );
         }
 
         if (controls?.isLocked && !menuVisible() && player && player.body) {
             playerMovement(delta);
 
+            // Enemy AI updates
             for (let i = 0; i < enemyAIs.length; i++) {
                 const ai = enemyAIs[i];
                 const e = enemies[i];
@@ -455,44 +532,54 @@ window.addEventListener('DOMContentLoaded', () => {
                 e.mesh.position.copy(e.body.position);
             }
 
+            // Projectiles update & collisions
             for (let i = projectiles.length - 1; i >= 0; i--) {
                 const p = projectiles[i];
                 if (!p || !p.mesh || !p.body) continue;
                 p.life -= delta;
                 p.mesh.position.copy(p.body.position);
+                if (p.light) p.light.position.copy(p.body.position);
 
                 if (p.life <= 0) {
                     scene.remove(p.mesh);
-                    try { world.removeBody(p.body); } catch(e){}
-                    projectiles.splice(i,1);
+                    if (p.light) scene.remove(p.light);
+                    try { world.removeBody(p.body); } catch (e) {}
+                    projectiles.splice(i, 1);
                     continue;
                 }
 
-                // Kollisionsprüfung Map-Objekte
+                // Map-Kollision: raycast from current to next position
                 const from = p.body.position.clone();
                 const to = from.vadd(p.body.velocity.scale(delta));
                 const ray = new CANNON.Ray(from, to);
                 ray.skipBackfaces = true;
                 let hitObject = false;
-                for(const obj of gameMap.objects){
-                    if(!obj?.body) continue;
-                    ray.intersectBody(obj.body, (result)=>{
-                        if(result.hasHit) hitObject = true;
-                    });
+                if (Array.isArray(gameMap?.objects)) {
+                    for (const obj of gameMap.objects) {
+                        if (!obj?.body) continue;
+                        try {
+                            ray.intersectBody(obj.body, (result) => {
+                                if (result.hasHit) hitObject = true;
+                            });
+                        } catch (err) {
+                            // some cannon builds may not support intersectBody callback - ignore
+                        }
+                        if (hitObject) break;
+                    }
                 }
-                if(hitObject){
+                if (hitObject) {
                     scene.remove(p.mesh);
-                    try { world.removeBody(p.body); } catch(e){}
-                    projectiles.splice(i,1);
+                    if (p.light) scene.remove(p.light);
+                    try { world.removeBody(p.body); } catch (e) {}
+                    projectiles.splice(i, 1);
                     continue;
                 }
 
-                // Kollisionsprüfung Gegner
+                // Enemy collision
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     const enemy = enemies[j];
                     if (!enemy || !enemy.body || !enemy.mesh) continue;
                     if (enemy.health === undefined) enemy.health = 120;
-
                     const distVec = enemy.body.position.vsub(p.body.position);
                     const d = Math.sqrt(distVec.x*distVec.x + distVec.y*distVec.y + distVec.z*distVec.z);
 
@@ -500,17 +587,22 @@ window.addEventListener('DOMContentLoaded', () => {
                         const headshotThreshold = 1.4;
                         const isHeadshot = (p.body.position.y - enemy.body.position.y) > headshotThreshold;
                         const damage = isHeadshot ? enemy.health : 25;
+                        if (isHeadshot) console.log("🎯 Headshot! One-Hit.");
+                        else console.log("🔫 Treffer: -25 HP");
+
                         enemy.health -= damage;
 
                         scene.remove(p.mesh);
-                        try { world.removeBody(p.body); } catch(e){}
-                        projectiles.splice(i,1);
+                        if (p.light) scene.remove(p.light);
+                        try { world.removeBody(p.body); } catch (e) {}
+                        projectiles.splice(i, 1);
 
                         if (enemy.health <= 0) {
-                            try { scene.remove(enemy.mesh); } catch(e){}
-                            try { world.removeBody(enemy.body); } catch(e){}
-                            enemies.splice(j,1);
-                            if (enemyAIs[j]) enemyAIs.splice(j,1);
+                            console.log("💀 Gegner ausgeschaltet!");
+                            try { scene.remove(enemy.mesh); } catch (err) {}
+                            try { world.removeBody(enemy.body); } catch (err) {}
+                            enemies.splice(j, 1);
+                            if (enemyAIs[j]) enemyAIs.splice(j, 1);
                         }
                         break;
                     }
@@ -528,8 +620,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // 10. HUD Update
     // ==========================
     function updateHUD() {
-        if(!player) return;
-        healthEl.innerText = `Leben: ${Math.max(player.health || classes[selectedClass]?.health || 0,0)}`;
+        if (!player) return;
+        healthEl.innerText = `Leben: ${Math.max(player.health || classes[selectedClass]?.health || 0, 0)}`;
         ammoEl.innerText = player.weapon?.reloading ? "Nachladen..." : `Munition: ${player.weapon?.ammo || classes[selectedClass]?.ammo || 0}/${player.weapon?.maxAmmo || classes[selectedClass]?.ammo || 0}`;
         abilityEl.innerText = `Fähigkeit: ${player.ability || classes[selectedClass]?.ability || '-'} (${Math.max(player.abilityObj?.cooldown?.toFixed?.(1) || 0,0)}s)`;
         levelEl.innerText = `Level: ${levelManager?.level || 1}`;
@@ -553,10 +645,15 @@ window.addEventListener('DOMContentLoaded', () => {
             case 'Space': move.jump=true; break;
             case 'ShiftLeft':
             case 'ShiftRight':
-                if(sprintCooldownTimer <= 0) sprinting = true;
+                if (sprintCooldownTimer <= 0) sprinting = true;
                 break;
-            case 'KeyR': player.weapon?.reload(); break;
-            case 'KeyF': player.abilityObj?.use(enemies); break;
+            case 'KeyR':
+                // trigger reload on weapon if available
+                player.weapon?.reload?.();
+                break;
+            case 'KeyF':
+                player.abilityObj?.use?.(enemies);
+                break;
         }
     });
     document.addEventListener('keyup', e=>{
@@ -570,22 +667,32 @@ window.addEventListener('DOMContentLoaded', () => {
             case 'ShiftRight': sprinting = false; break;
         }
     });
-    document.addEventListener('mousedown', e=>{
-        if(controls?.isLocked && e.button===0 && player && camera){
-            if(player.weapon?.reloading) return; // Kein Schießen beim Nachladen
 
-            const shotResult = player.weapon?.shoot?.(enemies);
+    // Sichtbarer Schuss (mit Bullet Spawn) — Schießen nur wenn nicht nachgeladen
+    document.addEventListener('mousedown', e=>{
+        if (controls?.isLocked && e.button === 0 && player && camera) {
+            // keine Schüsse während Nachladen
+            if (player.weapon?.reloading) return;
+            // keine Schüsse ohne Munition
+            if (typeof player.weapon?.ammo === 'number' && player.weapon.ammo <= 0) return;
+
+            // Sound (optional, safe-call)
             audioManager?.play?.('shoot');
 
-            if (!shotResult && camera) {
-                const origin = new THREE.Vector3();
-                camera.getWorldPosition(origin);
-                const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();
-                origin.add(forward.clone().multiplyScalar(0.6));
-                spawnBullet(origin, forward, player);
-            }
+            // Kamera-Position + Richtung
+            const origin = new THREE.Vector3();
+            camera.getWorldPosition(origin);
+            const forward = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).normalize();
+            origin.add(forward.clone().multiplyScalar(0.6));
+
+            // Sichtbares Projektil erzeugen
+            spawnBullet(origin, forward, player);
+
+            // Interne Schuss-Logik (Ammo reduzieren, hitscan etc.)
+            player.weapon?.shoot?.(enemies);
         }
     });
 
     console.log("✅ Breacher Bros FPS ready!");
 });
+
