@@ -314,35 +314,6 @@ scene.add(grassMesh);
 
 // In der animate-Funktion:
 // In der animate-Funktion:
-function animate() {
-    requestAnimationFrame(animate);
-
-    const time = performance.now();
-    let delta = (time - prevTime) / 1000;
-    prevTime = time;
-
-    // Sicherstellen, dass delta nicht zu groß wird (FPS-Drops)
-    delta = Math.min(delta, 0.1);
-
-    // Physics-Step
-    if (world) world.step(1/60, delta, 3);
-
-    // --------------------------
-    // Grass Animation
-    // --------------------------
-    if (grassMaterial) grassMaterial.uniforms.time.value = time * 0.001;
-
-    // --------------------------
-    // Kamera folgt Player
-    // --------------------------
-    if (player?.body && controls) {
-        const headHeight = 1.6;
-        controls.getObject().position.set(
-            player.body.position.x,
-            player.body.position.y + (headHeight - 0.9),
-            player.body.position.z
-        );
-    }
 
     // --------------------------
     // Player Input + Movement
