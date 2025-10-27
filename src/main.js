@@ -1,7 +1,6 @@
 // ============================================================
 // BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT + KOLLISIONEN + HEADSHOT)
-// (vollständig angepasst: W/S vertauscht, sichtbare Patronen, Projektile kollidieren mit Map-Objekten,
-//  Gegner suchen Deckung, Schießen deaktiviert beim Nachladen, Audio optional)
+// (angepasst: WASD bewegt sich immer relativ zur Blickrichtung, hält nicht die erste Richtung; Map erhält mehr Objekte)
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
@@ -237,6 +236,25 @@ window.addEventListener('DOMContentLoaded', () => {
         // ensure gameMap.objects exist as array
         if (!gameMap.objects) gameMap.objects = [];
 
+        // --- Zusätzliche Map-Objekte hinzufügen (dichtere Map) ---
+        // Wir erzeugen einige zusätzliche statische Boxen zufällig verteilt, damit die Map "mehr Fahrt" bekommt / dichter wirkt.
+        for (let i = 0; i < 12; i++) {
+            const size = { x: 1 + Math.random() * 3, y: 1 + Math.random() * 2, z: 1 + Math.random() * 3 };
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(size.x, size.y, size.z),
+                new THREE.MeshStandardMaterial({ color: 0x444444 })
+            );
+            const posX = (Math.random() - 0.5) * 60; // verteilt in größerem Bereich
+            const posZ = (Math.random() - 0.5) * 60;
+            mesh.position.set(posX, size.y / 2, posZ);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            // Füge als Map-Objekt hinzu (Position + Scale), wird weiter unten in Physics als Body registriert
+            gameMap.objects.push({ mesh, position: { x: posX, y: size.y / 2, z: posZ }, scale: size });
+        }
+
         // register map objects in physics world (static bodies) and make them collidable
         gameMap.objects.forEach(obj => {
             if (!obj) return;
@@ -395,7 +413,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================
-    // 7. Player Movement mit Kollision + W/S vertauscht
+    // 7. Player Movement mit Kollision
+    //     -> Änderung: WASD bewegt sich **immer relativ zur Kamera** und reagiert dynamisch,
+    //        auch wenn die Kamera während des Haltens/Drückens gedreht wird.
     // ==========================
     function playerMovement(delta) {
         if (!player.body) return;
@@ -415,25 +435,37 @@ window.addEventListener('DOMContentLoaded', () => {
             if (sprintCooldownTimer < 0) sprintCooldownTimer = 0;
         }
 
+        // Build input vector (camera-relative movement will be computed below)
+        // Standard mapping: W = forward, S = backward, A = left, D = right
         let input = new THREE.Vector3(0,0,0);
-        // W/S vertauscht: W führt jetzt die "forward" flag, aber wir wollen sie als rückwärts -> make W move backwards
-        // So: when move.forward (W pressed) we move +z (backwards), when move.backward (S pressed) we move -z (forwards)
-        if (move.forward)  input.z += 1; // W => backwards relative to camera (swapped)
-        if (move.backward) input.z -= 1; // S => forwards relative to camera (swapped)
-        if (move.left)     input.x -= 1;
-        if (move.right)    input.x += 1;
-        input.normalize();
+        if (move.forward)  input.z -= 1; // W -> forward
+        if (move.backward) input.z += 1; // S -> backward
+        if (move.left)     input.x -= 1; // A -> left
+        if (move.right)    input.x += 1; // D -> right
 
+        // If no input, apply damping
         if (input.length() === 0) {
             player.body.velocity.x *= 0.9;
             player.body.velocity.z *= 0.9;
         } else {
-            const quat = new THREE.Quaternion();
-            // Use camera yaw so movement follows camera orientation
-            const yaw = controls?.getObject?.().rotation?.y ?? camera.rotation.y;
-            const euler = new THREE.Euler(0, yaw, 0, 'YXZ');
-            quat.setFromEuler(euler);
-            const worldDir = input.applyQuaternion(quat);
+            // compute camera-aligned directions each frame (so rotating the view while holding keys updates movement)
+            const camForward = new THREE.Vector3();
+            camera.getWorldDirection(camForward);
+            camForward.y = 0;
+            if (camForward.lengthSq() === 0) camForward.set(0,0,-1);
+            camForward.normalize();
+
+            const camRight = new THREE.Vector3();
+            camRight.crossVectors(camForward, new THREE.Vector3(0,1,0)).normalize();
+
+            // Map input to world direction: forward/back along camForward, left/right along camRight
+            // Note: input.z is -1 when pressing forward (W), so we invert sign to get positive forward movement
+            const worldDir = new THREE.Vector3();
+            worldDir.addScaledVector(camForward, -input.z);
+            worldDir.addScaledVector(camRight, input.x);
+
+            // normalize to avoid faster diagonal movement
+            if (worldDir.lengthSq() > 0) worldDir.normalize();
 
             // Raycast a short step ahead to prevent walking through thin objects
             const from = player.body.position.clone();
@@ -456,7 +488,8 @@ window.addEventListener('DOMContentLoaded', () => {
                 player.body.velocity.x = worldDir.x * speed;
                 player.body.velocity.z = worldDir.z * speed;
             } else {
-                // slide along obstacle attempt: zero velocity for simplicity
+                // slide along obstacle attempt: try to slide by projecting velocity onto tangent
+                // simpler fallback: zero out velocity
                 player.body.velocity.x = 0;
                 player.body.velocity.z = 0;
             }
@@ -695,4 +728,5 @@ window.addEventListener('DOMContentLoaded', () => {
 
     console.log("✅ Breacher Bros FPS ready!");
 });
+
 
