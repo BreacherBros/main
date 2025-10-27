@@ -1,5 +1,5 @@
 // ============================================================
-// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT + KOLLISIONEN + HEADSHOT + COVER)
+// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT + KOLLISIONEN + HEADSHOT)
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
@@ -291,13 +291,11 @@ window.addEventListener('DOMContentLoaded', () => {
             world.addBody(body);
             enemy.body = body;
 
-            // ===== Angepasste KI mit Cover und Observation =====
             const ai = new EnemyAI(enemy, gameMap, player);
             const originalUpdate = ai.update.bind(ai);
             ai.update = function(delta){
                 if(enemy.health <= 0) return;
 
-                // Zufällige Patrouille
                 if(Math.random() < 0.01) ai.setRandomDirection?.();
 
                 if(player.body){
@@ -308,16 +306,24 @@ window.addEventListener('DOMContentLoaded', () => {
                     if(distance < 15 && gameMap?.objects?.length > 0){
                         for(const obj of gameMap.objects){
                             if(!obj?.position) continue;
-                            const toCover = new THREE.Vector3().subVectors(obj.position, enemy.body.position);
-                            if(toCover.length() < 10){ // in Reichweite
-                                ai.moveTo?.(obj.position);
-                                coverChosen = true;
+
+                            const from = enemy.body.position.clone();
+                            const to = player.body.position.clone();
+                            const ray = new CANNON.Ray(from, to);
+                            ray.skipBackfaces = true;
+                            let hit = false;
+                            ray.intersectBody(obj.body, (result)=>{
+                                if(result.hasHit) hit = true;
+                            });
+
+                            if(hit){ 
+                                ai.moveTo?.(obj.position); 
+                                coverChosen = true; 
                                 break;
                             }
                         }
                     }
 
-                    // Wenn kein Deckungspunkt gewählt, dann Spieler beobachten
                     if(!coverChosen && distance < 20){
                         enemy.body.velocity.set(0, enemy.body.velocity.y, 0);
                         const dir = toPlayer.clone().normalize();
@@ -328,13 +334,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 originalUpdate(delta);
             };
-
             enemyAIs.push(ai);
         });
     }
 
     // ==========================
-    // 7. Player Movement
+    // 7. Player Movement mit Kollision
     // ==========================
     function playerMovement(delta) {
         if (!player.body) return;
@@ -355,8 +360,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         let input = new THREE.Vector3(0,0,0);
-        // W/S vertauscht
-        if(move.forward)  input.z -= 1;
+        if(move.forward)  input.z -= 1; // W/S vertauscht
         if(move.backward) input.z += 1;
         if(move.left)     input.x -= 1;
         if(move.right)    input.x += 1;
@@ -370,8 +374,23 @@ window.addEventListener('DOMContentLoaded', () => {
             const euler = new THREE.Euler(0, controls.getObject().rotation.y, 0, 'YXZ');
             quat.setFromEuler(euler);
             const worldDir = input.applyQuaternion(quat);
-            const vel = new CANNON.Vec3(worldDir.x * speed, player.body.velocity.y, worldDir.z * speed);
-            player.body.velocity.copy(vel);
+
+            const from = player.body.position.clone();
+            const to = from.vadd(new CANNON.Vec3(worldDir.x*speed*delta, 0, worldDir.z*speed*delta));
+            const ray = new CANNON.Ray(from, to);
+            ray.skipBackfaces = true;
+            let blocked = false;
+            ray.intersectWorld(world, { collisionFilterMask: -1 }, (result)=>{
+                if(result.hasHit) blocked = true;
+            });
+
+            if(!blocked){
+                player.body.velocity.x = worldDir.x * speed;
+                player.body.velocity.z = worldDir.z * speed;
+            } else {
+                player.body.velocity.x = 0;
+                player.body.velocity.z = 0;
+            }
         }
 
         const onGround = Math.abs(player.body.position.y - 1.0) < 0.6;
@@ -381,7 +400,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================
-    // 8. Projektile
+    // 8. Projektile mit Kollisionsprüfung
     // ==========================
     function spawnBullet(origin, direction, owner) {
         const geom = new THREE.SphereGeometry(0.08, 12, 12);
@@ -440,6 +459,26 @@ window.addEventListener('DOMContentLoaded', () => {
                     continue;
                 }
 
+                // Kollisionsprüfung Map-Objekte
+                const from = p.body.position.clone();
+                const to = from.vadd(p.body.velocity.scale(delta));
+                const ray = new CANNON.Ray(from, to);
+                ray.skipBackfaces = true;
+                let hitObject = false;
+                for(const obj of gameMap.objects){
+                    if(!obj?.body) continue;
+                    ray.intersectBody(obj.body, (result)=>{
+                        if(result.hasHit) hitObject = true;
+                    });
+                }
+                if(hitObject){
+                    scene.remove(p.mesh);
+                    try { world.removeBody(p.body); } catch(e){}
+                    projectiles.splice(i,1);
+                    continue;
+                }
+
+                // Kollisionsprüfung Gegner
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     const enemy = enemies[j];
                     if (!enemy || !enemy.body || !enemy.mesh) continue;
@@ -523,7 +562,9 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
     document.addEventListener('mousedown', e=>{
-        if(controls?.isLocked && e.button===0 && player && camera && !player.weapon?.reloading){
+        if(controls?.isLocked && e.button===0 && player && camera){
+            if(player.weapon?.reloading) return; // Kein Schießen beim Nachladen
+
             const shotResult = player.weapon?.shoot?.(enemies);
             audioManager?.play('shoot');
 
