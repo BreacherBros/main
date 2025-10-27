@@ -722,39 +722,82 @@ window.addEventListener('DOMContentLoaded', () => {
                     continue;
                 }
 
-                // Enemy collision
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    const enemy = enemies[j];
-                    if (!enemy || !enemy.body || !enemy.mesh) continue;
-                    if (enemy.health === undefined) enemy.health = 120;
-                    const distVec = enemy.body.position.vsub(p.body.position);
-                    const d = Math.sqrt(distVec.x*distVec.x + distVec.y*distVec.y + distVec.z*distVec.z);
+      // Enemy collision
+for (let j = enemies.length - 1; j >= 0; j--) {
+    const enemy = enemies[j];
+    if (!enemy || !enemy.body || !enemy.mesh) continue;
+    if (enemy.health === undefined) enemy.health = 120;
 
-                    if (d < 0.8) {
-                        // Kopf-Höhe nun anhand humanoider Proportionen etwas niedriger ansetzen
-                        const headshotThreshold = 0.9; // fühlt sich bei humanoid-Modell besser an
-                        const isHeadshot = (p.body.position.y - enemy.body.position.y) > headshotThreshold;
-                        const damage = isHeadshot ? enemy.health : 25;
-                        if (isHeadshot) console.log("🎯 Headshot! One-Hit.");
-                        else console.log("🔫 Treffer: -25 HP");
+    const distVec = enemy.body.position.vsub(p.body.position);
+    const d = Math.sqrt(distVec.x*distVec.x + distVec.y*distVec.y + distVec.z*distVec.z);
 
-                        enemy.health -= damage;
+    if (d < 0.8) {
+        const headshotThreshold = 0.9; 
+        const isHeadshot = (p.body.position.y - enemy.body.position.y) > headshotThreshold;
+        const damage = isHeadshot ? enemy.health : 25;
 
-                        scene.remove(p.mesh);
-                        if (p.light) scene.remove(p.light);
-                        try { world.removeBody(p.body); } catch (e) {}
-                        projectiles.splice(i, 1);
+        enemy.health -= damage;
 
-                        if (enemy.health <= 0) {
-                            console.log("💀 Gegner ausgeschaltet!");
-                            try { scene.remove(enemy.mesh); } catch (err) {}
-                            try { world.removeBody(enemy.body); } catch (err) {}
-                            enemies.splice(j, 1);
-                            if (enemyAIs[j]) enemyAIs.splice(j, 1);
-                        }
-                        break;
-                    }
-                }
+        // -----------------------------
+        // VISUAL: Treffer-Anzeige (animiert)
+        // -----------------------------
+        const div = document.createElement('div');
+        div.style.position = 'absolute';
+        div.style.color = isHeadshot ? 'red' : 'yellow';
+        div.style.fontWeight = 'bold';
+        div.style.fontSize = '20px';
+        div.style.pointerEvents = 'none';
+        div.style.transform = 'translate(-50%, -50%) scale(0)';
+        div.style.transition = 'transform 0.15s ease-out, opacity 0.8s ease-out';
+        div.innerText = isHeadshot ? 'HEADSHOT!' : `-${damage}`;
+        document.body.appendChild(div);
+
+        const startTime = performance.now();
+
+        function updatePosition() {
+            const now = performance.now();
+            const delta = (now - startTime) / 1000;
+
+            // Position über Gegner in Bildschirmkoordinaten
+            const screenPos = enemy.mesh.position.clone();
+            screenPos.y += 1.8 + delta * 0.8; // float nach oben
+            screenPos.project(camera);
+            const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+            const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+            div.style.left = `${x}px`;
+            div.style.top = `${y}px`;
+
+            // Animation: aufpoppen am Anfang
+            if (delta < 0.15) {
+                const scale = 1 + delta * 2; // von 0 auf 1.3
+                div.style.transform = `translate(-50%, -50%) scale(${scale})`;
+            } else {
+                div.style.transform = 'translate(-50%, -50%) scale(1)';
+                div.style.opacity = `${Math.max(1 - (delta - 0.15)/0.65, 0)}`; // langsam verblassen
+            }
+
+            if (delta < 0.8) requestAnimationFrame(updatePosition);
+            else div.remove();
+        }
+        updatePosition();
+
+        // Projektil entfernen
+        scene.remove(p.mesh);
+        if (p.light) scene.remove(p.light);
+        try { world.removeBody(p.body); } catch (e) {}
+        projectiles.splice(i, 1);
+
+        if (enemy.health <= 0) {
+            console.log("💀 Gegner ausgeschaltet!");
+            try { scene.remove(enemy.mesh); } catch (err) {}
+            try { world.removeBody(enemy.body); } catch (err) {}
+            enemies.splice(j, 1);
+            if (enemyAIs[j]) enemyAIs.splice(j, 1);
+        }
+        break;
+    }
+}
+
             }
 
             player.abilityObj.updateCooldown?.(delta);
