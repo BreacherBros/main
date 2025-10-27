@@ -268,9 +268,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
         player.abilityObj = new Ability(player, scene);
 
-        audioManager = new AudioManager(new THREE.AudioListener());
-        audioManager.load('shoot', './assets/sounds/shoot.wav')
-            .catch(err => console.warn("❌ shoot.wav konnte nicht geladen werden:", err));
+        // AudioManager optional nutzen, Fehler vermeiden
+        try {
+            audioManager = new AudioManager(new THREE.AudioListener());
+            audioManager.load?.('shoot', './assets/sounds/shoot.wav')
+                .catch(err => console.warn("❌ shoot.wav konnte nicht geladen werden:", err));
+        } catch(e) {
+            console.warn("❌ AudioManager konnte nicht initialisiert werden:", e);
+            audioManager = null;
+        }
 
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
@@ -325,7 +331,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if(!coverChosen && distance < 20){
-                        enemy.body.velocity.set(0, enemy.body.velocity.y, 0);
+                        // Gegner nur schauen, nicht blind laufen
+                        enemy.body.velocity.x = 0;
+                        enemy.body.velocity.z = 0;
                         const dir = toPlayer.clone().normalize();
                         const angle = Math.atan2(dir.x, dir.z);
                         enemy.mesh.rotation.y = angle;
@@ -339,7 +347,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================
-    // 7. Player Movement mit Kollision
+    // 7. Player Movement mit Kollision + W/S vertauscht
     // ==========================
     function playerMovement(delta) {
         if (!player.body) return;
@@ -375,6 +383,7 @@ window.addEventListener('DOMContentLoaded', () => {
             quat.setFromEuler(euler);
             const worldDir = input.applyQuaternion(quat);
 
+            // Kollisionsprüfung
             const from = player.body.position.clone();
             const to = from.vadd(new CANNON.Vec3(worldDir.x*speed*delta, 0, worldDir.z*speed*delta));
             const ray = new CANNON.Ray(from, to);
@@ -566,7 +575,7 @@ window.addEventListener('DOMContentLoaded', () => {
             if(player.weapon?.reloading) return; // Kein Schießen beim Nachladen
 
             const shotResult = player.weapon?.shoot?.(enemies);
-            audioManager?.play('shoot');
+            audioManager?.play?.('shoot');
 
             if (!shotResult && camera) {
                 const origin = new THREE.Vector3();
