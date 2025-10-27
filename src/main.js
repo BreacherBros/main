@@ -236,41 +236,91 @@ window.addEventListener('DOMContentLoaded', () => {
     // ==========================
     // 4. Szene + Renderer + Licht
     // ==========================
-      function initScene() {
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x101010);
+    function initScene() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x101010);
 
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 1.6, 0);
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1.6, 0);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
-        scene.add(ambientLight);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.45);
+    scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(10, 20, 10);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        scene.add(dirLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(10, 20, 10);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
 
-        renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
 
-        window.addEventListener('resize', onWindowResize);
+    window.addEventListener('resize', onWindowResize);
 
-        // --------------------------
-        // Boden als Rasen
-        // --------------------------
-        const geometry = new THREE.PlaneGeometry(100, 100);
-        const material = new THREE.MeshStandardMaterial({ color: 0x228B22 }); // grüner Rasen
-        floor = new THREE.Mesh(geometry, material);
-        floor.rotation.x = -Math.PI / 2;
-        floor.receiveShadow = true;
-        scene.add(floor);
+    // --------------------------
+    // Boden für Physics
+    // --------------------------
+    const floorShape = new CANNON.Plane();
+    const floorBody = new CANNON.Body({ mass: 0, shape: floorShape });
+    floorBody.quaternion.setFromEuler(-Math.PI/2, 0, 0);
+    world?.addBody(floorBody);
+
+    // --------------------------
+    // Grass-Instancing mit Wind-Animation
+    // --------------------------
+    const grassCount = 5000;
+    const grassGeometry = new THREE.PlaneGeometry(0.1, 0.5, 1, 4); // 4 Segmente für Wackel
+    const grassMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            time: { value: 0 },
+            color: { value: new THREE.Color(0x33aa33) }
+        },
+        vertexShader: `
+            uniform float time;
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                vec3 pos = position;
+                float sway = sin((position.y + time) * 5.0) * 0.05;
+                pos.x += sway;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform vec3 color;
+            varying vec2 vUv;
+            void main() {
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `,
+        side: THREE.DoubleSide
+    });
+
+    const instancedGrass = new THREE.InstancedMesh(grassGeometry, grassMaterial, grassCount);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < grassCount; i++) {
+        dummy.position.set((Math.random() - 0.5) * 100, 0, (Math.random() - 0.5) * 100);
+        dummy.rotation.y = Math.random() * Math.PI * 2;
+        dummy.updateMatrix();
+        instancedGrass.setMatrixAt(i, dummy.matrix);
     }
+    instancedGrass.receiveShadow = true;
+    scene.add(instancedGrass);
+
+    // --------------------------
+    // Animation Loop: Zeit aktualisieren für Shader
+    // --------------------------
+    const originalAnimate = animate; // bestehende animate-Funktion
+    animate = function() {
+        grassMaterial.uniforms.time.value = performance.now() * 0.001; // Sekunden
+        originalAnimate();
+    }
+}
+
 
     // ==========================
     // 4a. Physics World + Boden
