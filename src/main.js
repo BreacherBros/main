@@ -236,7 +236,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // ==========================
     // 4. Szene + Renderer + Licht
     // ==========================
-    function initScene() {
+      function initScene() {
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x101010);
 
@@ -261,8 +261,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
         window.addEventListener('resize', onWindowResize);
 
+        // --------------------------
+        // Boden als Rasen
+        // --------------------------
         const geometry = new THREE.PlaneGeometry(100, 100);
-        const material = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        const material = new THREE.MeshStandardMaterial({ color: 0x228B22 }); // grüner Rasen
         floor = new THREE.Mesh(geometry, material);
         floor.rotation.x = -Math.PI / 2;
         floor.receiveShadow = true;
@@ -321,18 +324,16 @@ window.addEventListener('DOMContentLoaded', () => {
     // ==========================
     // 6. Player + Gegner
     // ==========================
-    function initPlayer() {
+       function initPlayer() {
         gameMap = new Map(scene);
-
-        // ensure gameMap.objects exist as array
         if (!gameMap.objects) gameMap.objects = [];
 
-        // --- Zusätzliche Map-Objekte hinzufügen (dichtere Map) ---
+        // --- Map-Objekte als Steinwände ---
         for (let i = 0; i < 12; i++) {
             const size = { x: 1 + Math.random() * 3, y: 1 + Math.random() * 2, z: 1 + Math.random() * 3 };
             const mesh = new THREE.Mesh(
                 new THREE.BoxGeometry(size.x, size.y, size.z),
-                new THREE.MeshStandardMaterial({ color: 0x444444 })
+                new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.3, roughness: 0.8 }) // Steinwand
             );
             const posX = (Math.random() - 0.5) * 60;
             const posZ = (Math.random() - 0.5) * 60;
