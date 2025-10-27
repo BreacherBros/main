@@ -1,5 +1,5 @@
 // ============================================================
-// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT + KOLLISIONEN + HEADSHOT)
+// BREACHER BROS — 3D FPS BROWSERGAME (MIT PHYSICS, KAMERA- & WAFFEN-FIX + SPRINT + KOLLISIONEN + HEADSHOT + COVER)
 // ============================================================
 
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js';
@@ -269,11 +269,8 @@ window.addEventListener('DOMContentLoaded', () => {
         player.abilityObj = new Ability(player, scene);
 
         audioManager = new AudioManager(new THREE.AudioListener());
-        try {
-            audioManager.load('shoot', './assets/sounds/shoot.wav');
-        } catch(err) {
-            console.warn("❌ shoot.wav konnte nicht geladen werden:", err);
-        }
+        audioManager.load('shoot', './assets/sounds/shoot.wav')
+            .catch(err => console.warn("❌ shoot.wav konnte nicht geladen werden:", err));
 
         levelManager = new LevelManager(scene, gameMap, player);
         levelManager.startLevel();
@@ -294,14 +291,41 @@ window.addEventListener('DOMContentLoaded', () => {
             world.addBody(body);
             enemy.body = body;
 
+            // ===== Angepasste KI mit Cover und Observation =====
             const ai = new EnemyAI(enemy, gameMap, player);
             const originalUpdate = ai.update.bind(ai);
-            ai.update = function(delta) {
-                if (Math.random() < 0.02) ai.setRandomDirection?.();
-                if (Math.random() < 0.01 && gameMap?.objects?.length > 0) {
-                    const cover = gameMap.objects[Math.floor(Math.random()*gameMap.objects.length)];
-                    if (cover?.position) ai.moveTo?.(cover.position);
+            ai.update = function(delta){
+                if(enemy.health <= 0) return;
+
+                // Zufällige Patrouille
+                if(Math.random() < 0.01) ai.setRandomDirection?.();
+
+                if(player.body){
+                    const toPlayer = new THREE.Vector3().subVectors(player.body.position, enemy.body.position);
+                    const distance = toPlayer.length();
+
+                    let coverChosen = false;
+                    if(distance < 15 && gameMap?.objects?.length > 0){
+                        for(const obj of gameMap.objects){
+                            if(!obj?.position) continue;
+                            const toCover = new THREE.Vector3().subVectors(obj.position, enemy.body.position);
+                            if(toCover.length() < 10){ // in Reichweite
+                                ai.moveTo?.(obj.position);
+                                coverChosen = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Wenn kein Deckungspunkt gewählt, dann Spieler beobachten
+                    if(!coverChosen && distance < 20){
+                        enemy.body.velocity.set(0, enemy.body.velocity.y, 0);
+                        const dir = toPlayer.clone().normalize();
+                        const angle = Math.atan2(dir.x, dir.z);
+                        enemy.mesh.rotation.y = angle;
+                    }
                 }
+
                 originalUpdate(delta);
             };
 
@@ -332,8 +356,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
         let input = new THREE.Vector3(0,0,0);
         // W/S vertauscht
-        if(move.forward)  input.z += 1;
-        if(move.backward) input.z -= 1;
+        if(move.forward)  input.z -= 1;
+        if(move.backward) input.z += 1;
         if(move.left)     input.x -= 1;
         if(move.right)    input.x += 1;
         input.normalize();
@@ -499,7 +523,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
     document.addEventListener('mousedown', e=>{
-        if(controls?.isLocked && e.button===0 && player && camera){
+        if(controls?.isLocked && e.button===0 && player && camera && !player.weapon?.reloading){
             const shotResult = player.weapon?.shoot?.(enemies);
             audioManager?.play('shoot');
 
