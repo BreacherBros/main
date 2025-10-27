@@ -297,7 +297,7 @@ const grassMaterial = new THREE.ShaderMaterial({
 });
 
 // InstancedMesh
-const grassMesh = new THREE.InstancedMesh(grassGeometry, grassMaterial, grassCount);
+let grassMesh = new THREE.InstancedMesh(grassGeometry, grassMaterial, grassCount);
 grassGeometry.setAttribute('instanceOffset', new THREE.InstancedBufferAttribute(offsets, 1));
 
 // Position der Halme
