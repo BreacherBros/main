@@ -7,7 +7,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.m
 window.THREE = THREE;
 
 // PointerLockControls from three's examples (CDN)
-import { PointerLockControls } from '/PointerLockControls.js';
+import { PointerLockControls } from '/PointerLockControls.js'; 
 import * as CANNON from 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js';
 
 // Deine lokalen Module (unverändert)
