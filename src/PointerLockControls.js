@@ -3,7 +3,9 @@ import {
 	EventDispatcher,
 	Vector3
 
-} import { PointerLockControls } from './PointerLockControls.js';
+} import * as THREE from 'three';
+import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+
 
 
 const _euler = new Euler( 0, 0, 0, 'YXZ' );
