@@ -270,60 +270,71 @@ window.addEventListener('DOMContentLoaded', () => {
         scene.add(floor);
 
         // -- INSTANCED GRASS BLADES (visual depth)
-        const grassCount = 4000;
-        const bladeGeom = new THREE.PlaneGeometry(0.08, 0.6, 1, 4);
-        // give each blade a random offset attribute
-        const offsets = new Float32Array(grassCount);
-        for (let i = 0; i < grassCount; i++) offsets[i] = Math.random() * Math.PI * 2;
+   // 🌿 Grass Instancing (Three.js r158 stabil)
+const grassCount = 1500;
 
-        // tiny vertex shader sway
-        const grassMaterial = new THREE.ShaderMaterial({
-            uniforms: {
-                time: { value: 0 },
-                map: { value: loader.load(grassTextureUrl) },
-                globalScale: { value: 1.0 }
-            },
-            vertexShader: `
-                uniform float time;
-                attribute float instanceOffset;
-                varying vec2 vUv;
-                void main() {
-                    vUv = uv;
-                    vec3 pos = position;
-                    float sway = sin((instanceOffset + time*1.5) + position.y*2.0) * 0.04;
-                    pos.x += sway * (1.0 - uv.y);
-                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                    gl_Position = projectionMatrix * mvPosition;
-                }
-            `,
-            fragmentShader: `
-                uniform sampler2D map;
-                varying vec2 vUv;
-                void main() {
-                    vec4 c = texture2D(map, vUv * vec2(1.0,1.0));
-                    // simple green tint (the texture is used for detail)
-                    gl_FragColor = vec4(c.rgb * vec3(0.6, 1.0, 0.6), 1.0);
-                }
-            `,
-            transparent: false,
-            side: THREE.DoubleSide
-        });
+// Basisgeometrie für ein einzelnes Blatt
+const bladeGeom = new THREE.PlaneGeometry(0.08, 0.6, 1, 4);
+bladeGeom.translate(0, 0.3, 0); // Basis unten am Boden zentrieren
 
-        const instanced = new THREE.InstancedMesh(bladeGeom, grassMaterial, grassCount);
-        bladeGeom.setAttribute('instanceOffset', new THREE.InstancedBufferAttribute(offsets, 1));
+// Zufällige Rotation pro Instanz vorbereiten
+const offsets = new Float32Array(grassCount);
+for (let i = 0; i < grassCount; i++) offsets[i] = Math.random() * Math.PI * 2;
 
-        const dummy = new THREE.Object3D();
-        for (let i = 0; i < grassCount; i++) {
-            dummy.position.set((Math.random() - 0.5) * 190, 0.12, (Math.random() - 0.5) * 190);
-            dummy.rotation.y = Math.random() * Math.PI;
-            const scale = 0.6 + Math.random() * 0.9;
-            dummy.scale.set(scale, scale, scale);
-            dummy.updateMatrix();
-            instanced.setMatrixAt(i, dummy.matrix);
-        }
-        instanced.receiveShadow = true;
-        instanced.castShadow = false;
-        scene.add(instanced);
+// 🟢 Attribut hinzufügen, bevor InstancedMesh erzeugt wird
+bladeGeom.setAttribute('instanceOffset', new THREE.InstancedBufferAttribute(offsets, 1));
+
+// Shader für Windbewegung
+const grassMaterial = new THREE.ShaderMaterial({
+  vertexShader: `
+    attribute float instanceOffset;
+    varying vec2 vUv;
+    uniform float time;
+
+    void main() {
+      vUv = uv;
+
+      vec3 pos = position;
+      // leichte Sinus-Bewegung oben
+      float sway = sin(instanceOffset + time * 2.0) * 0.08 * (pos.y);
+      pos.x += sway;
+
+      // Matrix anwenden (Instancing)
+      vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(pos, 1.0);
+      gl_Position = projectionMatrix * mvPosition;
+    }
+  `,
+  fragmentShader: `
+    varying vec2 vUv;
+    void main() {
+      // sanfter Farbverlauf: unten dunkler, oben heller
+      vec3 topColor = vec3(0.3, 0.8, 0.3);
+      vec3 bottomColor = vec3(0.1, 0.4, 0.1);
+      vec3 color = mix(bottomColor, topColor, vUv.y);
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `,
+  uniforms: {
+    time: { value: 0 },
+  },
+  side: THREE.DoubleSide,
+});
+
+// InstancedMesh erzeugen
+const instancedGrass = new THREE.InstancedMesh(bladeGeom, grassMaterial, grassCount);
+
+// Jede Instanz zufällig auf der Ebene verteilen
+const dummyMatrix = new THREE.Matrix4();
+for (let i = 0; i < grassCount; i++) {
+  const x = (Math.random() - 0.5) * 200;
+  const z = (Math.random() - 0.5) * 200;
+  dummyMatrix.makeRotationY(offsets[i]);
+  dummyMatrix.setPosition(x, 0, z);
+  instancedGrass.setMatrixAt(i, dummyMatrix);
+}
+
+scene.add(instancedGrass);
+
 
         // store reference to update time uniform during animate
         scene.userData.grassInstanced = instanced;
@@ -814,6 +825,14 @@ window.addEventListener('DOMContentLoaded', () => {
                             try { world.removeBody(enemy.body); } catch (err) {}
                             enemies.splice(j, 1);
                             if (enemyAIs[j]) enemyAIs.splice(j, 1);
+
+                            const elapsed = clock.getElapsedTime();
+scene.traverse((obj) => {
+  if (obj.material && obj.material.uniforms && obj.material.uniforms.time) {
+    obj.material.uniforms.time.value = elapsed;
+  }
+});
+
                         }
                         break;
                     }
