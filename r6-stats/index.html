@@ -2,28 +2,38 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>R6 Stats – Pater_Odor & SomaRay_Jr</title>
-
-  <meta name="description" content="Live Rainbow Six Siege Stats für Pater_Odor und SomaRay_Jr" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#020617" />
 
-  <link rel="stylesheet" href="./assets/style.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #020617;
+      color: white;
+      font-family: system-ui, sans-serif;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 24px;
+    }
+    .card {
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+  </style>
 </head>
 
 <body>
-  <header>
-    <h1>🎮 Rainbow Six Siege Stats</h1>
-    <p>Auto-Update alle 10 Sekunden</p>
-  </header>
+  <div class="container">
+    <h1>🎮 Rainbow Six Siege – Live Stats</h1>
+    <div id="players"></div>
+  </div>
 
-  <main id="app"></main>
-
-  <footer>
-    <span id="status">Letztes Update: –</span>
-  </footer>
-
-  <script type="module" src="./assets/main.js"></script>
+  <script src="./stats.js"></script>
 </body>
 </html>
