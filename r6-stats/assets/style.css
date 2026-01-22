@@ -1,0 +1,51 @@
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+}
+
+body {
+  margin: 0;
+  background: #020617;
+  color: #e5e7eb;
+}
+
+header, footer {
+  text-align: center;
+  padding: 16px;
+  background: #020617;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.card {
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.card h2 {
+  margin-top: 0;
+  color: #38bdf8;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0;
+}
+
+.loading {
+  text-align: center;
+  opacity: 0.6;
+}
