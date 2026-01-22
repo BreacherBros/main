@@ -1,35 +1,35 @@
-const players = [
+const operators = [
   { name: "Pater_Odor", side: "blue" },
   { name: "SomaRay_Jr", side: "orange" }
 ];
 
-const WORKER_URL = "https://r6-proxy.YOURNAME.workers.dev"; // <-- HIER DEINE URL
+const WORKER_URL = "https://r6-proxy.breacherbros.workers.dev"; // ✅ deine Worker-URL
 
 async function fetchPlayer(player) {
   const res = await fetch(`${WORKER_URL}?player=${player}`);
   const html = await res.text();
-
-  // ⚠️ Parsing (basic, erweiterbar)
   return parseStats(html);
 }
 
 function parseStats(html) {
   const doc = new DOMParser().parseFromString(html, "text/html");
 
-  // ⚠️ Tracker-Seiten ändern oft Klassen → später robust machen
-  const get = (text) => {
-    const el = [...doc.querySelectorAll("*")].find(e => e.textContent.includes(text));
-    return el ? el.nextElementSibling?.textContent.trim() : "N/A";
+  const findValue = (label) => {
+    const el = [...doc.querySelectorAll("div, span, p, h1, h2, h3")]
+      .find(e => e.textContent.trim().toLowerCase().includes(label.toLowerCase()));
+    if (!el) return "N/A";
+    const val = el.parentElement?.querySelector("span, div");
+    return val ? val.textContent.trim() : "N/A";
   };
 
   return {
-    level: get("Level"),
-    kd: get("K/D"),
-    wl: get("Win %"),
-    rank: get("Rank"),
-    matches: get("Matches"),
-    kills: get("Kills"),
-    deaths: get("Deaths")
+    level: findValue("Level"),
+    rank: findValue("Rank"),
+    kd: findValue("K/D"),
+    wl: findValue("Win"),
+    matches: findValue("Matches"),
+    kills: findValue("Kills"),
+    deaths: findValue("Deaths")
   };
 }
 
@@ -37,16 +37,21 @@ async function render() {
   const root = document.getElementById("players");
   root.innerHTML = "";
 
-  for (const p of players) {
-    const s = await fetchPlayer(p.name);
+  for (const op of operators) {
+    let s;
+    try {
+      s = await fetchPlayer(op.name);
+    } catch (e) {
+      s = { level:"ERR", rank:"ERR", kd:"ERR", wl:"ERR", matches:"ERR", kills:"ERR", deaths:"ERR" };
+    }
 
     const card = document.createElement("div");
-    card.className = `operator-card ${p.side === "blue" ? "operator-glow-blue" : "operator-glow-orange"}`;
+    card.className = `operator-card ${op.side === "blue" ? "operator-glow-blue" : "operator-glow-orange"}`;
 
     card.innerHTML = `
       <div class="operator-header">
-        <div class="operator-name">${p.name}</div>
-        <div class="operator-tag">${p.side === "blue" ? "ICE UNIT" : "FIRE UNIT"}</div>
+        <div class="operator-name">${op.name}</div>
+        <div class="operator-tag">${op.side === "blue" ? "ICE UNIT" : "FIRE UNIT"}</div>
       </div>
 
       <div class="section-title">LIVE DATA</div>
@@ -57,6 +62,7 @@ async function render() {
         <div class="stat-box"><div class="stat-label">W/L</div><div class="stat-value">${s.wl}</div></div>
         <div class="stat-box"><div class="stat-label">MATCHES</div><div class="stat-value">${s.matches}</div></div>
         <div class="stat-box"><div class="stat-label">KILLS</div><div class="stat-value">${s.kills}</div></div>
+        <div class="stat-box"><div class="stat-label">DEATHS</div><div class="stat-value">${s.deaths}</div></div>
       </div>
     `;
 
@@ -65,4 +71,4 @@ async function render() {
 }
 
 render();
-setInterval(render, 10000); // 🔄 Auto-Reload alle 10 Sekunden
+setInterval(render, 10000); // 🔄 Auto-Update alle 10 Sekunden
