@@ -1,51 +1,35 @@
-const operators = [
-  { name: "Pater_Odor", side: "blue" },
-  { name: "SomaRay_Jr", side: "orange" }
-];
+const API = "https://r6-api-backend.onrender.com/player";
 
-const API = "https://r6-proxy.breacherbros.workers.dev";
-
-async function fetchPlayer(player) {
-  const res = await fetch(`${API}?player=${player}`);
-  return await res.json();
+async function loadPlayer(name) {
+  const res = await fetch(`${API}?platform=psn&name=${name}`);
+  return res.json();
 }
 
-async function render() {
-  const root = document.getElementById("players");
-  root.innerHTML = "";
+async function loadStats() {
+  const p1 = await loadPlayer("Pater_Odor");
+  const p2 = await loadPlayer("SomaRay_Jr");
 
-  for (const op of operators) {
-    let s;
-    try {
-      s = await fetchPlayer(op.name);
-    } catch {
-      s = { level:"ERR", kd:"ERR", wl:"ERR", matches:"ERR", kills:"ERR", deaths:"ERR", rank:"ERR" };
-    }
+  document.getElementById("players").innerHTML = `
+    <div class="card">
+      <h2>${p1.username}</h2>
+      <p>Level: ${p1.level}</p>
+      <p>Rank: ${p1.rank} (${p1.rank_points})</p>
+      <p>K/D: ${p1.kd}</p>
+      <p>Wins: ${p1.wins} | Losses: ${p1.losses}</p>
+      <p>Kills: ${p1.kills} | Deaths: ${p1.deaths}</p>
+    </div>
 
-    const card = document.createElement("div");
-    card.className = `operator-card ${op.side === "blue" ? "operator-glow-blue" : "operator-glow-orange"}`;
-
-    card.innerHTML = `
-      <div class="operator-header">
-        <div class="operator-name">${op.name}</div>
-        <div class="operator-tag">${op.side === "blue" ? "ICE UNIT" : "FIRE UNIT"}</div>
-      </div>
-
-      <div class="section-title">LIVE DATA</div>
-      <div class="stats-grid">
-        <div class="stat-box"><div class="stat-label">LEVEL</div><div class="stat-value">${s.level ?? "N/A"}</div></div>
-        <div class="stat-box"><div class="stat-label">RANK</div><div class="stat-value">${s.rank ?? "N/A"}</div></div>
-        <div class="stat-box"><div class="stat-label">K/D</div><div class="stat-value">${s.kd ?? "N/A"}</div></div>
-        <div class="stat-box"><div class="stat-label">W/L</div><div class="stat-value">${s.wl ?? "N/A"}</div></div>
-        <div class="stat-box"><div class="stat-label">MATCHES</div><div class="stat-value">${s.matches ?? "N/A"}</div></div>
-        <div class="stat-box"><div class="stat-label">KILLS</div><div class="stat-value">${s.kills ?? "N/A"}</div></div>
-        <div class="stat-box"><div class="stat-label">DEATHS</div><div class="stat-value">${s.deaths ?? "N/A"}</div></div>
-      </div>
-    `;
-
-    root.appendChild(card);
-  }
+    <div class="card">
+      <h2>${p2.username}</h2>
+      <p>Level: ${p2.level}</p>
+      <p>Rank: ${p2.rank} (${p2.rank_points})</p>
+      <p>K/D: ${p2.kd}</p>
+      <p>Wins: ${p2.wins} | Losses: ${p2.losses}</p>
+      <p>Kills: ${p2.kills} | Deaths: ${p2.deaths}</p>
+    </div>
+  `;
 }
 
-render();
-setInterval(render, 10000);
+// Auto refresh alle 30 Sekunden
+loadStats();
+setInterval(loadStats, 30000);
