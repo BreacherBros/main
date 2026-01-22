@@ -1,38 +1,26 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>R6 Stats – Pater_Odor & SomaRay_Jr</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#020617" />
+  <meta charset="UTF-8">
+  <title>R6 Operator Stats</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#05060a">
 
-  <style>
-    body {
-      margin: 0;
-      background: #020617;
-      color: white;
-      font-family: system-ui, sans-serif;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 24px;
-    }
-    .card {
-      background: #020617;
-      border: 1px solid #1e293b;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-  </style>
+  <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
-  <div class="container">
-    <h1>🎮 Rainbow Six Siege – Live Stats</h1>
-    <div id="players"></div>
-  </div>
+
+  <div class="energy-bg"></div>
+
+  <header class="hud-header">
+    <h1>R6 OPERATOR STATS</h1>
+    <span class="hud-sub">LIVE COMBAT DATA • AUTO SYNC 10s</span>
+  </header>
+
+  <main class="hud-dashboard">
+    <div id="players" class="operators-grid"></div>
+  </main>
 
   <script src="./stats.js"></script>
 </body>
