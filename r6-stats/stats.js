@@ -41,6 +41,6 @@ async function loadStats() {
   `;
 }
 
-// Auto refresh alle 30 Sekunden
+// Auto refresh alle 3 Sekunden
 loadStats();
-setInterval(loadStats, 30000);
+setInterval(loadStats, 3000);
