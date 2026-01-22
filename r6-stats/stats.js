@@ -1,25 +1,21 @@
-const players = [
-  { name: "Pater_Odor", kd: 1.34, rank: "Emerald" },
-  { name: "SomaRay_Jr", kd: 1.12, rank: "Platinum" }
-];
+console.log("STATS.JS GELADEN ✅");
 
-function render() {
-  const root = document.getElementById("players");
-  root.innerHTML = "";
+const root = document.getElementById("players");
 
-  players.forEach(p => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <h2>${p.name}</h2>
-      <p>K/D: ${p.kd}</p>
-      <p>Rank: ${p.rank}</p>
-    `;
-    root.appendChild(div);
-  });
+if (!root) {
+  console.error("❌ #players nicht gefunden");
+} else {
+  root.innerHTML = `
+    <div class="card">
+      <h2>Pater_Odor</h2>
+      <p>K/D: 1.34</p>
+      <p>Rank: Emerald</p>
+    </div>
+
+    <div class="card">
+      <h2>SomaRay_Jr</h2>
+      <p>K/D: 1.12</p>
+      <p>Rank: Platinum</p>
+    </div>
+  `;
 }
-
-render();
-
-// Auto-Refresh (alle 10 Sekunden)
-setInterval(render, 10000);
