@@ -1,7 +1,7 @@
-const API = "https://api.tracker.gg/api/v2/r6siege/standard/profile";
+const API = "https://r6-proxy.breacherbros.workers.dev";
 
 async function fetchPlayer(platform, name) {
-  const res = await fetch(`${API}/${platform}/${encodeURIComponent(name)}`);
+  const res = await fetch(`${API}?platform=${platform}&name=${encodeURIComponent(name)}`);
   return res.json();
 }
 
