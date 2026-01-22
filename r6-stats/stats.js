@@ -1,7 +1,7 @@
-const API = "https://r6-proxy.breacherbros.workers.dev";
+const API = "https://api.tracker.gg/api/v2/r6siege/standard/profile";
 
 async function fetchPlayer(platform, name) {
-  const res = await fetch(`${API}?platform=${platform}&name=${encodeURIComponent(name)}`);
+  const res = await fetch(`${API}/${platform}/${encodeURIComponent(name)}`);
   return res.json();
 }
 
@@ -11,7 +11,6 @@ function val(obj, key) {
 
 function mapPlayer(api) {
   const segments = api.data.segments;
-
   const overview = segments.find(s => s.type === "overview");
   const ranked = segments.find(s => s.type === "ranked");
 
@@ -60,4 +59,4 @@ async function loadStats() {
 }
 
 loadStats();
-setInterval(loadStats, 10000);
+setInterval(loadStats, 30000); // 30s refresh (safe)
