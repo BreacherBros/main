@@ -5,6 +5,10 @@ async function fetchPlayer(platform, name) {
   return res.json();
 }
 
+function val(obj, key) {
+  return obj?.[key]?.displayValue || obj?.[key]?.value || "0";
+}
+
 function mapPlayer(api) {
   const segments = api.data.segments;
 
@@ -13,15 +17,15 @@ function mapPlayer(api) {
 
   return {
     username: api.data.platformInfo.platformUserHandle,
-    level: overview.stats.level.value,
-    kd: overview.stats.kd.value,
-    wins: overview.stats.wins.value,
-    losses: overview.stats.losses.value,
-    kills: overview.stats.kills.value,
-    deaths: overview.stats.deaths.value,
-    headshots: overview.stats.headshots.value,
-    rank: ranked?.stats.rankName?.value || "Unranked",
-    mmr: ranked?.stats.rating?.value || 0
+    level: val(overview.stats, "level"),
+    kd: val(overview.stats, "kd"),
+    wins: val(overview.stats, "wins"),
+    losses: val(overview.stats, "losses"),
+    kills: val(overview.stats, "kills"),
+    deaths: val(overview.stats, "deaths"),
+    headshots: val(overview.stats, "headshots"),
+    rank: val(ranked?.stats, "rankName"),
+    mmr: val(ranked?.stats, "rating")
   };
 }
 
