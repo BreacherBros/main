@@ -2,55 +2,98 @@ html, body {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: Arial, sans-serif;
-  background: #000;
+  font-family: 'Orbitron', Arial, sans-serif;
+  background: radial-gradient(circle at top, #05060a, #020617);
   height: 100%;
+  color: #e5e7eb;
 }
 
+/* ENERGY BACKGROUND */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at left, rgba(0,200,255,0.12), transparent 40%),
+    radial-gradient(circle at right, rgba(255,120,0,0.12), transparent 40%);
+  z-index: -1;
+}
+
+/* MENU + BRIEFING */
 #menu, #briefing {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(30,30,30,0.9);
+  background: linear-gradient(180deg, rgba(7,10,20,0.95), rgba(5,6,10,0.95));
   color: #fff;
-  padding: 20px;
-  border-radius: 10px;
+  padding: 28px 26px;
+  border-radius: 18px;
   text-align: center;
-  border: 2px solid rgba(255,255,255,0.2);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 0 60px rgba(0,200,255,0.15),
+    0 0 80px rgba(255,120,0,0.08);
   z-index: 10;
+  backdrop-filter: blur(10px);
 }
 
+/* TITLES */
 #menu h2, #briefing h2 {
-  margin-bottom: 15px;
+  margin-bottom: 18px;
+  letter-spacing: 3px;
+  font-size: 1.2rem;
+  background: linear-gradient(90deg, #00c8ff, #ff7a00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
+/* BUTTONS */
 #menu button, #briefing button {
   display: block;
-  width: 200px;
-  margin: 10px auto;
-  padding: 10px;
-  font-size: 16px;
-  background: rgba(255,165,0,0.3);
-  border: 1px solid orange;
+  width: 220px;
+  margin: 12px auto;
+  padding: 12px;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  background: linear-gradient(
+    135deg,
+    rgba(0,200,255,0.15),
+    rgba(255,120,0,0.15)
+  );
+  border: 1px solid rgba(0,200,255,0.35);
   color: #fff;
-  border-radius: 5px;
+  border-radius: 12px;
   cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow:
+    0 0 25px rgba(0,200,255,0.15),
+    inset 0 0 20px rgba(255,255,255,0.04);
+  transition: 0.35s ease;
 }
 
+/* BUTTON HOVER */
 #menu button:hover, #briefing button:hover {
-  background: rgba(255,165,0,0.6);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 0 45px rgba(0,200,255,0.35),
+    0 0 60px rgba(255,120,0,0.25);
+  border-color: rgba(255,255,255,0.5);
 }
 
+/* HUD INFO */
 #hud {
   position: fixed;
-  top: 10px;
-  left: 10px;
-  color: #fff;
-  font-size: 18px;
+  top: 14px;
+  left: 14px;
+  color: #00c8ff;
+  font-size: 0.8rem;
+  letter-spacing: 2px;
   z-index: 5;
+  text-shadow: 0 0 10px rgba(0,200,255,0.5);
 }
 
+/* GAME CANVAS */
 #gameCanvas {
   position: absolute;
   top: 0;
