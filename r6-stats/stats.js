@@ -1,4 +1,4 @@
-const PROXY = "https://r6-proxy.breacherbros.workers.dev/";
+const PROXY = "https://r6-proxy.breacherbros.workers.dev";
 
 async function fetchPlayer(platform, name) {
   const target = `https://r6.tracker.network/profile/${platform}/${encodeURIComponent(name)}`;
