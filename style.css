@@ -1,3 +1,6 @@
+body {
+  background: lime !important;
+}
 html, body {
   margin: 0;
   padding: 0;
