@@ -484,6 +484,42 @@ nav,
     flex-direction: column !important;
   }
 }
+  /* ===== CARDS GLEICHE GRÖSSE ===== */
+.profiles {
+  align-items: stretch !important;
+}
+
+.card {
+  width: 320px !important;          /* feste Breite */
+  min-height: 620px !important;     /* gleiche Höhe */
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+/* Bilder gleich groß */
+.card img {
+  height: 260px !important;
+  object-fit: cover !important;
+}
+
+/* Bio Text flexibel, damit Karten gleich bleiben */
+.card .bio {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== ANIMIERTES LOGO ENTFERNEN ===== */
+.logo-container {
+  display: none !important;
+}
+
+/* Header Abstand korrigieren nach Logo-Entfernung */
+header {
+  padding-top: 40px !important;
+}
 </style>
 </head>
 
