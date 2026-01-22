@@ -169,24 +169,78 @@ body {
   padding: 12px 24px 0;
 }
 
-.back-btn {
-  display: inline-block;
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-size: 0.7rem;
-  letter-spacing: 2px;
-  text-decoration: none;
-  color: #00c8ff;
-  border: 1px solid rgba(0,200,255,0.25);
-  background: rgba(5,6,10,0.6);
-  backdrop-filter: blur(6px);
-  transition: 0.25s ease;
-  box-shadow: 0 0 25px rgba(0,200,255,0.08);
+/* NAV BAR */
+.nav-bar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+  margin-bottom: 10px;
 }
 
-.back-btn:hover {
-  color: #fff;
-  border-color: rgba(0,200,255,0.6);
-  box-shadow: 0 0 35px rgba(0,200,255,0.25);
-  transform: translateX(-4px);
+/* BACK BUTTON */
+.back-home {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  border-radius: 14px;
+  text-decoration: none;
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  color: #e5f6ff;
+
+  background: linear-gradient(
+    135deg,
+    rgba(0,200,255,0.15),
+    rgba(255,120,0,0.12)
+  );
+
+  border: 1px solid rgba(0,200,255,0.35);
+  backdrop-filter: blur(10px);
+
+  box-shadow:
+    0 0 25px rgba(0,200,255,0.15),
+    inset 0 0 25px rgba(255,255,255,0.04);
+
+  transition: 0.35s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glow animation layer */
+.back-home::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.25),
+    transparent
+  );
+  opacity: 0;
+  transition: 0.4s;
+}
+
+.back-home:hover::before {
+  opacity: 1;
+}
+
+.back-home:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    0 0 45px rgba(0,200,255,0.35),
+    0 0 60px rgba(255,120,0,0.25);
+  border-color: rgba(255,255,255,0.5);
+}
+
+.arrow {
+  font-size: 1rem;
+  color: #00c8ff;
+}
+
+.text {
+  font-weight: 600;
+  color: #ffffff;
 }
