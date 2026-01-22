@@ -6,41 +6,31 @@ async function loadPlayer(name) {
 }
 
 async function loadStats() {
-  const p1raw = await loadPlayer("Pater_Odor");
-  const p2raw = await loadPlayer("SomaRay_Jr");
-
-  const p1 = p1raw.data;
-  const p2 = p2raw.data;
-
-  const p1g = p1.stats.general;
-  const p1r = p1.stats.ranked;
-
-  const p2g = p2.stats.general;
-  const p2r = p2.stats.ranked;
+  const p1 = await loadPlayer("Pater_Odor");
+  const p2 = await loadPlayer("SomaRay_Jr");
 
   document.getElementById("players").innerHTML = `
     <div class="card">
       <h2>${p1.username}</h2>
-      <p>Level: ${p1g.level}</p>
-      <p>Rank: ${p1r.rank} (${p1r.mmr})</p>
-      <p>K/D: ${p1g.kd}</p>
-      <p>Wins: ${p1g.wins} | Losses: ${p1g.losses}</p>
-      <p>Kills: ${p1g.kills} | Deaths: ${p1g.deaths}</p>
-      <p>Headshots: ${p1g.headshots}</p>
+      <p>Level: ${p1.level}</p>
+      <p>Rank: ${p1.rank}</p>
+      <p>K/D: ${p1.kd}</p>
+      <p>Wins/Losses: ${p1.wins_losses}</p>
+      <p>Kills/Deaths: ${p1.kills_deaths}</p>
+      <p>Headshots: ${p1.headshots}</p>
     </div>
 
     <div class="card">
       <h2>${p2.username}</h2>
-      <p>Level: ${p2g.level}</p>
-      <p>Rank: ${p2r.rank} (${p2r.mmr})</p>
-      <p>K/D: ${p2g.kd}</p>
-      <p>Wins: ${p2g.wins} | Losses: ${p2g.losses}</p>
-      <p>Kills: ${p2g.kills} | Deaths: ${p2g.deaths}</p>
-      <p>Headshots: ${p2g.headshots}</p>
+      <p>Level: ${p2.level}</p>
+      <p>Rank: ${p2.rank}</p>
+      <p>K/D: ${p2.kd}</p>
+      <p>Wins/Losses: ${p2.wins_losses}</p>
+      <p>Kills/Deaths: ${p2.kills_deaths}</p>
+      <p>Headshots: ${p2.headshots}</p>
     </div>
   `;
 }
 
-// Auto refresh alle 3 Sekunden
 loadStats();
-setInterval(loadStats, 3000);
+setInterval(loadStats, 10000);
