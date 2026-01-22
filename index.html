@@ -440,6 +440,50 @@ nav,
   align-items: center;
   flex-direction: column;
 }
+  /* ===== CARDS NEBENEINANDER ===== */
+.profiles {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: stretch !important;
+  gap: 40px !important;
+  flex-wrap: wrap !important;
+}
+
+/* Jede Card gleiche Höhe */
+.card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* ===== SOCIAL BUTTONS NEBENEINANDER ===== */
+.social-buttons {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 20px !important;
+  flex-wrap: wrap !important;
+}
+
+/* Buttons gleiche Höhe */
+.social-buttons a {
+  min-width: 150px;
+  text-align: center;
+}
+
+/* Mobile Anpassung */
+@media (max-width: 900px) {
+  .profiles {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .social-buttons {
+    flex-direction: column !important;
+  }
+}
 </style>
 </head>
 
