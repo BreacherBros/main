@@ -1,7 +1,9 @@
-const API = "https://r6-proxy.breacherbros.workers.dev";
+const PROXY = "https://corsproxy.io/?";
+const API = "https://api.tracker.gg/api/v2/r6siege/standard/profile";
 
 async function fetchPlayer(platform, name) {
-  const res = await fetch(`${API}?platform=${platform}&name=${encodeURIComponent(name)}`);
+  const url = `${API}/${platform}/${encodeURIComponent(name)}`;
+  const res = await fetch(PROXY + encodeURIComponent(url));
   return res.json();
 }
 
@@ -59,4 +61,4 @@ async function loadStats() {
 }
 
 loadStats();
-setInterval(loadStats, 30000); // 30s refresh (safe)
+setInterval(loadStats, 60000); // 60 Sekunden Refresh (safe)
