@@ -281,7 +281,165 @@ nav {
 h1, h2, h3, p, p1, p5 {
   text-align: center;
 }
+/* ============================= */
+/* ===== CARD SYSTEM FIX ===== */
+/* ============================= */
 
+/* CARD CONTAINER */
+.card {
+  position: relative;
+  max-width: 340px;          /* größer als Bild */
+  padding: 22px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #0a0f1e, #05060a);
+  border: 1px solid rgba(255,255,255,0.06);
+
+  box-shadow:
+    0 0 35px rgba(0,200,255,0.12),
+    0 0 55px rgba(255,120,0,0.08),
+    inset 0 0 25px rgba(255,255,255,0.03);
+
+  transition: all 0.45s ease;
+  overflow: hidden;
+}
+
+/* BACK GLOW LAYER */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle,
+    rgba(0,200,255,0.18),
+    rgba(255,120,0,0.12),
+    transparent 60%);
+  opacity: 0.35;
+  z-index: 0;
+}
+
+/* HOVER EFFECT */
+.card:hover {
+  transform: translateY(-12px) scale(1.03);
+  box-shadow:
+    0 0 60px rgba(0,200,255,0.35),
+    0 0 90px rgba(255,120,0,0.25),
+    inset 0 0 35px rgba(255,255,255,0.05);
+}
+
+/* CARD CONTENT ABOVE GLOW */
+.card * {
+  position: relative;
+  z-index: 2;
+}
+
+/* IMAGE SMALLER THAN CARD */
+.card img {
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 14px;
+
+  box-shadow:
+    0 0 25px rgba(0,200,255,0.25),
+    0 0 35px rgba(255,120,0,0.15);
+
+  transition: 0.4s ease;
+}
+
+/* IMAGE HOVER */
+.card:hover img {
+  transform: scale(1.04);
+  box-shadow:
+    0 0 35px rgba(0,200,255,0.45),
+    0 0 55px rgba(255,120,0,0.35);
+}
+
+
+/* ============================= */
+/* ===== VIDEO SYSTEM FIX ===== */
+/* ============================= */
+
+.video-embed {
+  position: relative;
+  width: 85%;
+  max-width: 1100px;
+  aspect-ratio: 16 / 9;      /* echtes 16:9 */
+  margin: 40px auto;         /* sauber zentriert */
+  padding: 0;
+}
+
+.video-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 22px;
+
+  box-shadow:
+    0 0 45px rgba(0,200,255,0.25),
+    0 0 70px rgba(255,120,0,0.15);
+
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+
+/* ============================= */
+/* ===== SCROLL BUTTON FIX ===== */
+/* ============================= */
+
+#scrollTopBtn {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  z-index: 9999;
+
+  font-size: 20px;
+  padding: 22px 36px;
+  border-radius: 16px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(0,200,255,0.35),
+    rgba(255,120,0,0.35)
+  );
+
+  border: 1px solid rgba(255,255,255,0.25);
+  backdrop-filter: blur(10px);
+
+  box-shadow:
+    0 0 35px rgba(0,200,255,0.35),
+    0 0 55px rgba(255,120,0,0.25),
+    inset 0 0 20px rgba(255,255,255,0.08);
+
+  color: #fff;
+  transition: 0.4s ease;
+}
+
+/* HOVER */
+#scrollTopBtn:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow:
+    0 0 60px rgba(0,200,255,0.6),
+    0 0 90px rgba(255,120,0,0.45);
+}
+
+
+/* ============================= */
+/* ===== GENERAL CENTER FIX ===== */
+/* ============================= */
+
+.video-embed,
+.profiles,
+.social-buttons,
+.footer,
+header,
+nav,
+.content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
 </style>
 </head>
 
