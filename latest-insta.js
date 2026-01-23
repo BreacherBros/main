@@ -1,33 +1,28 @@
-async function loadLatestReel() {
+async function loadLatestReel(){
   try {
-    const res = await fetch("https://r6-api-backend.onrender.com/api/insta-latest");
+    const res = await fetch("https://r6-api-backend.onrender.com/api/instagram-latest");
     const data = await res.json();
 
-    if (!data.videoUrl) {
-      document.getElementById("latest-reel").innerHTML =
-        "<p style='color:#888;text-align:center;'>Kein Reel gefunden</p>";
+    const container = document.getElementById("latest-reel");
+
+    if(!data.video_url){
+      container.innerHTML = "<p style='color:#888;text-align:center;'>Kein Reel gefunden</p>";
       return;
     }
 
-    document.getElementById("latest-reel").innerHTML = `
+    container.innerHTML = `
       <video 
-        src="${data.videoUrl}" 
-        poster="${data.thumbnail}" 
+        src="${data.video_url}" 
         controls 
         autoplay 
         muted 
         loop
-        style="width:100%; border-radius:14px;">
+        playsinline
+        style="width:100%;border-radius:14px;">
       </video>
-
-      <div style="margin-top:10px;">
-        <a href="${data.link}" target="_blank" style="color:#00c8ff; text-decoration:none;">
-          Auf Instagram ansehen →
-        </a>
-      </div>
     `;
 
-  } catch (err) {
+  } catch(err){
     document.getElementById("latest-reel").innerHTML =
       "<p style='color:#888;text-align:center;'>Reel konnte nicht geladen werden</p>";
   }
