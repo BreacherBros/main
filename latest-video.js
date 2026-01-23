@@ -1,21 +1,23 @@
+console.log("🔥 latest-video.js wurde geladen");
+
 async function loadLatestVideo() {
-  try {
-    const res = await fetch("https://r6-api-backend.onrender.com/api/youtube-latest");
-    const data = await res.json();
+  console.log("🚀 loadLatestVideo gestartet");
 
-    if (!data.videoId) {
-      throw new Error("No video");
-    }
+  const res = await fetch("https://r6-api-backend.onrender.com/api/youtube-latest");
+  const data = await res.json();
 
-    const iframe = document.getElementById("latestVideoFrame");
-    const title = document.getElementById("latestVideoTitle");
+  console.log("📡 API DATA:", data);
 
-    iframe.src = `https://www.youtube.com/embed/${data.videoId}?autoplay=0&rel=0`;
-    title.innerText = data.title;
+  const iframe = document.getElementById("latestVideoFrame");
+  const title = document.getElementById("latestVideoTitle");
 
-  } catch (err) {
-    document.getElementById("latestVideoTitle").innerText = "Neuestes Video konnte nicht geladen werden";
+  if (!iframe || !title) {
+    console.error("❌ HTML IDs nicht gefunden");
+    return;
   }
+
+  iframe.src = `https://www.youtube.com/embed/${data.videoId}`;
+  title.innerText = data.title;
 }
 
 loadLatestVideo();
