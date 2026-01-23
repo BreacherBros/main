@@ -5,32 +5,25 @@ async function loadLatestReel() {
 
     const container = document.getElementById("latest-reel");
 
-    if (!data.video_url && !data.permalink) {
+    if (!data.permalink) {
       container.innerHTML = "<p style='color:#888;'>Kein Reel gefunden</p>";
       return;
     }
 
-    // Video direkt einbetten
-    if (data.video_url) {
-      container.innerHTML = `
-        <video 
-          src="${data.video_url}" 
-          controls 
-          autoplay 
-          muted 
-          loop 
-          playsinline
-          style="width:100%;border-radius:14px;box-shadow:0 0 25px rgba(0,200,255,0.25);">
-        </video>
-      `;
-    } else {
-      // Fallback auf Instagram Link
-      container.innerHTML = `
-        <a href="${data.permalink}" target="_blank" style="color:#00c8ff;">
-          Reel auf Instagram ansehen
-        </a>
-      `;
-    }
+    // Embed-URL bauen
+    const embedUrl = data.permalink.replace(
+      "https://www.instagram.com/reel/",
+      "https://www.instagram.com/reel/"
+    ) + "embed";
+
+    container.innerHTML = `
+      <iframe 
+        src="${embedUrl}"
+        style="width:100%;height:100%;min-height:420px;border-radius:14px;border:none;"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    `;
 
   } catch (err) {
     document.getElementById("latest-reel").innerHTML =
