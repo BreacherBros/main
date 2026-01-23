@@ -794,9 +794,20 @@ Also schnapp dir ’nen Controller, schnall dich an – und komm mit auf unsere 
 <div class="content" id="videos">
   <h2>Neueste Videos</h2>
 
-<div class="video-embed" id="latest-video">
-  <div class="loading-text">Lade neuestes Video...</div>
+<div class="content" id="videos">
+  <h2 id="latestVideoTitle">Lade neuestes Video...</h2>
+
+  <div class="video-embed">
+    <iframe 
+      id="latestVideoFrame"
+      src=""
+      allowfullscreen
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+    </iframe>
+  </div>
 </div>
+
+<script src="./latest-video.js"></script>
 
   <div class="video-embed">
     <iframe src="https://player.twitch.tv/?channel=breacherbros&parent=breacherbros.com" allowfullscreen></iframe>
