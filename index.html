@@ -794,10 +794,9 @@ Also schnapp dir ’nen Controller, schnall dich an – und komm mit auf unsere 
 <div class="content" id="videos">
   <h2>Neueste Videos</h2>
 
-  <div class="video-embed">
-    <iframe src="https://www.youtube.com/embed?listType=playlist&list=PLf_FIfiHRIAUCHjD7fUr_vy3yGCFx3xzC" allowfullscreen></iframe>
- 
-  </div>
+<div class="video-embed" id="latest-video">
+  <div class="loading-text">Lade neuestes Video...</div>
+</div>
 
   <div class="video-embed">
     <iframe src="https://player.twitch.tv/?channel=breacherbros&parent=breacherbros.com" allowfullscreen></iframe>
@@ -888,7 +887,35 @@ document.getElementById("contactForm").addEventListener("submit", function(e) {
     });
   }
 </script>
+  
+<script>
+async function loadLatestVideo() {
+  try {
+    const res = await fetch("https://r6-api-backend.onrender.com/api/youtube-latest");
+    const data = await res.json();
 
+    if (!data.videoId) {
+      document.getElementById("latest-video").innerHTML =
+        "<p style='text-align:center;color:#999;'>Kein Video gefunden</p>";
+      return;
+    }
+
+    document.getElementById("latest-video").innerHTML = `
+      <iframe 
+        src="https://www.youtube.com/embed/${data.videoId}" 
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    `;
+
+  } catch (err) {
+    document.getElementById("latest-video").innerHTML =
+      "<p style='text-align:center;color:#999;'>Video konnte nicht geladen werden</p>";
+  }
+}
+
+loadLatestVideo();
+</script>
 
 </body>
 </html>
