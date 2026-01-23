@@ -165,3 +165,98 @@ body::before {
   height: 100%;
   background: transparent;
 }
+
+/* GRID FIX */
+.profiles{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  gap: 32px;
+  align-items: stretch;
+  justify-items: center;
+}
+
+/* CARD BASE SIZE */
+.card{
+  width: 100%;
+  max-width: 360px;
+  min-height: 560px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* GLOW COLORS */
+.glow-blue{
+  box-shadow:
+    0 0 40px rgba(0,200,255,0.18),
+    0 0 80px rgba(0,200,255,0.08);
+}
+
+.glow-orange{
+  box-shadow:
+    0 0 40px rgba(255,120,0,0.18),
+    0 0 80px rgba(255,120,0,0.08);
+}
+
+/* HOVER ANIMATION */
+.card:hover{
+  transform: translateY(-10px) scale(1.02);
+  box-shadow:
+    0 0 60px rgba(255,255,255,0.15),
+    0 0 120px rgba(0,200,255,0.25),
+    0 0 120px rgba(255,120,0,0.25);
+}
+
+/* INSTAGRAM CARD */
+.insta-card{
+  background: linear-gradient(180deg,#070a14,#05060a);
+  border: 1px solid rgba(255,255,255,0.08);
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+  align-items:center;
+  padding: 22px;
+}
+
+/* INSTA HEADER */
+.insta-header{
+  text-align:center;
+  margin-bottom:12px;
+}
+
+.insta-header h3{
+  margin:0;
+  font-size:1.2rem;
+  background: linear-gradient(90deg,#00c8ff,#ff7a00);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.insta-sub{
+  font-size:0.7rem;
+  letter-spacing:2px;
+  opacity:0.6;
+}
+
+/* INSTA FRAME */
+.insta-frame{
+  width:100%;
+  aspect-ratio: 9 / 16;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow: inset 0 0 30px rgba(255,255,255,0.03);
+  background:#000;
+}
+
+.insta-frame iframe{
+  width:100%;
+  height:100%;
+  border:none;
+}
+
+/* RESPONSIVE */
+@media(max-width:1100px){
+  .profiles{
+    grid-template-columns: 1fr;
+  }
+}
