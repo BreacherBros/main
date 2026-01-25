@@ -3,24 +3,28 @@ async function loadLatestTikTok() {
     const res = await fetch("https://r6-api-backend.onrender.com/api/tiktok-latest");
     const data = await res.json();
 
-    if (!data.id) {
+    if (!data.play) {
       document.getElementById("latest-tiktok").innerHTML =
-        "<p style='text-align:center;color:#888;'>Kein TikTok gefunden</p>";
+        "<p style='color:#888;text-align:center;'>Kein TikTok gefunden</p>";
       return;
     }
 
     document.getElementById("latest-tiktok").innerHTML = `
-      <iframe 
-        src="https://www.tiktok.com/embed/v2/${data.id}" 
-        style="width:100%;height:100%;border-radius:14px;"
-        allowfullscreen
-        loading="lazy">
-      </iframe>
+      <video 
+        src="${data.play}" 
+        poster="${data.cover || ''}"
+        controls 
+        playsinline 
+        style="width:100%; border-radius:14px;">
+      </video>
+      <a href="${data.link}" target="_blank" style="display:block;margin-top:10px;color:#00c8ff;">
+        Auf TikTok ansehen
+      </a>
     `;
 
   } catch (e) {
     document.getElementById("latest-tiktok").innerHTML =
-      "<p style='text-align:center;color:#888;'>TikTok konnte nicht geladen werden</p>";
+      "<p style='color:#888;text-align:center;'>TikTok konnte nicht geladen werden</p>";
   }
 }
 
