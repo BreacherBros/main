@@ -264,3 +264,24 @@ body::before {
   transform: scale(1.1);
   background: rgba(0,0,0,0.8);
 }
+
+/* ===== TIKTOK OVERRIDE (ISOLATION MODE) ===== */
+
+.card.tiktok-card{
+  padding: 6px !important;
+  min-height: unset !important;
+  height: auto !important;
+  display: block !important;
+}
+
+.card.tiktok-card .tiktok-video-wrapper{
+  width: 100% !important;
+  aspect-ratio: 9 / 16 !important;
+  height: auto !important;
+}
+
+/* Force fill */
+.card.tiktok-card iframe{
+  width: 100% !important;
+  height: 100% !important;
+}
