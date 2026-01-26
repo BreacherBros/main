@@ -1,3 +1,6 @@
+let ttMuted = true;
+let ttId = null;
+
 async function loadLatestTikTok() {
   try {
     console.log("Loading TikTok...");
@@ -7,40 +10,32 @@ async function loadLatestTikTok() {
 
     console.log("TIKTOK DATA:", data);
 
-    if (!data || !data.video_url) {
-      console.error("❌ No usable TikTok video URL in API", data);
+    if (!data || !data.id) {
+      console.error("❌ No TikTok ID", data);
       return;
     }
 
-    const video = document.getElementById("tiktokVideo");
-    const muteBtn = document.getElementById("tiktokMuteBtn");
+    ttId = data.id;
 
-    if (!video || !muteBtn) {
-      console.error("❌ TikTok elements missing");
-      return;
-    }
+    const frame = document.getElementById("tiktokFrame");
+    const btn = document.getElementById("tiktokMuteBtn");
 
-    // Video setzen
-    video.src = data.video_url;
-    video.load();
+    // load muted autoplay
+    frame.src = `https://www.tiktok.com/embed/v2/${ttId}?autoplay=1&muted=1`;
 
-    // Autoplay safe
-    video.muted = true;
-    video.play().catch(() => {});
+    btn.innerText = "🔇";
 
-    // Button State
-    muteBtn.innerText = "🔇";
+    btn.onclick = () => {
+      ttMuted = !ttMuted;
 
-    // Toggle Mute
-    muteBtn.addEventListener("click", () => {
-      video.muted = !video.muted;
-
-      if(video.muted){
-        muteBtn.innerText = "🔇";
-      } else {
-        muteBtn.innerText = "🔊";
+      if(ttMuted){
+        frame.src = `https://www.tiktok.com/embed/v2/${ttId}?autoplay=1&muted=1`;
+        btn.innerText = "🔇";
+      }else{
+        frame.src = `https://www.tiktok.com/embed/v2/${ttId}?autoplay=1&muted=0`;
+        btn.innerText = "🔊";
       }
-    });
+    };
 
   } catch (e) {
     console.error("TikTok load error:", e);
