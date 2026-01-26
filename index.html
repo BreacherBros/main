@@ -772,17 +772,22 @@ Also schnapp dir ’nen Controller, schnall dich an – und komm mit auf unsere 
 <div class="card tiktok-card">
 
   <div class="tiktok-video-wrapper">
-    <iframe
-      id="tiktokFrame"
-      allow="autoplay; encrypted-media"
-      allowfullscreen
-      style="width:100%;height:100%;border:none;border-radius:14px;">
-    </iframe>
+
+    <video 
+      id="tiktokVideo"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto">
+    </video>
 
     <!-- MUTE BUTTON -->
-    <button id="ttMuteBtn" class="tiktok-mute-btn">🔇</button>
-  </div>
+    <button id="tiktokMuteBtn" class="tiktok-mute-btn">
+      🔇
+    </button>
 
+  </div>
 </div>
   
   <!-- Pater_Odor Card -->
