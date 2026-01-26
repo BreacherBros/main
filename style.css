@@ -290,3 +290,27 @@ body::before {
   width: 100% !important;
   height: 100% !important;
 }
+/* ===== TIKTOK SIZE FORCE OVERRIDE ===== */
+
+.card.tiktok-card{
+  padding: 6px !important;
+  height: auto !important;
+  min-height: unset !important;
+  display: block !important;
+}
+
+.card.tiktok-card .tiktok-video-wrapper{
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 9 / 16 !important;
+  max-height: 100% !important;
+}
+
+/* force iframe full fill */
+.card.tiktok-card iframe{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
