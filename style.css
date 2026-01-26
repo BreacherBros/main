@@ -263,3 +263,51 @@ body::before {
   transform: scale(1.1);
   background: rgba(0,0,0,0.75);
 }
+/* =============================== */
+/* ===== TIKTOK HARD OVERRIDE ==== */
+/* =============================== */
+
+.card.tiktok-card{
+  all: unset;
+  display: block;
+  width: 320px !important;
+  height: 570px !important;
+  border-radius: 20px;
+  position: relative;
+}
+
+/* Wrapper */
+.card.tiktok-card .tiktok-video-wrapper{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  aspect-ratio: 9 / 16 !important;
+}
+
+/* Video */
+.card.tiktok-card video{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 20px !important;
+  display: block !important;
+}
+
+/* Mute Button */
+.card.tiktok-card .tt-mute-btn{
+  position: absolute !important;
+  bottom: 12px !important;
+  right: 12px !important;
+  z-index: 9999 !important;
+  background: rgba(0,0,0,0.6) !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+  padding: 8px 10px !important;
+  cursor: pointer !important;
+}
