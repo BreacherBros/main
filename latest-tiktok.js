@@ -10,7 +10,7 @@ async function loadLatestTikTok() {
     console.log("TIKTOK DATA:", data);
 
     if (!data.video_url) {
-      console.error("❌ No TikTok video_url", data);
+      console.error("❌ No video_url in API", data);
       return;
     }
 
@@ -18,13 +18,11 @@ async function loadLatestTikTok() {
     if (!video) return;
 
     video.src = data.video_url;
-    video.muted = true;
+    video.load();
     video.play().catch(()=>{});
 
-    console.log("✅ TikTok Video geladen");
-
   } catch (e) {
-    console.error("🔥 TikTok load error:", e);
+    console.error("TikTok error:", e);
   }
 }
 
@@ -35,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const video = document.getElementById("tiktokVideo");
 
   if(btn && video){
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", ()=>{
       ttMuted = !ttMuted;
       video.muted = ttMuted;
       btn.innerText = ttMuted ? "🔇" : "🔊";
