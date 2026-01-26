@@ -9,8 +9,8 @@ async function loadLatestTikTok() {
 
     console.log("TIKTOK DATA:", data);
 
-    if (!data.permalink) {
-      console.error("❌ No TikTok permalink in API", data);
+    if (!data.id) {
+      console.error("❌ No TikTok ID in API", data);
       return;
     }
 
@@ -21,12 +21,10 @@ async function loadLatestTikTok() {
       return;
     }
 
-    // TikTok embed URL
-    const embedUrl = `https://www.tiktok.com/embed/v2/${data.id}`;
+    // offizieller TikTok Embed
+    frame.src = `https://www.tiktok.com/embed/v2/${data.id}`;
 
-    frame.src = embedUrl;
-
-    console.log("✅ TikTok iframe embed loaded");
+    console.log("✅ TikTok iframe geladen");
 
   } catch (e) {
     console.error("🔥 TikTok load error:", e);
