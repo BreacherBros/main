@@ -311,3 +311,54 @@ body::before {
   padding: 8px 10px !important;
   cursor: pointer !important;
 }
+/* =============================== */
+/* ===== TIKTOK ISOLATION FIX ==== */
+/* =============================== */
+
+.tiktok-isolated-card{
+  width: 320px !important;
+  height: 570px !important;
+  position: relative !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+.tiktok-isolated-wrapper{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  background: #000 !important;
+
+  box-shadow:
+    0 0 30px rgba(0,200,255,0.35),
+    0 0 55px rgba(255,120,0,0.25);
+}
+
+/* Video FULL CARD */
+.tiktok-isolated-wrapper video{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  border-radius: 20px !important;
+}
+
+/* Mute Button */
+.tt-mute-btn{
+  position: absolute !important;
+  bottom: 12px !important;
+  right: 12px !important;
+  z-index: 9999 !important;
+  background: rgba(0,0,0,0.6) !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  color: white !important;
+  font-size: 16px !important;
+  border-radius: 50% !important;
+  padding: 8px 10px !important;
+  cursor: pointer !important;
+}
