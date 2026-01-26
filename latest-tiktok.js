@@ -1,49 +1,31 @@
-async function loadLatestTikTok() {
-  try {
-    console.log("Loading TikTok...");
+console.log("🔥 latest-video.js wurde geladen");
 
-    const res = await fetch("https://r6-api-backend.onrender.com/api/tiktok-latest");
+async function loadLatestVideo() {
+  try {
+    console.log("🚀 loadLatestVideo gestartet");
+
+    const res = await fetch("https://r6-api-backend.onrender.com/api/youtube-latest");
     const data = await res.json();
 
-    console.log("TIKTOK DATA:", data);
+    console.log("📡 API DATA:", data);
 
-    // flexible Feldnamen
-    const url =
-      data.video_url ||
-      data.videoUrl ||
-      data.play ||
-      data.downloadUrl ||
-      data.url;
-
-    if (!url) {
-      console.error("❌ No usable TikTok video URL in API", data);
+    if (!data.videoId) {
+      console.warn("❌ Kein Video gefunden");
       return;
     }
 
-    const video = document.getElementById("tiktokVideo");
+    const frame = document.getElementById("latestVideoFrame");
 
-    if (!video) {
-      console.error("❌ Video element #tiktokVideo not found");
+    if (!frame) {
+      console.error("❌ latestVideoFrame nicht gefunden");
       return;
     }
 
-    video.src = url;
-    video.muted = true;
-    video.loop = true;
-    video.playsInline = true;
-    video.autoplay = true;
+    frame.src = `https://www.youtube.com/embed/${data.videoId}?autoplay=1&mute=1`;
 
-    video.load();
-
-    video.play().catch(err => {
-      console.warn("⚠️ Autoplay blocked:", err);
-    });
-
-    console.log("✅ TikTok video loaded");
-
-  } catch (e) {
-    console.error("🔥 TikTok load error:", e);
+  } catch (err) {
+    console.error("🔥 YouTube load error:", err);
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadLatestTikTok);
+document.addEventListener("DOMContentLoaded", loadLatestVideo);
