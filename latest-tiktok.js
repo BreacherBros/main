@@ -1,5 +1,8 @@
 console.log("🔥 latest-tiktok.js wurde geladen");
 
+let ttMuted = true;
+let ttVideoId = null;
+
 async function loadLatestTikTok() {
   try {
     console.log("Loading TikTok...");
@@ -14,21 +17,42 @@ async function loadLatestTikTok() {
       return;
     }
 
+    ttVideoId = data.id;
+
     const frame = document.getElementById("tiktokFrame");
+    if (!frame) return;
 
-    if (!frame) {
-      console.error("❌ tiktokFrame not found");
-      return;
-    }
+    // default muted
+    frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1`;
 
-    // offizieller TikTok Embed
-    frame.src = `https://www.tiktok.com/embed/v2/${data.id}`;
-
-    console.log("✅ TikTok iframe geladen");
+    console.log("✅ TikTok iframe geladen (muted)");
 
   } catch (e) {
     console.error("🔥 TikTok load error:", e);
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadLatestTikTok);
+document.addEventListener("DOMContentLoaded", () => {
+  loadLatestTikTok();
+
+  const btn = document.getElementById("ttMuteBtn");
+
+  if(btn){
+    btn.addEventListener("click", () => {
+      if(!ttVideoId) return;
+
+      const frame = document.getElementById("tiktokFrame");
+      if(!frame) return;
+
+      ttMuted = !ttMuted;
+
+      if(ttMuted){
+        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1`;
+        btn.innerText = "🔇";
+      }else{
+        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=0`;
+        btn.innerText = "🔊";
+      }
+    });
+  }
+});
