@@ -780,8 +780,21 @@ Also schnapp dir ’nen Controller, schnall dich an – und komm mit auf unsere 
   <h3>BreacherBros</h3>
   <span class="insta-sub">Latest TikTok</span>
 
-  <div id="latest-tiktok" style="margin-top:15px;">
-    <p style="color:#888;text-align:center;">Lade TikTok...</p>
+  <div class="tiktok-video-wrapper">
+    <video 
+      id="tiktokVideo"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto">
+    </video>
+
+    <!-- Controls -->
+    <div class="tiktok-controls">
+      <button id="ttMute">🔇</button>
+      <button id="ttPlay">⏸</button>
+    </div>
   </div>
 </div>
 
