@@ -7,38 +7,43 @@ async function loadLatestTikTok() {
 
     console.log("TIKTOK DATA:", data);
 
-    if (!data || !data.video_url) {
-      console.error("No TikTok video_url", data);
+    // flexible Feldnamen
+    const url =
+      data.video_url ||
+      data.videoUrl ||
+      data.play ||
+      data.downloadUrl ||
+      data.url;
+
+    if (!url) {
+      console.error("❌ No usable TikTok video URL in API", data);
       return;
     }
 
     const video = document.getElementById("tiktokVideo");
 
     if (!video) {
-      console.error("❌ Video element #tiktokVideo not found in DOM");
+      console.error("❌ Video element #tiktokVideo not found");
       return;
     }
 
-    video.src = data.video_url;
-    video.muted = true;        // Autoplay Policy Fix
+    video.src = url;
+    video.muted = true;
     video.loop = true;
     video.playsInline = true;
+    video.autoplay = true;
 
     video.load();
 
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(err => {
-        console.warn("Autoplay blocked by browser:", err);
-      });
-    }
+    video.play().catch(err => {
+      console.warn("⚠️ Autoplay blocked:", err);
+    });
+
+    console.log("✅ TikTok video loaded");
 
   } catch (e) {
-    console.error("TikTok load error:", e);
+    console.error("🔥 TikTok load error:", e);
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM loaded -> TikTok init");
-  loadLatestTikTok();
-});
+document.addEventListener("DOMContentLoaded", loadLatestTikTok);
