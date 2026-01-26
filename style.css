@@ -362,3 +362,65 @@ body::before {
   padding: 8px 10px !important;
   cursor: pointer !important;
 }
+/* =============================== */
+/* ===== TIKTOK CARD FIX ========= */
+/* =============================== */
+
+.tiktok-card-fix{
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  width: 100% !important;
+  max-width: 360px !important;
+  height: 560px !important;   /* FIXED HEIGHT */
+  min-height: 560px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Container inside card */
+.tiktok-container-fix{
+  position: relative !important;
+  width: 94% !important;
+  height: 94% !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  background: #000 !important;
+
+  box-shadow:
+    0 0 30px rgba(0,200,255,0.35),
+    0 0 55px rgba(255,120,0,0.25);
+}
+
+/* Video full fill */
+.tiktok-container-fix video{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 20px !important;
+  display: block !important;
+}
+
+/* Mute Button */
+.tt-mute-btn{
+  position: absolute !important;
+  bottom: 10px !important;
+  right: 10px !important;
+  z-index: 999 !important;
+
+  background: rgba(0,0,0,0.6) !important;
+  border: 1px solid rgba(255,255,255,0.4) !important;
+  color: white !important;
+  font-size: 15px !important;
+  border-radius: 50% !important;
+  padding: 8px 10px !important;
+  cursor: pointer !important;
+
+  backdrop-filter: blur(4px);
+}
