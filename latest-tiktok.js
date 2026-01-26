@@ -12,7 +12,6 @@ async function loadLatestTikTok() {
 
     console.log("TIKTOK DATA:", data);
 
-    // API liefert ID -> korrekt
     if (!data.id) {
       console.error("❌ No TikTok ID in API", data);
       return;
@@ -26,7 +25,7 @@ async function loadLatestTikTok() {
       return;
     }
 
-    // Embed v2 Player (stabil)
+    // Embed Player
     frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1&controls=0`;
 
     console.log("✅ TikTok iframe loaded");
@@ -41,20 +40,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const btn = document.getElementById("ttMuteBtn");
 
-  if(btn){
+  if (btn) {
+    btn.innerHTML = "🔇"; // default icon
+
     btn.addEventListener("click", () => {
-      if(!ttVideoId) return;
+      if (!ttVideoId) return;
 
       const frame = document.getElementById("tiktokFrame");
-      if(!frame) return;
+      if (!frame) return;
 
       ttMuted = !ttMuted;
 
-if(ttMuted){
-  frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1&controls=0`;
-  btn.innerText = "🔇";
-}else{
-  frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=0&controls=0`;
-  btn.innerText = "🔊";
-}
-
+      if (ttMuted) {
+        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1&controls=0`;
+        btn.innerHTML = "🔇";
+      } else {
+        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=0&controls=0`;
+        btn.innerHTML = "🔊";
+      }
+    });
+  }
+});
