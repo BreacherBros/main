@@ -1,31 +1,41 @@
-async function loadLatestTikTok() {
-  try {
-    const res = await fetch("https://r6-api-backend.onrender.com/api/tiktok-latest");
-    const data = await res.json();
+import express from "express";
+import fetch from "node-fetch";
 
-    if (!data.play) {
-      document.getElementById("latest-tiktok").innerHTML =
-        "<p style='color:#888;text-align:center;'>Kein TikTok gefunden</p>";
-      return;
+const router = express.Router();
+
+// 🔁 DEIN APIFY DATASET URL (JSON)
+const DATASET_URL = "HIER_DEINE_DATASET_JSON_URL_EINTRAGEN";
+
+router.get("/tiktok-latest", async (req, res) => {
+  try {
+    const r = await fetch(DATASET_URL);
+    const data = await r.json();
+
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(404).json({ error: "No TikTok videos found" });
     }
 
-    document.getElementById("latest-tiktok").innerHTML = `
-      <video 
-        src="${data.play}" 
-        poster="${data.cover || ''}"
-        controls 
-        playsinline 
-        style="width:100%; border-radius:14px;">
-      </video>
-      <a href="${data.link}" target="_blank" style="display:block;margin-top:10px;color:#00c8ff;">
-        Auf TikTok ansehen
-      </a>
-    `;
+    const video = data[0]; // neuestes Video
 
-  } catch (e) {
-    document.getElementById("latest-tiktok").innerHTML =
-      "<p style='color:#888;text-align:center;'>TikTok konnte nicht geladen werden</p>";
+    const id = video.id;
+    const caption = video.text || "";
+    const thumbnail = video.videoMeta?.coverUrl || null;
+
+    const permalink = `https://www.tiktok.com/@breacherbros/video/${id}`;
+
+    res.json({
+      id,
+      caption,
+      thumbnail,
+      permalink
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      error: "TikTok API error",
+      details: err.message
+    });
   }
-}
+});
 
-loadLatestTikTok();
+export default router;
