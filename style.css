@@ -240,3 +240,32 @@ body::before {
   object-fit: cover !important;
   border: none !important;
 }
+/* ============================= */
+/* === TIKTOK PIXEL OVERRIDE === */
+/* ============================= */
+
+.card.tiktok-card{
+  width: 320px !important;
+  height: 570px !important;
+  min-height: 570px !important;
+  max-height: 570px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.tiktok-video-wrapper{
+  width: 100% !important;
+  height: 100% !important;
+  aspect-ratio: 9 / 16 !important;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.tiktok-video-wrapper video{
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block;
+}
