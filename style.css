@@ -339,3 +339,61 @@ body::before {
   cursor: pointer;
   backdrop-filter: blur(6px);
 }
+/* ===== TIKTOK CARD FULL SIZE FIX ===== */
+
+.tiktok-card{
+  padding: 10px !important;          /* kleiner Rand */
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  display: flex;
+}
+
+/* Card Container */
+.tiktok-video-wrapper{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 9 / 16;              /* echtes TikTok Format */
+  border-radius: 18px;
+  overflow: hidden;
+
+  box-shadow:
+    0 0 25px rgba(0,200,255,0.35),
+    0 0 45px rgba(255,120,0,0.25);
+}
+
+/* TikTok iframe */
+.tiktok-video-wrapper iframe{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+
+  /* wichtig */
+  transform: scale(1.01);            /* füllt minimal über Rand */
+}
+
+/* Mute Button */
+.tiktok-mute-btn{
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  z-index: 10;
+
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: white;
+  font-size: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  backdrop-filter: blur(6px);
+}
