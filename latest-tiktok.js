@@ -1,5 +1,7 @@
 async function loadLatestTikTok() {
   try {
+    console.log("Loading TikTok...");
+
     const res = await fetch("https://r6-api-backend.onrender.com/api/tiktok-latest");
     const data = await res.json();
 
@@ -13,20 +15,30 @@ async function loadLatestTikTok() {
     const video = document.getElementById("tiktokVideo");
 
     if (!video) {
-      console.error("Video element not found");
+      console.error("❌ Video element #tiktokVideo not found in DOM");
       return;
     }
 
     video.src = data.video_url;
+    video.muted = true;        // Autoplay Policy Fix
+    video.loop = true;
+    video.playsInline = true;
+
     video.load();
 
-    video.play().catch(err => {
-      console.warn("Autoplay blocked:", err);
-    });
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(err => {
+        console.warn("Autoplay blocked by browser:", err);
+      });
+    }
 
   } catch (e) {
     console.error("TikTok load error:", e);
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadLatestTikTok);
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM loaded -> TikTok init");
+  loadLatestTikTok();
+});
