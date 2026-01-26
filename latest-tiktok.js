@@ -18,6 +18,7 @@ async function loadLatestTikTok() {
     if (!video) return;
 
     video.src = data.video_url;
+    video.muted = true;
     video.load();
     video.play().catch(()=>{});
 
