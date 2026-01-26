@@ -314,3 +314,77 @@ body::before {
   height: 100% !important;
   object-fit: cover !important;
 }
+/* ===== TIKTOK 92% SIZE SYSTEM ===== */
+
+.card.tiktok-card{
+  position: relative !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 92% Container */
+.card.tiktok-card .tiktok-video-wrapper{
+  position: relative !important;
+  width: 92% !important;
+  height: 92% !important;
+
+  aspect-ratio: 9 / 16 !important;
+
+  border-radius: 18px;
+  overflow: hidden;
+
+  box-shadow:
+    0 0 25px rgba(0,200,255,0.35),
+    0 0 45px rgba(255,120,0,0.25);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Video Fill */
+.card.tiktok-card iframe{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+}
+
+/* ===== FLOATING MUTE BUTTON ===== */
+
+.tt-mute-btn{
+  position: absolute;
+  bottom: 14px;     /* schwebt über dem unteren Rand */
+  right: 14px;
+  z-index: 999;
+
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.35);
+
+  color: white;
+  font-size: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+
+  transition: 0.25s ease;
+}
+
+.tt-mute-btn:hover{
+  transform: scale(1.12);
+  background: rgba(0,0,0,0.8);
+}
