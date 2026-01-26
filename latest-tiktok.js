@@ -1,8 +1,3 @@
-console.log("🔥 latest-tiktok.js wurde geladen");
-
-let ttMuted = true;
-let ttVideoId = null;
-
 async function loadLatestTikTok() {
   try {
     console.log("Loading TikTok...");
@@ -12,47 +7,44 @@ async function loadLatestTikTok() {
 
     console.log("TIKTOK DATA:", data);
 
-    if (!data.id) {
-      console.error("❌ No TikTok ID in API", data);
+    if (!data || !data.video_url) {
+      console.error("❌ No usable TikTok video URL in API", data);
       return;
     }
 
-    ttVideoId = data.id;
+    const video = document.getElementById("tiktokVideo");
+    const muteBtn = document.getElementById("tiktokMuteBtn");
 
-    const frame = document.getElementById("tiktokFrame");
-    if (!frame) return;
+    if (!video || !muteBtn) {
+      console.error("❌ TikTok elements missing");
+      return;
+    }
 
-    // default muted
-    frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1`;
+    // Video setzen
+    video.src = data.video_url;
+    video.load();
 
-    console.log("✅ TikTok iframe geladen (muted)");
+    // Autoplay safe
+    video.muted = true;
+    video.play().catch(() => {});
+
+    // Button State
+    muteBtn.innerText = "🔇";
+
+    // Toggle Mute
+    muteBtn.addEventListener("click", () => {
+      video.muted = !video.muted;
+
+      if(video.muted){
+        muteBtn.innerText = "🔇";
+      } else {
+        muteBtn.innerText = "🔊";
+      }
+    });
 
   } catch (e) {
-    console.error("🔥 TikTok load error:", e);
+    console.error("TikTok load error:", e);
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadLatestTikTok();
-
-  const btn = document.getElementById("ttMuteBtn");
-
-  if(btn){
-    btn.addEventListener("click", () => {
-      if(!ttVideoId) return;
-
-      const frame = document.getElementById("tiktokFrame");
-      if(!frame) return;
-
-      ttMuted = !ttMuted;
-
-      if(ttMuted){
-        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1`;
-        btn.innerText = "🔇";
-      }else{
-        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=0`;
-        btn.innerText = "🔊";
-      }
-    });
-  }
-});
+document.addEventListener("DOMContentLoaded", loadLatestTikTok);
