@@ -262,3 +262,32 @@ body::before {
 
   backdrop-filter: blur(4px);
 }
+.card-wrapper {
+  margin: 0;
+  padding: 0;
+  border: none; /* Rahmen entfernen */
+  width: 100%;  /* ggf. feste Breite oder max-width setzen */
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9/16; /* Hochformat sicherstellen [oai_citation:3‡developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Box_sizing/Aspect_ratios#:~:text=iframe.instagram%2C%20iframe.tiktok%20%7B%20aspect,height%3A%20100vh%3B%20width%3A%20auto%3B) */
+  overflow: hidden;
+  background: #000; /* optional Schwarz-Background während Ladevorgang */
+}
+
+/* Fallback (ältere Browser): */
+.video-container {
+  height: 0;
+  padding-top: 177.78%; /* 16/9*100% ≈ 177.78% [oai_citation:4‡stackoverflow.com](https://stackoverflow.com/questions/66066752/responsive-iframe-with-916-aspect-ratio-vertical#:~:text=.aspect,box%20iframe%7B%20position%3Aabsolute) */
+}
+
+/* Iframe auf 100% strecken und absolute Position */
+.video-container iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0; /* Randlos */
+}
