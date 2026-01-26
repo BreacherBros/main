@@ -208,110 +208,53 @@ body::before {
     0 0 120px rgba(255,120,0,0.25);
 }
 
-/* INSTAGRAM CARD */
-.insta-card{
-  background: linear-gradient(180deg,#070a14,#05060a);
-  border: 1px solid rgba(255,255,255,0.08);
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-start;
-  align-items:center;
-  padding: 22px;
+/* ===== TIKTOK CLEAN UI ===== */
+
+.tiktok-card{
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
-/* INSTA HEADER */
-.insta-header{
-  text-align:center;
-  margin-bottom:12px;
-}
-
-.insta-header h3{
-  margin:0;
-  font-size:1.2rem;
-  background: linear-gradient(90deg,#00c8ff,#ff7a00);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-
-.insta-sub{
-  font-size:0.7rem;
-  letter-spacing:2px;
-  opacity:0.6;
-}
-
-/* INSTA FRAME */
-.insta-frame{
-  width:100%;
-  aspect-ratio: 9 / 16;
-  border-radius:14px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,0.08);
-  box-shadow: inset 0 0 30px rgba(255,255,255,0.03);
-  background:#000;
-}
-
-.insta-frame iframe{
-  width:100%;
-  height:100%;
-  border:none;
-}
-
-/* RESPONSIVE */
-@media(max-width:1100px){
-  .profiles{
-    grid-template-columns: 1fr;
-  }
-}
-/* ============================= */
-/* ===== TIKTOK CARD SYSTEM ==== */
-/* ============================= */
-
-.tiktok-card {
-  width: 320px;
-  min-height: 620px;
-}
-
-.tiktok-video-wrapper {
+.tiktok-video-wrapper{
   position: relative;
   width: 100%;
-  aspect-ratio: 9 / 16;   /* TikTok Format */
-  border-radius: 14px;
+  aspect-ratio: 9 / 16;
+  border-radius: 18px;
   overflow: hidden;
-  margin-top: 15px;
   box-shadow:
-    0 0 25px rgba(0,200,255,0.25),
-    0 0 40px rgba(255,120,0,0.15);
+    0 0 30px rgba(0,200,255,0.35),
+    0 0 50px rgba(255,120,0,0.25);
 }
 
-.tiktok-video-wrapper video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Controls Overlay */
-.tiktok-controls {
+/* Mute Button */
+.tiktok-mute-btn{
   position: absolute;
-  bottom: 10px;
-  right: 10px;
-  display: flex;
-  gap: 10px;
+  bottom: 12px;
+  right: 12px;
   z-index: 5;
-}
 
-.tiktok-controls button {
-  background: rgba(0,0,0,0.6);
-  border: 1px solid rgba(255,255,255,0.3);
-  color: white;
-  font-size: 16px;
-  padding: 10px 14px;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
+  font-size: 16px;
   backdrop-filter: blur(6px);
-  transition: 0.3s;
+
+  transition: 0.25s ease;
 }
 
-.tiktok-controls button:hover {
+.tiktok-mute-btn:hover{
   transform: scale(1.1);
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,0.75);
 }
