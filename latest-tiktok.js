@@ -50,13 +50,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       ttMuted = !ttMuted;
 
-  if(ttMuted){
+if(ttMuted){
   frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1&controls=0`;
-  btn.innerHTML = `<img src="mutebutton.png" style="width:18px;height:18px;">`;
+  btn.innerText = "🔇";
 }else{
   frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=0&controls=0`;
-  btn.innerHTML = `<img src="unmutebutton.png" style="width:18px;height:18px;">`;
+  btn.innerText = "🔊";
 }
-    });
-  }
-});
+
