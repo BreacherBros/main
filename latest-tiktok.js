@@ -5,11 +5,14 @@ let ttVideoId = null;
 
 async function loadLatestTikTok() {
   try {
+    console.log("Loading TikTok...");
+
     const res = await fetch("https://r6-api-backend.onrender.com/api/tiktok-latest");
     const data = await res.json();
 
     console.log("TIKTOK DATA:", data);
 
+    // API liefert ID -> korrekt
     if (!data.id) {
       console.error("❌ No TikTok ID in API", data);
       return;
@@ -17,17 +20,14 @@ async function loadLatestTikTok() {
 
     ttVideoId = data.id;
 
-    const container = document.getElementById("tiktokContainer");
-    if (!container) return;
+    const frame = document.getElementById("tiktokFrame");
+    if (!frame) {
+      console.error("❌ iframe not found");
+      return;
+    }
 
-    container.innerHTML = `
-      <iframe 
-        id="tiktokFrame"
-        src="https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1"
-        allow="autoplay; encrypted-media"
-        allowfullscreen
-      ></iframe>
-    `;
+    // Embed v2 Player (stabil)
+    frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1&controls=0`;
 
     console.log("✅ TikTok iframe loaded");
 
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("ttMuteBtn");
 
   if(btn){
-    btn.addEventListener("click", ()=>{
+    btn.addEventListener("click", () => {
       if(!ttVideoId) return;
 
       const frame = document.getElementById("tiktokFrame");
@@ -50,8 +50,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
       ttMuted = !ttMuted;
 
-      frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=${ttMuted ? 1 : 0}`;
-      btn.innerText = ttMuted ? "🔇" : "🔊";
+      if(ttMuted){
+        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1&controls=0`;
+        btn.innerText = "🔇";
+      }else{
+        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=0&controls=0`;
+        btn.innerText = "🔊";
+      }
     });
   }
 });
