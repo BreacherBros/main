@@ -3,22 +3,29 @@ async function loadLatestTikTok() {
     const res = await fetch("https://r6-api-backend.onrender.com/api/tiktok-latest");
     const data = await res.json();
 
-    console.log("TikTok API:", data);
+    console.log("TIKTOK DATA:", data);
 
-    if (!data.video_url) {
-      console.log("Kein TikTok gefunden");
+    if (!data || !data.video_url) {
+      console.error("No TikTok video_url", data);
       return;
     }
 
     const video = document.getElementById("tiktokVideo");
+
+    if (!video) {
+      console.error("Video element not found");
+      return;
+    }
+
     video.src = data.video_url;
     video.load();
 
-    // autoplay trigger
-    video.play().catch(()=>{});
+    video.play().catch(err => {
+      console.warn("Autoplay blocked:", err);
+    });
 
-  } catch (err) {
-    console.error("TikTok Load Error:", err);
+  } catch (e) {
+    console.error("TikTok load error:", e);
   }
 }
 
