@@ -110,7 +110,7 @@ body::before {
 
   background: linear-gradient(180deg, #0a0f1e, #05060a);
   border-radius: 18px;
-  padding: 22px;
+  padding: 18px;
 
   border: 1px solid rgba(255,255,255,0.06);
 
@@ -119,7 +119,8 @@ body::before {
     0 0 55px rgba(255,120,0,0.08);
 
   display: flex;
-  flex-direction: column;
+  justify-content: flex-start;   /* 🔥 */
+  align-items: stretch;          /* 🔥 */
 }
 
 /* Simulierter Bildbereich wie bei Profilkarten */
