@@ -1,7 +1,28 @@
 console.log("🔥 latest-tiktok.js geladen");
 
-let ttMuted = true;
-let ttVideoId = null;
+const muteBtn = document.getElementById("ttMuteBtn");
+
+muteBtn.addEventListener("click", () => {
+  const iframe = document.getElementById("tiktokFrame");
+
+  if(!hasInteracted){
+    // erster Klick = echtes Unmute (Browser erlaubt Sound)
+    iframe.src = tiktokURL.replace("mute=1","mute=0");
+    muteBtn.textContent = "🔊";
+    isMuted = false;
+    hasInteracted = true;
+    return;
+  }
+
+  // danach nur UX-State (kein Reload mehr!)
+  if(isMuted){
+    muteBtn.textContent = "🔊";
+    isMuted = false;
+  }else{
+    muteBtn.textContent = "🔇";
+    isMuted = true;
+  }
+});
 
 async function loadLatestTikTok() {
   try {
