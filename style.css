@@ -91,162 +91,10 @@ body::before {
 }
 
 /* ============================= */
-/* ===== TIKTOK CARD FIX ===== */
+/* ===== TIKTOK CARD SYSTEM ===== */
 /* ============================= */
 
-.card.tiktok-card{
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* echter 9:16 Container */
-.card.tiktok-card .tiktok-video-wrapper{
-  position: relative;
-  width: 92%;
-  height: 0;
-  padding-top: 177.77%; /* 16 / 9 * 100 = echtes Hochformat */
-
-  border-radius: 18px;
-  overflow: hidden;
-
-  box-shadow:
-    0 0 25px rgba(0,200,255,0.35),
-    0 0 45px rgba(255,120,0,0.25);
-}
-
-/* iframe full fill */
-.card.tiktok-card iframe{
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-/* ============================= */
-/* ===== FLOATING MUTE BUTTON ===== */
-/* ============================= */
-
-.tt-mute-btn{
-  position: absolute;
-  bottom: 14px;
-  right: 14px;
-  z-index: 1000;
-
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(255,255,255,0.35);
-
-  color: white;
-  font-size: 16px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: 0.25s ease;
-}
-
-.tt-mute-btn:hover{
-  transform: scale(1.12);
-  background: rgba(0,0,0,0.8);
-}
-
-/* ============================= */
-/* ===== RESPONSIVE ===== */
-/* ============================= */
-
-@media (max-width: 1000px){
-  .profiles{
-    grid-template-columns: 1fr;
-  }
-}
-/* ============================= */
-/* ===== TIKTOK FINAL FIX ===== */
-/* ============================= */
-
-.tiktok-card{
-  width: 320px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* echter 9:16 Frame */
-.tiktok-video-wrapper{
-  position: relative;
-  width: 100%;
-  height: 0;
-  padding-top: 177.77%; /* 9:16 */
-
-  border-radius: 22px;
-  overflow: hidden;
-
-  background: #000;
-
-  box-shadow:
-    0 0 35px rgba(0,200,255,0.45),
-    0 0 65px rgba(255,120,0,0.35);
-}
-
-/* iframe full cover */
-.tiktok-video-wrapper iframe{
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border: none;
-
-  border-radius: 22px;
-}
-
-/* Mute Button */
-.tt-mute-btn{
-  position: absolute;
-  bottom: 14px;
-  right: 14px;
-  z-index: 10;
-
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-
-  background: rgba(0,0,0,0.65);
-  border: 1px solid rgba(255,255,255,0.4);
-
-  color: white;
-  font-size: 16px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-  backdrop-filter: blur(6px);
-  transition: 0.25s ease;
-}
-
-.tt-mute-btn:hover{
-  transform: scale(1.12);
-  background: rgba(0,0,0,0.85);
-}
-
-/* ============================= */
-/* ===== TIKTOK CARD FINAL ===== */
-/* ============================= */
-
+/* äußere Größe = exakt wie Vorstellkarten */
 .tiktok-card{
   width: 320px;
   min-height: 620px;
@@ -256,7 +104,7 @@ body::before {
   align-items: center;
 }
 
-/* äußere Card (wie die anderen) */
+/* Card-Design (optisch wie andere Cards) */
 .tiktok-shell{
   width: 100%;
   height: 100%;
@@ -276,12 +124,12 @@ body::before {
   align-items: center;
 }
 
-/* 9:16 Video Container */
+/* echtes 9:16 Hochformat */
 .tiktok-video-wrapper{
   position: relative;
   width: 100%;
   height: 0;
-  padding-top: 177.77%; /* echtes 9:16 */
+  padding-top: 177.77%; /* 9:16 */
 
   border-radius: 14px;
   overflow: hidden;
@@ -293,7 +141,7 @@ body::before {
     0 0 60px rgba(255,120,0,0.25);
 }
 
-/* iframe */
+/* TikTok iframe */
 .tiktok-video-wrapper iframe{
   position: absolute;
   inset: 0;
@@ -303,7 +151,7 @@ body::before {
   border-radius: 14px;
 }
 
-/* Mute Button */
+/* Floating Mute Button */
 .tt-mute-btn{
   position: absolute;
   bottom: 12px;
@@ -335,58 +183,11 @@ body::before {
 }
 
 /* ============================= */
-/* ===== TIKTOK FORCE FIX ===== */
+/* ===== RESPONSIVE ===== */
 /* ============================= */
 
-.tiktok-card{
-  width: 320px !important;
-  min-height: 620px !important;
-  max-height: 620px !important;
-
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-}
-
-.tiktok-shell{
-  width: 100% !important;
-  height: 100% !important;
-
-  background: linear-gradient(180deg, #0a0f1e, #05060a) !important;
-  border-radius: 18px !important;
-  padding: 18px !important;
-
-  border: 1px solid rgba(255,255,255,0.06) !important;
-
-  box-shadow:
-    0 0 35px rgba(0,200,255,0.12),
-    0 0 55px rgba(255,120,0,0.08) !important;
-
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-}
-
-.tiktok-video-wrapper{
-  position: relative !important;
-  width: 100% !important;
-  height: 0 !important;
-  padding-top: 177.77% !important; /* echtes 9:16 */
-
-  border-radius: 14px !important;
-  overflow: hidden !important;
-
-  background: #000 !important;
-}
-
-.tiktok-video-wrapper iframe{
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  border: none !important;
-  border-radius: 14px !important;
-}
-.tiktok-shell{ 
-  background: red !important; 
+@media (max-width: 1000px){
+  .profiles{
+    grid-template-columns: 1fr;
+  }
 }
