@@ -387,3 +387,6 @@ body::before {
   border: none !important;
   border-radius: 14px !important;
 }
+.tiktok-shell{ 
+  background: red !important; 
+}
