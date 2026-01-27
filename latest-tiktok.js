@@ -47,7 +47,7 @@ async function loadLatestTikTok() {
     }
 
     // Embed Player
-    frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1&controls=0`;
+    frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?autoplay=1&muted=0&loop=1`;
 
     console.log("✅ TikTok iframe loaded");
 
@@ -59,26 +59,28 @@ async function loadLatestTikTok() {
 document.addEventListener("DOMContentLoaded", () => {
   loadLatestTikTok();
 
-  const btn = document.getElementById("ttMuteBtn");
+const iframe = document.getElementById("tiktokFrame");
+const muteBtn = document.getElementById("ttMuteBtn");
 
-  if (btn) {
-    btn.innerHTML = "🔇"; // default icon
+let isMuted = true;
+let isPlaying = true;
 
-    btn.addEventListener("click", () => {
-      if (!ttVideoId) return;
+muteBtn.addEventListener("click", () => {
+  if (!iframe) return;
 
-      const frame = document.getElementById("tiktokFrame");
-      if (!frame) return;
+  const src = iframe.src.split("?")[0];
+  const params = new URLSearchParams(iframe.src.split("?")[1]);
 
-      ttMuted = !ttMuted;
+  if (isMuted) {
+    params.set("muted", "0");
+    muteBtn.innerText = "🔊";
+  } else {
+    params.set("muted", "1");
+    muteBtn.innerText = "🔇";
+  }
 
-      if (ttMuted) {
-        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=1&controls=0`;
-        btn.innerHTML = "🔇";
-      } else {
-        frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?muted=0&controls=0`;
-        btn.innerHTML = "🔊";
-      }
-    });
+  iframe.src = `${src}?${params.toString()}`;
+  isMuted = !isMuted;
+});
   }
 });
