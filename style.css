@@ -333,3 +333,57 @@ body::before {
   transform: scale(1.12);
   background: rgba(0,0,0,0.85);
 }
+
+/* ============================= */
+/* ===== TIKTOK FORCE FIX ===== */
+/* ============================= */
+
+.tiktok-card{
+  width: 320px !important;
+  min-height: 620px !important;
+  max-height: 620px !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.tiktok-shell{
+  width: 100% !important;
+  height: 100% !important;
+
+  background: linear-gradient(180deg, #0a0f1e, #05060a) !important;
+  border-radius: 18px !important;
+  padding: 18px !important;
+
+  border: 1px solid rgba(255,255,255,0.06) !important;
+
+  box-shadow:
+    0 0 35px rgba(0,200,255,0.12),
+    0 0 55px rgba(255,120,0,0.08) !important;
+
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
+.tiktok-video-wrapper{
+  position: relative !important;
+  width: 100% !important;
+  height: 0 !important;
+  padding-top: 177.77% !important; /* echtes 9:16 */
+
+  border-radius: 14px !important;
+  overflow: hidden !important;
+
+  background: #000 !important;
+}
+
+.tiktok-video-wrapper iframe{
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 14px !important;
+}
