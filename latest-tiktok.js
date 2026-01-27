@@ -56,7 +56,7 @@ function forceTikTokLoop() {
   setInterval(() => {
     if (!iframe.src) return;
     iframe.src = iframe.src;   // reload = loop
-  }, 30000); // 30s Loop
+  }, 60000); // 60s Loop
 }
 
 /* ============================= */
