@@ -91,7 +91,7 @@ body::before {
 }
 
 /* ============================= */
-/* ===== TIKTOK CARD ===== */
+/* ===== TIKTOK CARD FIX ===== */
 /* ============================= */
 
 .card.tiktok-card{
@@ -100,20 +100,17 @@ body::before {
   border: none;
   box-shadow: none;
 
-  min-height: unset;
-  height: auto;
-
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* 92% Container im Hochformat */
+/* echter 9:16 Container */
 .card.tiktok-card .tiktok-video-wrapper{
   position: relative;
   width: 92%;
-  aspect-ratio: 9 / 16;
-  height: auto;
+  height: 0;
+  padding-top: 177.77%; /* 16 / 9 * 100 = echtes Hochformat */
 
   border-radius: 18px;
   overflow: hidden;
@@ -123,10 +120,11 @@ body::before {
     0 0 45px rgba(255,120,0,0.25);
 }
 
-/* iframe exakt füllen */
+/* iframe full fill */
 .card.tiktok-card iframe{
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   border: 0;
