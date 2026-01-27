@@ -32,9 +32,9 @@ body::before {
 
 .profiles{
   display: grid;
-  grid-template-columns: repeat(3, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 320px);  /* feste Card-Breite */
   gap: 32px;
-  justify-items: center;
+  justify-content: center;
   align-items: start;
 }
 
@@ -44,7 +44,7 @@ body::before {
 
 .card{
   width: 320px;
-  min-height: 620px;
+  height: 620px;                 /* feste Höhe */
   position: relative;
   overflow: hidden;
 
@@ -58,6 +58,9 @@ body::before {
     0 0 55px rgba(255,120,0,0.08);
 
   transition: 0.45s ease;
+
+  display: flex;
+  flex-direction: column;
 }
 
 /* Hover */
@@ -94,17 +97,17 @@ body::before {
 /* ===== TIKTOK CARD SYSTEM ===== */
 /* ============================= */
 
-/* äußere Größe = exakt wie Vorstellkarten */
+/* äußere TikTok-Karte = gleiche Größe wie andere Karten */
 .tiktok-card{
   width: 320px;
-  min-height: 620px;
+  height: 620px;
 
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Card-Design (optisch wie andere Cards) */
+/* TikTok Card Optik */
 .tiktok-shell{
   width: 100%;
   height: 100%;
@@ -124,31 +127,34 @@ body::before {
   align-items: center;
 }
 
-/* echtes 9:16 Hochformat */
+/* echtes 9:16 Hochformat innen */
 .tiktok-video-wrapper{
   position: relative;
   width: 100%;
-  height: 0;
-  padding-top: 177.77%; /* 9:16 */
+  height: 100%;
+  max-height: 100%;
 
   border-radius: 14px;
   overflow: hidden;
 
   background: #000;
 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
   box-shadow:
     0 0 30px rgba(0,200,255,0.35),
     0 0 60px rgba(255,120,0,0.25);
 }
 
-/* TikTok iframe */
+/* Video selbst */
 .tiktok-video-wrapper iframe{
-  position: absolute;
-  inset: 0;
   width: 100%;
   height: 100%;
   border: none;
   border-radius: 14px;
+  object-fit: cover;
 }
 
 /* Floating Mute Button */
@@ -189,5 +195,20 @@ body::before {
 @media (max-width: 1000px){
   .profiles{
     grid-template-columns: 1fr;
+  }
+
+  .card,
+  .tiktok-card{
+    width: 90%;
+    height: auto;
+  }
+
+  .tiktok-shell{
+    height: auto;
+  }
+
+  .tiktok-video-wrapper{
+    aspect-ratio: 9 / 16;
+    height: auto;
   }
 }
