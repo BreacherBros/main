@@ -1,28 +1,12 @@
 console.log("🔥 latest-tiktok.js geladen");
 
-const muteBtn = document.getElementById("ttMuteBtn");
+let isMuted = true;
+let hasInteracted = false;
+let ttVideoId = null;
 
-muteBtn.addEventListener("click", () => {
-  const iframe = document.getElementById("tiktokFrame");
-
-  if(!hasInteracted){
-    // erster Klick = echtes Unmute (Browser erlaubt Sound)
-    iframe.src = tiktokURL.replace("mute=1","mute=0");
-    muteBtn.textContent = "🔊";
-    isMuted = false;
-    hasInteracted = true;
-    return;
-  }
-
-  // danach nur UX-State (kein Reload mehr!)
-  if(isMuted){
-    muteBtn.textContent = "🔊";
-    isMuted = false;
-  }else{
-    muteBtn.textContent = "🔇";
-    isMuted = true;
-  }
-});
+/* ============================= */
+/* ===== LOAD LATEST TIKTOK ==== */
+/* ============================= */
 
 async function loadLatestTikTok() {
   try {
@@ -40,47 +24,78 @@ async function loadLatestTikTok() {
 
     ttVideoId = data.id;
 
-    const frame = document.getElementById("tiktokFrame");
-    if (!frame) {
+    const iframe = document.getElementById("tiktokFrame");
+    if (!iframe) {
       console.error("❌ iframe not found");
       return;
     }
 
-    // Embed Player
-    frame.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?autoplay=1&muted=0&loop=1`;
+    // TikTok Embed
+    iframe.src = `https://www.tiktok.com/embed/v2/${ttVideoId}?autoplay=1&muted=1&loop=1`;
 
     console.log("✅ TikTok iframe loaded");
+
+    // 🔁 Loop starten
+    forceTikTokLoop();
 
   } catch (e) {
     console.error("🔥 TikTok load error:", e);
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadLatestTikTok();
+/* ============================= */
+/* ===== FORCE LOOP SYSTEM ===== */
+/* ============================= */
 
-const iframe = document.getElementById("tiktokFrame");
-const muteBtn = document.getElementById("ttMuteBtn");
-
-let isMuted = true;
-let isPlaying = true;
-
-muteBtn.addEventListener("click", () => {
+function forceTikTokLoop() {
+  const iframe = document.getElementById("tiktokFrame");
   if (!iframe) return;
 
-  const src = iframe.src.split("?")[0];
-  const params = new URLSearchParams(iframe.src.split("?")[1]);
+  console.log("🔁 TikTok Loop aktiviert");
 
-  if (isMuted) {
-    params.set("muted", "0");
-    muteBtn.innerText = "🔊";
-  } else {
-    params.set("muted", "1");
-    muteBtn.innerText = "🔇";
-  }
+  setInterval(() => {
+    if (!iframe.src) return;
+    iframe.src = iframe.src;   // reload = loop
+  }, 30000); // 30s Loop
+}
 
-  iframe.src = `${src}?${params.toString()}`;
-  isMuted = !isMuted;
-});
-  }
+/* ============================= */
+/* ===== MUTE BUTTON SYSTEM ==== */
+/* ============================= */
+
+function initMuteButton(){
+  const muteBtn = document.getElementById("ttMuteBtn");
+  const iframe = document.getElementById("tiktokFrame");
+
+  if(!muteBtn || !iframe) return;
+
+  muteBtn.addEventListener("click", () => {
+
+    if(!hasInteracted){
+      // erster Klick = echtes Unmute (Browser erlaubt Sound)
+      iframe.src = iframe.src.replace("muted=1","muted=0");
+      muteBtn.textContent = "🔊";
+      isMuted = false;
+      hasInteracted = true;
+      return;
+    }
+
+    // UX Toggle (kein Reload mehr)
+    if(isMuted){
+      muteBtn.textContent = "🔊";
+      isMuted = false;
+    }else{
+      muteBtn.textContent = "🔇";
+      isMuted = true;
+    }
+  });
+}
+
+/* ============================= */
+/* ===== INIT ================== */
+/* ============================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadLatestTikTok();
+  initMuteButton();
 });
