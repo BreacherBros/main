@@ -254,20 +254,4 @@ body::after{
     transform: translateX(-10%) translateY(-10%) rotate(360deg);
   }
 }
-/* ============================= */
-/* ===== TIKTOK ALIGN FIX ===== */
-/* ============================= */
 
-.tiktok-shell{
-  display: grid;
-  grid-template-rows: 260px 1fr; /* oben wie Profilbild-Höhe */
-  align-items: center;
-}
-
-/* Wrapper sitzt im unteren Bereich */
-.tiktok-video-wrapper{
-  width: 100%;
-  aspect-ratio: 9 / 16;
-  max-height: 100%;
-  margin-top: 10px;
-}
