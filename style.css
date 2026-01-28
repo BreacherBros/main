@@ -30,12 +30,28 @@ body::before {
 /* ===== GRID SYSTEM ===== */
 /* ============================= */
 
+/* ============================= */
+/* ===== PROFILES SPACING ===== */
+/* ============================= */
+
 .profiles{
   display: grid;
-  grid-template-columns: repeat(3, 320px);
-  gap: 32px;
+  grid-template-columns: repeat(3, 320px); /* feste Kartenbreite */
+  gap: 40px;                /* 🔥 gleicher Abstand zwischen Karten */
   justify-content: center;
-  align-items: stretch;   /* WICHTIG: gleiche Höhe erzwingen */
+  align-items: start;
+
+  margin-top: 60px;         /* 🔥 Abstand zum Text oben */
+  margin-bottom: 40px;      /* optional: Abstand nach unten */
+}
+
+/* Mobile */
+@media (max-width: 1000px){
+  .profiles{
+    grid-template-columns: 1fr;
+    gap: 30px;              /* kleinerer Abstand mobil */
+    margin-top: 40px;
+  }
 }
 
 /* ============================= */
@@ -224,7 +240,7 @@ body::before {
   z-index: 0;
   pointer-events: none;
   filter: blur(85px);
-  opacity: 0.8; /* 🔥 10% heller */
+  opacity: 0.7; /* 🔥 10% heller */
   overflow: hidden;
 }
 
@@ -257,7 +273,7 @@ body::before {
     radial-gradient(circle at 50% 85%, rgba(0, 190, 255, 0.60), transparent 55%),
     radial-gradient(circle at 10% 70%, rgba(0, 180, 255, 0.45), transparent 60%),
     radial-gradient(circle at 90% 60%, rgba(0, 210, 255, 0.40), transparent 65%);
-  animation: smokeCyan 50s linear infinite;
+  animation: smokeCyan 80s linear infinite;
 }
 
 /* ORANGE ACCENT (SECONDARY) */
@@ -283,7 +299,7 @@ body::before {
     radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 60%),
     radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06), transparent 65%),
     radial-gradient(circle at 70% 80%, rgba(255,255,255,0.07), transparent 65%);
-  animation: fogDrift 120s linear infinite;
+  animation: fogDrift 160s linear infinite;
 }
 
 /* ============================= */
@@ -300,7 +316,7 @@ body::before {
       transparent 40%,
       rgba(255,120,0,0.12) 60%,
       transparent 80%);
-  animation: energyFlow 45s linear infinite;
+  animation: energyFlow 60s linear infinite;
 }
 
 /* ============================= */
@@ -313,7 +329,7 @@ body::before {
   background:
     radial-gradient(circle at 60% 40%, rgba(0,200,255,0.18), transparent 60%),
     radial-gradient(circle at 40% 70%, rgba(255,120,0,0.15), transparent 65%);
-  animation: parallaxDrift 160s linear infinite;
+  animation: parallaxDrift 120s linear infinite;
 }
 
 /* ============================= */
