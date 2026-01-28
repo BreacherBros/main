@@ -244,3 +244,171 @@ body {
   font-weight: 600;
   color: #ffffff;
 }
+
+/* ============================= */
+/* ===== CINEMATIC SMOKE FX ==== */
+/* ============================= */
+
+#smoke-bg{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(85px);
+  opacity: 0.7; /* 🔥 10% heller */
+  overflow: hidden;
+}
+
+/* ============================= */
+/* ===== NEXT LEVEL SMOKE FX === */
+/* ============================= */
+
+#smoke-bg{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(85px);
+  opacity: 0.85;
+  overflow: hidden;
+}
+
+/* ============================= */
+/* ===== MAIN SMOKE LAYERS ===== */
+/* ============================= */
+
+/* CYAN DOMINANT CORE */
+#smoke-bg::before{
+  content: "";
+  position: absolute;
+  inset: -70%;
+  background:
+    radial-gradient(circle at 15% 30%, rgba(0, 220, 255, 0.65), transparent 45%),
+    radial-gradient(circle at 80% 35%, rgba(0, 200, 255, 0.55), transparent 50%),
+    radial-gradient(circle at 50% 85%, rgba(0, 190, 255, 0.60), transparent 55%),
+    radial-gradient(circle at 10% 70%, rgba(0, 180, 255, 0.45), transparent 60%),
+    radial-gradient(circle at 90% 60%, rgba(0, 210, 255, 0.40), transparent 65%);
+  animation: smokeCyan 80s linear infinite;
+}
+
+/* ORANGE ACCENT (SECONDARY) */
+#smoke-bg::after{
+  content: "";
+  position: absolute;
+  inset: -70%;
+  background:
+    radial-gradient(circle at 30% 60%, rgba(255, 130, 0, 0.40), transparent 45%),
+    radial-gradient(circle at 70% 20%, rgba(255, 140, 0, 0.35), transparent 50%),
+    radial-gradient(circle at 60% 80%, rgba(255, 120, 0, 0.38), transparent 55%);
+  animation: smokeOrange 80s linear infinite;
+}
+
+/* ============================= */
+/* ===== DEPTH FOG LAYER ======= */
+/* ============================= */
+
+#smoke-bg .fog-layer{
+  position: absolute;
+  inset: -70%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 60%),
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06), transparent 65%),
+    radial-gradient(circle at 70% 80%, rgba(255,255,255,0.07), transparent 65%);
+  animation: fogDrift 160s linear infinite;
+}
+
+/* ============================= */
+/* ===== ENERGY FLOW LAYER ===== */
+/* ============================= */
+
+#smoke-bg .energy-layer{
+  position: absolute;
+  inset: -70%;
+  background:
+    linear-gradient(120deg,
+      transparent 0%,
+      rgba(0,220,255,0.18) 20%,
+      transparent 40%,
+      rgba(255,120,0,0.12) 60%,
+      transparent 80%);
+  animation: energyFlow 60s linear infinite;
+}
+
+/* ============================= */
+/* ===== PARALLAX DEPTH ======== */
+/* ============================= */
+
+#smoke-bg .parallax-layer{
+  position: absolute;
+  inset: -80%;
+  background:
+    radial-gradient(circle at 60% 40%, rgba(0,200,255,0.18), transparent 60%),
+    radial-gradient(circle at 40% 70%, rgba(255,120,0,0.15), transparent 65%);
+  animation: parallaxDrift 120s linear infinite;
+}
+
+/* ============================= */
+/* ===== GPU NOISE OVERLAY ===== */
+/* ============================= */
+
+#smoke-bg .noise-layer{
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-radial-gradient(circle,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 1px,
+      transparent 2px,
+      transparent 4px);
+  mix-blend-mode: overlay;
+  opacity: 0.18;
+  animation: noiseMove 25s linear infinite;
+}
+
+/* ============================= */
+/* ===== ANIMATIONS ============ */
+/* ============================= */
+
+@keyframes smokeCyan{
+  0%   { transform: translate(-30%, -30%) rotate(0deg); }
+  50%  { transform: translate(30%, 20%) rotate(180deg); }
+  100% { transform: translate(-30%, -30%) rotate(360deg); }
+}
+
+@keyframes smokeOrange{
+  0%   { transform: translate(30%, 30%) rotate(360deg); }
+  50%  { transform: translate(-30%, -20%) rotate(180deg); }
+  100% { transform: translate(30%, 30%) rotate(0deg); }
+}
+
+@keyframes fogDrift{
+  0%   { transform: translate(-10%, -10%) scale(1); }
+  50%  { transform: translate(10%, 5%) scale(1.06); }
+  100% { transform: translate(-10%, -10%) scale(1); }
+}
+
+@keyframes energyFlow{
+  0%   { transform: translateX(-40%) rotate(0deg); }
+  100% { transform: translateX(40%) rotate(360deg); }
+}
+
+@keyframes parallaxDrift{
+  0%   { transform: translate(-15%, -15%); }
+  50%  { transform: translate(15%, 10%); }
+  100% { transform: translate(-15%, -15%); }
+}
+
+@keyframes noiseMove{
+  0%   { transform: translate(0,0); }
+  100% { transform: translate(120px, 120px); }
+}
+
+/* ============================= */
+/* ===== FOREGROUND FIX ======== */
+/* ============================= */
+
+/* Alles liegt über dem Smoke */
+body > *{
+  position: relative;
+  z-index: 1;
+}
