@@ -96,6 +96,6 @@ function initMuteButton(){
 /* ============================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadLatestTikTok();
-  initMuteButton();
+  loadLatestTikTok();                 // beim Laden der Seite
+  setInterval(loadLatestTikTok, 120000); // alle 2 Minuten neu laden
 });
