@@ -1144,29 +1144,4 @@ body > *{
     0 0 25px rgba(0,200,255,0.25),
     0 0 40px rgba(255,120,0,0.15);
 }
-.r6-background {
-  position: fixed;
-  inset: 0;
 
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(0,200,255,0.15), transparent 40%),
-    radial-gradient(circle at 80% 60%, rgba(255,120,0,0.15), transparent 40%);
-
-  animation: r6Glow 10s infinite alternate ease-in-out;
-
-  z-index: -5;
-}
-
-@keyframes r6Glow {
-
-  0% {
-    filter: blur(60px);
-    transform: scale(1);
-  }
-
-  100% {
-    filter: blur(90px);
-    transform: scale(1.2);
-  }
-
-}
