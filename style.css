@@ -429,3 +429,35 @@ body > *{
 .discord-card a:hover {
   transform: scale(1.05);
 }
+
+.discord-widget {
+  margin: 50px auto;
+  padding: 25px;
+  max-width: 500px;
+
+  border-radius: 18px;
+
+  background: linear-gradient(135deg,#5865F2,#404EED);
+
+  box-shadow:
+    0 0 40px rgba(88,101,242,0.45),
+    0 0 80px rgba(88,101,242,0.25);
+
+  text-align: center;
+}
+
+.discord-widget a {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 12px 25px;
+
+  border-radius: 10px;
+  background: white;
+  color: #5865F2;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.discord-widget a:hover {
+  transform: scale(1.05);
+}
