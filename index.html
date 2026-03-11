@@ -747,6 +747,14 @@ Ob du Headshots verteilst, Drohnen überfährst oder versehentlich deinen Teamma
 Also schnapp dir ’nen Controller, schnall dich an – und komm mit auf unsere nächste Ehrenrunde. Chaos garantiert.
 </p>
 
+  <div class="discord-card">
+  <h2>🎮 Join unseren Discord</h2>
+  <p>Werde Teil der Breacher Bros Community!</p>
+  <a href="https://discord.gg/DEINLINK" target="_blank">
+    🚀 Jetzt beitreten
+  </a>
+</div>
+  
   <!-- Steckbriefe -->
 <section class="profiles">
 
@@ -757,7 +765,7 @@ Also schnapp dir ’nen Controller, schnall dich an – und komm mit auf unsere 
       <h3>SomaRay_Jr</h3>
       <p1>
         <strong>Name:</strong> Roman<br>
-        <strong>Alter:</strong> 28 Jahre<br>
+<strong>Alter:</strong> <span id="romanAge"></span> Jahre
         <strong>Heimat:</strong> Bayern
       </p1>
       <p class="bio">
@@ -798,7 +806,7 @@ Also schnapp dir ’nen Controller, schnall dich an – und komm mit auf unsere 
       <h3>Pater_Odor</h3>
       <p1>
         <strong>Name:</strong> Patrick<br>
-        <strong>Alter:</strong> 36 Jahre<br>
+<strong>Alter:</strong> <span id="patrickAge"></span> Jahre
         <strong>Heimat:</strong> Bayern
       </p1>
       <p class="bio">
@@ -961,6 +969,28 @@ loadLatestVideo();
   <div class="noise-layer"></div>
   <div class="parallax-layer"></div>
 </div>
+
+  <script>
+function calculateAge(birthdate) {
+  const today = new Date();
+  const birth = new Date(birthdate);
+
+  let age = today.getFullYear() - birth.getFullYear();
+  const month = today.getMonth() - birth.getMonth();
+
+  if (month < 0 || (month === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+
+  return age;
+}
+
+document.getElementById("romanAge").textContent =
+  calculateAge("1990-08-14");
+
+document.getElementById("patrickAge").textContent =
+  calculateAge("1989-02-17");
+</script>
   
 </body>
 </html>
