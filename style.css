@@ -397,46 +397,13 @@ body > *{
   position: relative;
   z-index: 1;
 }
-.discord-card {
-  width: 100%;
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 25px;
-  border-radius: 18px;
-
-  background: linear-gradient(135deg,#5865F2,#404EED);
-  color: white;
-
-  text-align: center;
-
-  box-shadow:
-    0 0 40px rgba(88,101,242,0.4),
-    0 0 80px rgba(88,101,242,0.2);
-}
-
-.discord-card a {
-  display: inline-block;
-  margin-top: 15px;
-  padding: 12px 24px;
-  border-radius: 10px;
-
-  background: white;
-  color: #5865F2;
-  font-weight: bold;
-  text-decoration: none;
-}
-
-.discord-card a:hover {
-  transform: scale(1.05);
-}
-
 /* ============================= */
 /* ===== DISCORD WIDGET ===== */
 /* ============================= */
 
 .discord-widget{
-  width: 320px;
-  margin: 40px auto;
+  width: 320px;                /* gleiche Breite wie Profilkarten */
+  margin: 60px auto;
   padding: 18px;
 
   border-radius: 18px;
@@ -455,18 +422,40 @@ body > *{
   display: flex;
   justify-content: center;
   align-items: center;
+
+  position: relative;
+  overflow: hidden;
 }
 
-/* Hover Effekt wie Karten */
+/* Hover Effekt wie deine Profilkarten */
+
 .discord-widget:hover{
-  transform: translateY(-6px) scale(1.02);
+  transform: translateY(-8px) scale(1.02);
 
   box-shadow:
     0 0 60px rgba(0,200,255,0.35),
     0 0 120px rgba(255,120,0,0.25);
 }
 
+/* Glow Layer */
+
+.discord-widget::before{
+  content: "";
+  position: absolute;
+  inset: -40%;
+
+  background: radial-gradient(circle,
+    rgba(0,200,255,0.25),
+    rgba(255,120,0,0.18),
+    transparent 60%);
+
+  opacity: 0.25;
+  filter: blur(60px);
+  z-index: 0;
+}
+
 /* Discord iframe */
+
 .discord-widget iframe{
   width: 100%;
   height: 420px;
@@ -474,11 +463,13 @@ body > *{
   border-radius: 14px;
   border: none;
 
+  position: relative;
+  z-index: 2;
+
   box-shadow:
     0 0 25px rgba(0,200,255,0.25),
     0 0 40px rgba(255,120,0,0.15);
 }
-
 .r6-background {
   position: fixed;
   inset: 0;
