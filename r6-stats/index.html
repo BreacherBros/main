@@ -1,4 +1,4 @@
-</html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
@@ -7,6 +7,34 @@
   <meta name="theme-color" content="#05060a">
 
   <link rel="stylesheet" href="./style.css">
+
+  <style>
+    .mode-switch {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px;
+    }
+
+    .mode-switch button {
+      padding: 10px 20px;
+      border: none;
+      background: #111;
+      color: #aaa;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .mode-switch .active {
+      background: #00c3ff;
+      color: black;
+    }
+
+    .kd {
+      font-size: 24px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
@@ -25,11 +53,12 @@
     </a>
   </div>
 
-<div class="mode-switch">
-  <button id="rankedBtn" class="active">RANKED</button>
-  <button id="casualBtn">UNRANKED</button>
-</div>
-  
+  <!-- 🔥 SWITCH -->
+  <div class="mode-switch">
+    <button id="rankedBtn" class="active">RANKED</button>
+    <button id="casualBtn">UNRANKED</button>
+  </div>
+
   <main class="hud-dashboard">
     <div id="players" class="operators-grid"></div>
   </main>
@@ -37,87 +66,74 @@
   <script>
   const API = "https://r6-api-backend.onrender.com/api/stats";
 
+  let currentMode = "ranked";
+
+  document.getElementById("rankedBtn").onclick = () => {
+    currentMode = "ranked";
+    setActive("rankedBtn");
+    loadStats();
+  };
+
+  document.getElementById("casualBtn").onclick = () => {
+    currentMode = "casual";
+    setActive("casualBtn");
+    loadStats();
+  };
+
+  function setActive(id) {
+    document.getElementById("rankedBtn").classList.remove("active");
+    document.getElementById("casualBtn").classList.remove("active");
+    document.getElementById(id).classList.add("active");
+  }
+
+  function getKDColor(kd) {
+    if (!kd) return "#aaa";
+    if (kd >= 1.3) return "#4caf50";
+    if (kd >= 1.0) return "#ff9800";
+    return "#f44336";
+  }
+
   async function fetchPlayer(name) {
     try {
       const res = await fetch(
         API + "?nameOnPlatform=" + encodeURIComponent(name) + "&platformType=psn"
       );
 
-      const text = await res.text();
+      const data = await res.json();
 
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("❌ Kein JSON:", text);
-        return null;
-      }
-
-      if (!res.ok) return null;
-
-      if (data.kills !== undefined) return data;
-
-      const profile = data?.profiles?.[0];
-      const stats = profile?.stats || {};
-
-      function get(key) {
-        return stats[key]?.value ?? null;
-      }
-
-      const kills = get("kills");
-      const deaths = get("deaths");
-
-      return {
-        username: name,
-        platform: "PSN",
-        kills: kills,
-        deaths: deaths,
-        kd: (kills && deaths) ? (kills / deaths).toFixed(2) : null,
-        wins: get("matchesWon"),
-        losses: get("matchesLost"),
-        level: get("level"),
-        rank: get("rank") || "UNRANKED",
-        mmr: get("mmr"),
-        maxRank: get("maxRank"),
-        maxMmr: get("maxMmr")
-      };
+      return data;
 
     } catch (err) {
-      console.error("Fetch Fehler:", err);
+      console.error(err);
       return null;
     }
   }
 
-  function safe(val, fallback) {
-    return val !== undefined && val !== null ? val : fallback;
+  function safe(v, f) {
+    return v ?? f;
   }
 
   function renderOperator(p, glowClass) {
-    if (!p) {
-      return '<div class="operator-card ' + glowClass + '">NO DATA</div>';
-    }
+    if (!p) return `<div class="operator-card">NO DATA</div>`;
 
     return `
       <div class="operator-card ${glowClass}">
-        <div class="operator-header">
-          <div>
-            <div class="operator-name">${safe(p.username, "-")}</div>
-            <div class="operator-tag">${safe(p.platform, "-")}</div>
-          </div>
-          <div class="operator-tag">
-            ${safe(p.rank, "UNRANKED")} • ${safe(p.mmr, 0)} MMR
-          </div>
+        
+        <h2>${safe(p.username, "-")}</h2>
+        <div>${safe(p.rank, "UNRANKED")} • ${safe(p.mmr, 0)} MMR</div>
+
+        <div class="kd" style="color:${getKDColor(p.kd)}">
+          ${safe(p.kd, "0.00")} KD
         </div>
 
-        <div class="section-title">COMBAT</div>
         <div>Kills: ${safe(p.kills, "-")}</div>
         <div>Deaths: ${safe(p.deaths, "-")}</div>
-        <div>KD: ${safe(p.kd, "0.00")}</div>
 
-        <div class="section-title">MATCHES</div>
         <div>Wins: ${safe(p.wins, "-")}</div>
         <div>Losses: ${safe(p.losses, "-")}</div>
+
         <div>Level: ${safe(p.level, "-")}</div>
+
       </div>
     `;
   }
@@ -126,14 +142,14 @@
     const container = document.getElementById("players");
     container.innerHTML = "Loading...";
 
-    const p1 = await fetchPlayer("BB_Pater_Odor");
-    const p2 = await fetchPlayer("SomaRay_Jr");
+    const [p1, p2] = await Promise.all([
+      fetchPlayer("BB_Pater_Odor"),
+      fetchPlayer("SomaRay_Jr")
+    ]);
 
     container.innerHTML =
       renderOperator(p1, "operator-glow-blue") +
       renderOperator(p2, "operator-glow-orange");
-
-    setTimeout(loadStats, 60000);
   }
 
   loadStats();
