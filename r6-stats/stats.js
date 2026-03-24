@@ -73,7 +73,7 @@ function renderOperator(p, glowClass) {
 
 async function loadStats() {
   try {
-    const p1 = await fetchPlayer("psn", "Pater_Odor");
+    const p1 = await fetchPlayer("psn", "BB_Pater_Odor");
     const p2 = await fetchPlayer("psn", "SomaRay_Jr");
 
     document.getElementById("players").innerHTML = `
