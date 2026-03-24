@@ -93,17 +93,18 @@
     return "#f44336";
   }
 
-  async function fetchPlayer(name) {
-    try {
-      const res = await fetch(
-        API + "?nameOnPlatform=" + encodeURIComponent(name) + "&platformType=psn"
-      );
+async function fetchPlayer(name) {
+  const res = await fetch(
+    `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
+  );
 
-      const data = await res.json();
+  const data = await res.json();
 
-      return data;
-
-    } catch (err) {
+  return currentMode === "ranked"
+    ? data.ranked
+    : data.casual;
+}
+    catch (err) {
       console.error(err);
       return null;
     }
