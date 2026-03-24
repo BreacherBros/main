@@ -101,6 +101,7 @@ async function fetchPlayer(name) {
 
     const data = await res.json();
 
+    // 🔥 DAS ist entscheidend
     return currentMode === "ranked"
       ? data.ranked
       : data.casual;
