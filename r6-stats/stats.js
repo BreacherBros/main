@@ -3,42 +3,59 @@
 <script>
 const API = "https://r6-api-backend.onrender.com/api/stats";
 
-// 👉 Spieler laden
+// 👉 Spieler laden (ROBUST)
 async function fetchPlayer(name) {
   try {
     const res = await fetch(
-      `${API}?type=stats&nameOnPlatform=${encodeURIComponent(name)}&platformType=psn&platform_families=console`
+      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
     );
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.error("❌ API liefert HTML statt JSON:");
+      console.log(text);
+      return null;
     }
 
-    const data = await res.json();
+    if (!res.ok) {
+      console.error("❌ API Fehler:", data);
+      return null;
+    }
 
-    // 👉 r6data Struktur
+    // 👉 Falls Backend schon fertig gemappt ist → direkt nutzen
+    if (data.kills !== undefined) {
+      return data;
+    }
+
+    // 👉 Falls RAW r6data (Fallback)
     const profile = data?.profiles?.[0];
     const stats = profile?.stats || {};
+
+    const get = (key) => stats?.[key]?.value ?? null;
+
+    const kills = get("kills");
+    const deaths = get("deaths");
 
     return {
       username: name,
       platform: "PSN",
 
-      // Combat
-      kills: stats.kills?.value,
-      deaths: stats.deaths?.value,
-      kd: stats.kd?.value,
+      kills,
+      deaths,
+      kd: (kills && deaths) ? (kills / deaths).toFixed(2) : null,
 
-      // Matches
-      wins: stats.matchesWon?.value,
-      losses: stats.matchesLost?.value,
-      level: stats.level?.value,
+      wins: get("matchesWon"),
+      losses: get("matchesLost"),
+      level: get("level"),
 
-      // Rank
-      rank: stats.rank?.value,
-      mmr: stats.mmr?.value,
-      maxRank: stats.maxRank?.value,
-      maxMmr: stats.maxMmr?.value
+      rank: get("rank") || "UNRANKED",
+      mmr: get("mmr"),
+      maxRank: get("maxRank"),
+      maxMmr: get("maxMmr")
     };
 
   } catch (err) {
@@ -88,7 +105,7 @@ function renderOperator(p, glowClass) {
         </div>
         <div class="stat-box">
           <div class="stat-label">K/D</div>
-          <div class="stat-value">${safe(p.kd)}</div>
+          <div class="stat-value">${safe(p.kd, "0.00")}</div>
         </div>
       </div>
 
@@ -144,7 +161,6 @@ async function loadStats() {
     ${renderOperator(p2, "operator-glow-orange")}
   `;
 
-  // 👉 refresh alle 60 Sekunden
   setTimeout(loadStats, 60000);
 }
 
