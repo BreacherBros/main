@@ -412,3 +412,46 @@ body > *{
   position: relative;
   z-index: 1;
 }
+.mode-switch {
+  display: flex;
+  justify-content: center;
+  margin: 20px;
+  gap: 10px;
+}
+
+.mode-switch button {
+  padding: 10px 20px;
+  border: none;
+  background: #111;
+  color: #aaa;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 6px;
+}
+
+.mode-switch .active {
+  background: #00c3ff;
+  color: #000;
+}
+
+/* CARD STYLE */
+.operator-card {
+  background: #0b0f1a;
+  padding: 20px;
+  border-radius: 12px;
+  color: white;
+  margin: 10px;
+}
+
+/* BIG KD */
+.kd-value {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+/* GRID */
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
