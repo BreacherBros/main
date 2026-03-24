@@ -1,21 +1,48 @@
 const API = "https://r6-api-backend.onrender.com/player";
 
 async function fetchPlayer(platform, name) {
-  const res = await fetch(`${API}?platform=${platform}&name=${encodeURIComponent(name)}`);
-  return res.json();
+  try {
+    const res = await fetch(`${API}?platform=${platform}&name=${encodeURIComponent(name)}`);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    // 👉 Falls API verschachtelt ist
+    return data.data || data;
+
+  } catch (err) {
+    console.error("Fetch Fehler:", err);
+    return null; // wichtig!
+  }
+}
+
+function safe(val, fallback = "-") {
+  return val !== undefined && val !== null ? val : fallback;
 }
 
 function renderOperator(p, glowClass) {
+  if (!p) {
+    return `
+      <div class="operator-card ${glowClass}">
+        <div class="operator-name">NO DATA</div>
+        <div class="operator-tag">API ERROR</div>
+      </div>
+    `;
+  }
+
   return `
     <div class="operator-card ${glowClass}">
       
       <div class="operator-header">
         <div>
-          <div class="operator-name">${p.username}</div>
-          <div class="operator-tag">${p.platform || "PSN"}</div>
+          <div class="operator-name">${safe(p.username)}</div>
+          <div class="operator-tag">${safe(p.platform, "PSN").toUpperCase()}</div>
         </div>
         <div class="operator-tag">
-          ${p.rank || "UNRANKED"} • ${p.mmr || 0} MMR
+          ${safe(p.rank, "UNRANKED")} • ${safe(p.mmr, 0)} MMR
         </div>
       </div>
 
@@ -23,15 +50,15 @@ function renderOperator(p, glowClass) {
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-label">KILLS</div>
-          <div class="stat-value">${p.kills ?? "-"}</div>
+          <div class="stat-value">${safe(p.kills)}</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">DEATHS</div>
-          <div class="stat-value">${p.deaths ?? "-"}</div>
+          <div class="stat-value">${safe(p.deaths)}</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">K/D</div>
-          <div class="stat-value">${p.kd ?? "-"}</div>
+          <div class="stat-value">${safe(p.kd)}</div>
         </div>
       </div>
 
@@ -39,15 +66,15 @@ function renderOperator(p, glowClass) {
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-label">WINS</div>
-          <div class="stat-value">${p.wins ?? "-"}</div>
+          <div class="stat-value">${safe(p.wins)}</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">LOSSES</div>
-          <div class="stat-value">${p.losses ?? "-"}</div>
+          <div class="stat-value">${safe(p.losses)}</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">LEVEL</div>
-          <div class="stat-value">${p.level ?? "-"}</div>
+          <div class="stat-value">${safe(p.level)}</div>
         </div>
       </div>
 
@@ -55,15 +82,15 @@ function renderOperator(p, glowClass) {
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-label">CURRENT RANK</div>
-          <div class="stat-value">${p.rank ?? "-"}</div>
+          <div class="stat-value">${safe(p.rank)}</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">MAX RANK</div>
-          <div class="stat-value">${p.maxRank ?? "-"}</div>
+          <div class="stat-value">${safe(p.maxRank)}</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">MAX MMR</div>
-          <div class="stat-value">${p.maxMmr ?? "-"}</div>
+          <div class="stat-value">${safe(p.maxMmr)}</div>
         </div>
       </div>
 
@@ -72,24 +99,21 @@ function renderOperator(p, glowClass) {
 }
 
 async function loadStats() {
-  try {
-    const p1 = await fetchPlayer("psn", "BB_Pater_Odor");
-    const p2 = await fetchPlayer("psn", "SomaRay_Jr");
+  const container = document.getElementById("players");
 
-    document.getElementById("players").innerHTML = `
-      ${renderOperator(p1, "operator-glow-blue")}
-      ${renderOperator(p2, "operator-glow-orange")}
-    `;
-  } catch (err) {
-    console.error("Stats Load Error:", err);
-    document.getElementById("players").innerHTML = `
-      <div class="operator-card operator-glow-blue">
-        <div class="operator-name">API ERROR</div>
-        <div class="operator-tag">BACKEND NOT AVAILABLE</div>
-      </div>
-    `;
-  }
+  container.innerHTML = "Loading...";
+
+  const [p1, p2] = await Promise.all([
+    fetchPlayer("psn", "BB_Pater_Odor"),
+    fetchPlayer("psn", "SomaRay_Jr")
+  ]);
+
+  container.innerHTML = `
+    ${renderOperator(p1, "operator-glow-blue")}
+    ${renderOperator(p2, "operator-glow-orange")}
+  `;
+
+  setTimeout(loadStats, 60000);
 }
 
 loadStats();
-setInterval(loadStats, 60000); // 60s refresh
