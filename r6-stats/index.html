@@ -94,21 +94,22 @@
   }
 
 async function fetchPlayer(name) {
-  const res = await fetch(
-    `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
-  );
+  try {
+    const res = await fetch(
+      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
+    );
 
-  const data = await res.json();
+    const data = await res.json();
 
-  return currentMode === "ranked"
-    ? data.ranked
-    : data.casual;
-}
-    catch (err) {
-      console.error(err);
-      return null;
-    }
+    return currentMode === "ranked"
+      ? data.ranked
+      : data.casual;
+
+  } catch (err) {
+    console.error("Fetch Fehler:", err);
+    return null;
   }
+}
 
   function safe(v, f) {
     return v ?? f;
