@@ -1,8 +1,14 @@
-const API = "https://r6-api-backend.onrender.com/player";
+<div id="players"></div>
 
-async function fetchPlayer(platform, name) {
+<script>
+const API = "https://r6-api-backend.onrender.com/api/stats";
+
+// 👉 Spieler laden
+async function fetchPlayer(name) {
   try {
-    const res = await fetch(`${API}?platform=${platform}&name=${encodeURIComponent(name)}`);
+    const res = await fetch(
+      `${API}?type=stats&nameOnPlatform=${encodeURIComponent(name)}&platformType=psn&platform_families=console`
+    );
 
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
@@ -10,19 +16,43 @@ async function fetchPlayer(platform, name) {
 
     const data = await res.json();
 
-    // 👉 Falls API verschachtelt ist
-    return data.data || data;
+    // 👉 r6data Struktur
+    const profile = data?.profiles?.[0];
+    const stats = profile?.stats || {};
+
+    return {
+      username: name,
+      platform: "PSN",
+
+      // Combat
+      kills: stats.kills?.value,
+      deaths: stats.deaths?.value,
+      kd: stats.kd?.value,
+
+      // Matches
+      wins: stats.matchesWon?.value,
+      losses: stats.matchesLost?.value,
+      level: stats.level?.value,
+
+      // Rank
+      rank: stats.rank?.value,
+      mmr: stats.mmr?.value,
+      maxRank: stats.maxRank?.value,
+      maxMmr: stats.maxMmr?.value
+    };
 
   } catch (err) {
     console.error("Fetch Fehler:", err);
-    return null; // wichtig!
+    return null;
   }
 }
 
+// 👉 sichere Anzeige
 function safe(val, fallback = "-") {
   return val !== undefined && val !== null ? val : fallback;
 }
 
+// 👉 UI rendern
 function renderOperator(p, glowClass) {
   if (!p) {
     return `
@@ -39,7 +69,7 @@ function renderOperator(p, glowClass) {
       <div class="operator-header">
         <div>
           <div class="operator-name">${safe(p.username)}</div>
-          <div class="operator-tag">${safe(p.platform, "PSN").toUpperCase()}</div>
+          <div class="operator-tag">${safe(p.platform)}</div>
         </div>
         <div class="operator-tag">
           ${safe(p.rank, "UNRANKED")} • ${safe(p.mmr, 0)} MMR
@@ -98,14 +128,15 @@ function renderOperator(p, glowClass) {
   `;
 }
 
+// 👉 Hauptfunktion
 async function loadStats() {
   const container = document.getElementById("players");
 
   container.innerHTML = "Loading...";
 
   const [p1, p2] = await Promise.all([
-    fetchPlayer("psn", "BB_Pater_Odor"),
-    fetchPlayer("psn", "SomaRay_Jr")
+    fetchPlayer("BB_Pater_Odor"),
+    fetchPlayer("SomaRay_Jr")
   ]);
 
   container.innerHTML = `
@@ -113,7 +144,10 @@ async function loadStats() {
     ${renderOperator(p2, "operator-glow-orange")}
   `;
 
+  // 👉 refresh alle 60 Sekunden
   setTimeout(loadStats, 60000);
 }
 
+// 👉 Start
 loadStats();
+</script>
