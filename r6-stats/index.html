@@ -148,8 +148,8 @@ function render(p, glowClass) {
   const rank = getRankFromMMR(p.mmr);
 
   return `
-    <div class="operator-card ${glowClass} ${p.user ? 'user-card' : ''}"
-         style="box-shadow:0 0 40px ${rank.color}55">
+  <div class="operator-card ${glowClass}" 
+     style="--rank-color:${rank.color}; box-shadow:0 0 40px ${rank.color}33">
 
       <div class="operator-header">
         <div class="operator-name">${p.username}</div>
