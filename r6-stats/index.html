@@ -225,8 +225,8 @@ function render(p, index, glowClass) {
       ${
         index <= 1
           ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
-              ${p.platform.toUpperCase()}
-            </button>`
+  ${p.platform === "psn" ? "PSN" : "UBISOFT"}
+</button>`
           : `<div class="operator-tag">${p.platform}</div>`
       }
     </div>
