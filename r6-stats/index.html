@@ -98,26 +98,39 @@
     document.getElementById(id).classList.add("active");
   }
 
-  // 🔥 RICHTIGES RANK SYSTEM (auf rank basierend)
-  function getRankData(rank) {
-    if (!rank) return { name: "UNRANKED", color: "#777" };
+  // ✅ RANK SYSTEM (RICHTIG → MMR BASIERT)
+  function getRankFromMMR(mmr) {
+    if (!mmr || mmr === 0) return { name: "UNRANKED", color: "#777" };
 
-    if (rank >= 25) return { name: "CHAMPION", color: "#ff0033" };
-    if (rank >= 20) return { name: "DIAMOND", color: "#00e5ff" };
-    if (rank >= 15) return { name: "EMERALD", color: "#00ff88" };
-    if (rank >= 10) return { name: "PLATINUM", color: "#4fc3f7" };
-    if (rank >= 5) return { name: "GOLD", color: "#ffd700" };
+    if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0033" };
+
+    if (mmr >= 4500) return { name: "DIAMOND I", color: "#00e5ff" };
+    if (mmr >= 4200) return { name: "DIAMOND II", color: "#00e5ff" };
+    if (mmr >= 3900) return { name: "DIAMOND III", color: "#00e5ff" };
+
+    if (mmr >= 3600) return { name: "EMERALD I", color: "#00ff88" };
+    if (mmr >= 3300) return { name: "EMERALD II", color: "#00ff88" };
+    if (mmr >= 3000) return { name: "EMERALD III", color: "#00ff88" };
+
+    if (mmr >= 2700) return { name: "PLATINUM I", color: "#4fc3f7" };
+    if (mmr >= 2400) return { name: "PLATINUM II", color: "#4fc3f7" };
+    if (mmr >= 2100) return { name: "PLATINUM III", color: "#4fc3f7" };
+
+    if (mmr >= 1800) return { name: "GOLD I", color: "#ffd700" };
+    if (mmr >= 1500) return { name: "GOLD II", color: "#ffd700" };
+    if (mmr >= 1200) return { name: "GOLD III", color: "#ffd700" };
+
     return { name: "SILVER", color: "#c0c0c0" };
   }
 
   function getWinrate(w, l) {
-    if (w === null || l === null) return null;
+    if (w == null || l == null) return null;
     if (w + l === 0) return null;
     return ((w / (w + l)) * 100).toFixed(1);
   }
 
   function getKDColor(kd) {
-    if (kd === null || kd === undefined) return "#aaa";
+    if (kd == null) return "#aaa";
 
     kd = parseFloat(kd);
 
@@ -152,7 +165,7 @@
   function renderOperator(p, glowClass) {
     if (!p) return `<div class="operator-card">NO DATA</div>`;
 
-    const rankData = getRankData(p.rank);
+    const rankData = getRankFromMMR(p.mmr);
     const winrate = getWinrate(p.wins, p.losses);
 
     return `
@@ -165,7 +178,7 @@
         </div>
 
         <div class="kd" style="color:${getKDColor(p.kd)}">
-          ${p.kd ? p.kd : "0.00"} KD
+          ${safe(p.kd, "0.00")} KD
         </div>
 
         <div>Winrate: ${winrate ?? "-"}%</div>
