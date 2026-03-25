@@ -5,142 +5,27 @@
 <title>R6 Operator Stats</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  color: white;
-  overflow-x: hidden;
-}
+<!-- ✅ DEIN NEUER CSS -->
+<link rel="stylesheet" href="./style.css">
 
-/* 🔥 ANIMATED BACKGROUND */
-body::before {
-  content: "";
-  position: fixed;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, #00c3ff22, transparent 40%),
-              radial-gradient(circle, #ff004422, transparent 40%),
-              #05060a;
-  animation: moveBg 20s linear infinite;
-  z-index: -1;
-}
-
-@keyframes moveBg {
-  0% { transform: translate(0,0); }
-  50% { transform: translate(-25%, -25%); }
-  100% { transform: translate(0,0); }
-}
-
-/* HEADER */
-header {
-  text-align: center;
-  margin-top: 40px;
-}
-
-header h1 {
-  letter-spacing: 2px;
-}
-
-/* INPUT */
-.search-box {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.search-box input, select {
-  padding: 10px;
-  border-radius: 6px;
-  border: none;
-}
-
-.search-box button {
-  padding: 10px 20px;
-  border: none;
-  background: #00c3ff;
-  color: black;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* SWITCH */
-.mode-switch {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 20px;
-}
-
-.mode-switch button {
-  padding: 10px 20px;
-  border: none;
-  background: #111;
-  color: #aaa;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.mode-switch .active {
-  background: #00c3ff;
-  color: black;
-}
-
-/* GRID */
-.operators-grid {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-top: 50px;
-  flex-wrap: wrap;
-}
-
-/* CARD */
-.operator-card {
-  background: linear-gradient(160deg, rgba(30,40,70,0.9), rgba(10,15,30,0.9));
-  border-radius: 16px;
-  padding: 30px;
-  width: 350px;
-  transition: 0.3s;
-}
-
-.operator-card:hover {
-  transform: translateY(-8px) scale(1.02);
-}
-
-/* TEXT */
-.player-name {
-  font-size: 22px;
-  font-weight: bold;
-}
-
-.rank {
-  margin: 10px 0;
-  font-weight: bold;
-}
-
-.kd {
-  font-size: 26px;
-  margin: 10px 0;
-  font-weight: bold;
-}
-
-.stat {
-  color: #ccc;
-  font-size: 15px;
-}
-</style>
 </head>
 
 <body>
 
-<header>
+<!-- 🔥 SMOKE BACKGROUND -->
+<div id="smoke-bg">
+  <div class="fog-layer"></div>
+  <div class="energy-layer"></div>
+  <div class="noise-layer"></div>
+  <div class="parallax-layer"></div>
+</div>
+
+<header class="hud-header">
   <h1>R6 OPERATOR STATS</h1>
-  <span>LIVE COMBAT DATA</span>
+  <span class="hud-sub">LIVE COMBAT DATA</span>
 </header>
 
-<!-- 🔥 PLAYER SEARCH -->
+<!-- 🔍 SEARCH -->
 <div class="search-box">
   <input id="playerInput" placeholder="Gamertag eingeben">
   
@@ -152,13 +37,15 @@ header h1 {
   <button onclick="searchPlayer()">ADD PLAYER</button>
 </div>
 
-<!-- MODE -->
+<!-- 🔁 MODE SWITCH -->
 <div class="mode-switch">
   <button id="rankedBtn" class="active">RANKED</button>
   <button id="casualBtn">UNRANKED</button>
 </div>
 
-<div class="operators-grid" id="players"></div>
+<main class="hud-dashboard">
+  <div class="operators-grid" id="players"></div>
+</main>
 
 <script>
 const API = "https://r6-api-backend.onrender.com/api/stats";
@@ -201,40 +88,43 @@ function searchPlayer() {
   loadStats();
 }
 
-/* RANK SYSTEM */
+/* 🎯 RANK SYSTEM (5 DIVISIONS) */
 function getRankFromMMR(mmr) {
   if (!mmr) return { name: "UNRANKED", color: "#777" };
 
   const tiers = [
-    { name: "KUPFER", color: "#cd7f32" },
-    { name: "BRONZE", color: "#a97142" },
-    { name: "SILBER", color: "#c0c0c0" },
-    { name: "GOLD", color: "#ffd700" },
-    { name: "PLATIN", color: "#4fc3f7" },
-    { name: "SMARAGD", color: "#00ff88" },
-    { name: "DIAMANT", color: "#00e5ff" }
+    { name: "Copper", color: "#cd7f32" },
+    { name: "Bronze", color: "#a97142" },
+    { name: "Silver", color: "#c0c0c0" },
+    { name: "Gold", color: "#ffd700" },
+    { name: "Platinum", color: "#4fc3f7" },
+    { name: "Emerald", color: "#00ff88" },
+    { name: "Diamond", color: "#00e5ff" }
   ];
 
-  let index = Math.floor(mmr / 500) - 2;
-  index = Math.max(0, Math.min(index, tiers.length - 1));
+  let tierIndex = Math.floor(mmr / 500) - 2;
+  tierIndex = Math.max(0, Math.min(tierIndex, tiers.length - 1));
 
   const division = 5 - Math.floor((mmr % 500) / 100);
 
   return {
-    name: `${tiers[index].name} ${division}`,
-    color: tiers[index].color
+    name: `${tiers[tierIndex].name} ${division}`,
+    color: tiers[tierIndex].color
   };
 }
 
+/* KD COLOR */
 function getKDColor(kd) {
   if (!kd) return "#aaa";
   kd = parseFloat(kd);
+
   if (kd >= 1.5) return "#00ff88";
   if (kd >= 1.2) return "#4caf50";
   if (kd >= 1.0) return "#ff9800";
   return "#f44336";
 }
 
+/* WINRATE */
 function getWinrate(w, l) {
   if (!w || !l) return "-";
   return ((w / (w + l)) * 100).toFixed(1);
@@ -253,36 +143,62 @@ async function fetchPlayer(p) {
       ? data.ranked
       : data.casual;
 
-  } catch {
+  } catch (err) {
+    console.error(err);
     return null;
   }
 }
 
 /* RENDER */
-function render(p) {
+function render(p, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
 
   const rank = getRankFromMMR(p.mmr);
 
   return `
-    <div class="operator-card" style="box-shadow:0 0 20px ${rank.color}55">
+    <div class="operator-card ${glowClass}" style="box-shadow:0 0 40px ${rank.color}33">
 
-      <div class="player-name">${p.username}</div>
+      <div class="operator-header">
+        <div class="operator-name">${p.username || "-"}</div>
+        <div class="operator-tag">${p.platform}</div>
+      </div>
 
       <div class="rank" style="color:${rank.color}">
         ${rank.name} • ${p.mmr || 0} MMR
       </div>
 
-      <div class="kd" style="color:${getKDColor(p.kd)}">
+      <div class="kd-value" style="color:${getKDColor(p.kd)}">
         ${p.kd || "0.00"} KD
       </div>
 
-      <div class="stat">Winrate: ${getWinrate(p.wins, p.losses)}%</div>
+      <div class="section-title">COMBAT</div>
 
-      <div class="stat">Kills: ${p.kills}</div>
-      <div class="stat">Deaths: ${p.deaths}</div>
-      <div class="stat">Wins: ${p.wins}</div>
-      <div class="stat">Losses: ${p.losses}</div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">WINRATE</div>
+          <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">KILLS</div>
+          <div class="stat-value">${p.kills ?? "-"}</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">DEATHS</div>
+          <div class="stat-value">${p.deaths ?? "-"}</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">WINS</div>
+          <div class="stat-value">${p.wins ?? "-"}</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-label">LOSSES</div>
+          <div class="stat-value">${p.losses ?? "-"}</div>
+        </div>
+      </div>
 
     </div>
   `;
@@ -295,7 +211,10 @@ async function loadStats() {
 
   const results = await Promise.all(players.map(fetchPlayer));
 
-  el.innerHTML = results.map(render).join("");
+  el.innerHTML = 
+    render(results[0], "operator-glow-blue") +
+    render(results[1], "operator-glow-orange") +
+    results.slice(2).map(p => render(p, "")).join("");
 }
 
 loadStats();
