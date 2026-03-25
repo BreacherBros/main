@@ -117,15 +117,18 @@ function searchPlayer() {
 /* PLATFORM SWITCH */
 /* ===================== */
 
+  }
 function togglePlatform(index) {
   if (index > 1) return;
 
-  players[index].platform =
-    players[index].platform === "psn" ? "uplay" : "psn";
+  const current = players[index].platform;
 
-  loadStats();
+  players[index].platform = current === "psn" ? "uplay" : "psn";
+
+  console.log("Switch:", players[index]); // DEBUG
+
+  loadStats(); // 🔥 GANZ WICHTIG
 }
-
 /* ===================== */
 /* RANK SYSTEM */
 /* ===================== */
