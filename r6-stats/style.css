@@ -1,11 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Rajdhani:wght@500;700&display=swap');
 
-/* ================= RESET ================= */
+/* ============================= */
+/* RESET */
+/* ============================= */
 html, body {
   margin: 0;
   padding: 0;
-  background: #05060a;
   overflow-x: hidden;
+  background: #05060a;
 }
 
 * {
@@ -17,7 +19,9 @@ body {
   color: #e5e7eb;
 }
 
-/* ================= SMOKE BACKGROUND ================= */
+/* ============================= */
+/* SMOKE BACKGROUND 🔥 */
+/* ============================= */
 
 #smoke-bg{
   position: fixed;
@@ -25,54 +29,119 @@ body {
   z-index: 0;
   pointer-events: none;
   filter: blur(100px);
-  opacity: 0.85;
+  opacity: 0.9;
+  overflow: hidden;
 }
 
-/* CYAN */
 #smoke-bg::before{
   content: "";
   position: absolute;
   inset: -70%;
   background:
     radial-gradient(circle at 20% 30%, rgba(0,220,255,0.7), transparent 45%),
-    radial-gradient(circle at 80% 40%, rgba(0,200,255,0.6), transparent 50%);
+    radial-gradient(circle at 80% 40%, rgba(0,200,255,0.6), transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(0,190,255,0.6), transparent 55%);
   animation: smokeCyan 70s linear infinite;
 }
 
-/* ORANGE */
 #smoke-bg::after{
   content: "";
   position: absolute;
   inset: -70%;
   background:
     radial-gradient(circle at 30% 60%, rgba(255,130,0,0.45), transparent 45%),
-    radial-gradient(circle at 70% 20%, rgba(255,140,0,0.4), transparent 50%);
+    radial-gradient(circle at 70% 20%, rgba(255,140,0,0.4), transparent 50%),
+    radial-gradient(circle at 60% 80%, rgba(255,120,0,0.35), transparent 55%);
   animation: smokeOrange 80s linear infinite;
 }
 
-@keyframes smokeCyan {
-  0% { transform: translate(-30%, -30%); }
-  50% { transform: translate(30%, 20%); }
-  100% { transform: translate(-30%, -30%); }
+#smoke-bg .fog-layer{
+  position: absolute;
+  inset: -70%;
+  background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 60%);
+  animation: fogDrift 140s linear infinite;
 }
 
-@keyframes smokeOrange {
-  0% { transform: translate(30%, 30%); }
-  50% { transform: translate(-30%, -20%); }
-  100% { transform: translate(30%, 30%); }
+#smoke-bg .energy-layer{
+  position: absolute;
+  inset: -70%;
+  background:
+    linear-gradient(120deg,
+      transparent,
+      rgba(0,220,255,0.15),
+      transparent,
+      rgba(255,120,0,0.1),
+      transparent);
+  animation: energyFlow 60s linear infinite;
 }
 
-/* FIX */
-body > *{
+#smoke-bg .parallax-layer{
+  position: absolute;
+  inset: -80%;
+  background:
+    radial-gradient(circle at 60% 40%, rgba(0,200,255,0.2), transparent 60%),
+    radial-gradient(circle at 40% 70%, rgba(255,120,0,0.2), transparent 65%);
+  animation: parallaxDrift 120s linear infinite;
+}
+
+#smoke-bg .noise-layer{
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-radial-gradient(circle,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 1px,
+      transparent 2px,
+      transparent 4px);
+  opacity: 0.15;
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+
+@keyframes smokeCyan{
+  0% { transform: translate(-30%, -30%) rotate(0deg); }
+  50% { transform: translate(30%, 20%) rotate(180deg); }
+  100% { transform: translate(-30%, -30%) rotate(360deg); }
+}
+
+@keyframes smokeOrange{
+  0% { transform: translate(30%, 30%) rotate(360deg); }
+  50% { transform: translate(-30%, -20%) rotate(180deg); }
+  100% { transform: translate(30%, 30%) rotate(0deg); }
+}
+
+@keyframes fogDrift{
+  0% { transform: translate(-10%, -10%) scale(1); }
+  50% { transform: translate(10%, 5%) scale(1.05); }
+  100% { transform: translate(-10%, -10%) scale(1); }
+}
+
+@keyframes energyFlow{
+  0% { transform: translateX(-40%) rotate(0deg); }
+  100% { transform: translateX(40%) rotate(360deg); }
+}
+
+@keyframes parallaxDrift{
+  0% { transform: translate(-15%, -15%); }
+  50% { transform: translate(15%, 10%); }
+  100% { transform: translate(-15%, -15%); }
+}
+
+/* FIX Z-INDEX */
+body > * {
   position: relative;
   z-index: 1;
 }
 
-/* ================= HEADER ================= */
+/* ============================= */
+/* HEADER */
+/* ============================= */
 
 .hud-header {
   text-align: center;
-  padding: 30px;
+  padding: 30px 16px;
 }
 
 .hud-header h1 {
@@ -84,15 +153,21 @@ body > *{
   -webkit-text-fill-color: transparent;
 }
 
-/* ================= MODE SWITCH ================= */
+.hud-sub {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* ============================= */
+/* SWITCH FIX */
+/* ============================= */
 
 .mode-switch {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 14px;
-  margin: 30px auto;
-  width: 100%;
+  margin: 20px auto;
+  gap: 10px;
 }
 
 .mode-switch button {
@@ -109,16 +184,20 @@ body > *{
   color: black;
 }
 
-/* ================= GRID ================= */
+/* ============================= */
+/* GRID */
+/* ============================= */
 
 .operators-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
   gap: 30px;
   padding: 40px;
 }
 
-/* ================= CARD ================= */
+/* ============================= */
+/* CARD */
+/* ============================= */
 
 .operator-card {
   position: relative;
@@ -127,15 +206,15 @@ body > *{
   border-radius: 20px;
   padding: 30px;
   border: 1px solid rgba(255,255,255,0.06);
-  transition: 0.3s;
-  animation: floatCard 6s ease-in-out infinite;
+  transition: 0.4s;
 }
 
 .operator-card:hover {
   transform: translateY(-8px) scale(1.02);
 }
 
-/* ⭐ STAR LAYER 1 */
+/* ⭐ FUNKELNDE STERNE */
+
 .operator-card::before {
   content: "";
   position: absolute;
@@ -143,113 +222,104 @@ body > *{
   pointer-events: none;
 
   background:
-    radial-gradient(circle at 8% 15%, var(--rank-color) 2px, transparent 4px),
-    radial-gradient(circle at 22% 75%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 35% 40%, var(--rank-color) 1.5px, transparent 3px),
-    radial-gradient(circle at 48% 10%, var(--rank-color) 2px, transparent 4px),
-    radial-gradient(circle at 60% 65%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 72% 30%, var(--rank-color) 1.5px, transparent 3px),
-    radial-gradient(circle at 85% 80%, var(--rank-color) 2px, transparent 4px),
-    radial-gradient(circle at 15% 55%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 55% 90%, var(--rank-color) 1.5px, transparent 3px),
-    radial-gradient(circle at 90% 20%, var(--rank-color) 1px, transparent 3px);
+    radial-gradient(circle at 12% 20%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 25% 75%, var(--rank-color) 1.5px, transparent 4px),
+    radial-gradient(circle at 40% 40%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 60% 15%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 75% 70%, var(--rank-color) 2px, transparent 4px);
 
-  opacity: 0.35;
-  animation: starBlinkFast 2.5s infinite ease-in-out;
+  animation: star1 3s infinite linear;
 }
 
-/* ⭐ STAR LAYER 2 */
 .operator-card .star-layer {
   position: absolute;
   inset: 0;
   pointer-events: none;
 
   background:
-    radial-gradient(circle at 12% 35%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 30% 15%, var(--rank-color) 1.5px, transparent 3px),
-    radial-gradient(circle at 65% 50%, var(--rank-color) 2px, transparent 4px),
-    radial-gradient(circle at 78% 25%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 50% 70%, var(--rank-color) 1.5px, transparent 3px),
-    radial-gradient(circle at 90% 60%, var(--rank-color) 1px, transparent 3px);
+    radial-gradient(circle at 20% 60%, var(--rank-color) 1.5px, transparent 4px),
+    radial-gradient(circle at 55% 80%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 80% 30%, var(--rank-color) 2px, transparent 4px);
 
-  opacity: 0.25;
-  animation: starBlinkAlt 3.2s infinite ease-in-out reverse;
+  animation: star2 4s infinite linear;
 }
 
-/* 🌫️ MINIMAL NEBEL */
-.operator-card::after {
+.operator-card .star-layer::after {
   content: "";
   position: absolute;
   inset: 0;
-  pointer-events: none;
 
   background:
-    radial-gradient(circle at 50% 50%, var(--rank-color), transparent 70%);
+    radial-gradient(circle at 50% 25%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 90% 60%, var(--rank-color) 1.5px, transparent 4px);
 
-  opacity: 0.04;
-  filter: blur(40px);
+  animation: star3 5s infinite linear;
 }
 
-/* ================= TEXT ================= */
+/* ⭐ REAL TWINKLE */
+
+@keyframes star1 {
+  0%,100%{opacity:0}
+  20%{opacity:.9}
+  30%{opacity:.2}
+  40%{opacity:1}
+  60%{opacity:0}
+}
+
+@keyframes star2 {
+  0%,100%{opacity:0}
+  10%{opacity:1}
+  25%{opacity:.3}
+  35%{opacity:.9}
+  55%{opacity:0}
+}
+
+@keyframes star3 {
+  0%,100%{opacity:0}
+  15%{opacity:.8}
+  30%{opacity:.2}
+  45%{opacity:1}
+  70%{opacity:0}
+}
+
+/* ============================= */
+/* TEXT */
+/* ============================= */
 
 .operator-name {
   font-size: 1.4rem;
-  margin-bottom: 10px;
 }
 
 .rank {
-  font-size: 0.9rem;
-  margin-bottom: 12px;
+  margin: 10px 0;
   text-shadow: 0 0 10px currentColor;
 }
 
 .kd-value {
   font-size: 32px;
   font-weight: bold;
-  animation: kdPulse 2s infinite;
 }
 
-/* ================= USER CARD ================= */
+.stat {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* ============================= */
+/* USER CARD */
+/* ============================= */
 
 .user-card {
-  border: 2px solid rgba(0,255,200,0.4);
-  animation: userGlow 2s infinite alternate;
+  border: 2px solid rgba(0,255,200,0.5);
+  animation: userGlow 1.5s infinite alternate;
+}
+
+@keyframes userGlow {
+  0% { box-shadow: 0 0 25px rgba(0,255,200,0.3); }
+  100% { box-shadow: 0 0 70px rgba(0,255,200,0.9); }
 }
 
 .user-card .operator-name {
   font-family: 'Rajdhani', sans-serif;
-}
-
-/* ================= ANIMATIONS ================= */
-
-@keyframes floatCard {
-  0% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
-}
-
-@keyframes starBlinkFast {
-  0%   { opacity: 0.2; transform: scale(1); }
-  20%  { opacity: 0.5; transform: scale(1.1); }
-  40%  { opacity: 0.25; }
-  60%  { opacity: 0.7; transform: scale(1.2); }
-  80%  { opacity: 0.3; }
-  100% { opacity: 0.2; transform: scale(1); }
-}
-
-@keyframes starBlinkAlt {
-  0%   { opacity: 0.15; }
-  50%  { opacity: 0.6; transform: scale(1.15); }
-  100% { opacity: 0.2; }
-}
-
-@keyframes kdPulse {
-  0% { text-shadow: 0 0 5px currentColor; }
-  50% { text-shadow: 0 0 20px currentColor; }
-  100% { text-shadow: 0 0 5px currentColor; }
-}
-
-@keyframes userGlow {
-  0% { box-shadow: 0 0 20px rgba(0,255,200,0.2); }
-  100% { box-shadow: 0 0 60px rgba(0,255,200,0.8); }
+  font-size: 1.6rem;
 }
