@@ -1,13 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap');
 
-/* ============================= */
-/* ===== RESET ================= */
-/* ============================= */
+/* ================= RESET ================= */
 html, body {
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
   background: #05060a;
+  overflow-x: hidden;
 }
 
 * {
@@ -19,9 +17,7 @@ body {
   color: #e5e7eb;
 }
 
-/* ============================= */
-/* ===== SMOKE BACKGROUND 🔥 ==== */
-/* ============================= */
+/* ================= SMOKE BACKGROUND ================= */
 
 #smoke-bg{
   position: fixed;
@@ -30,126 +26,47 @@ body {
   pointer-events: none;
   filter: blur(100px);
   opacity: 0.85;
-  overflow: hidden;
 }
 
-/* 🔵 CYAN SMOKE */
+/* CYAN */
 #smoke-bg::before{
   content: "";
   position: absolute;
   inset: -70%;
   background:
-    radial-gradient(circle at 20% 30%, rgba(0, 220, 255, 0.7), transparent 45%),
-    radial-gradient(circle at 80% 40%, rgba(0, 200, 255, 0.6), transparent 50%),
-    radial-gradient(circle at 50% 80%, rgba(0, 190, 255, 0.6), transparent 55%);
+    radial-gradient(circle at 20% 30%, rgba(0,220,255,0.7), transparent 45%),
+    radial-gradient(circle at 80% 40%, rgba(0,200,255,0.6), transparent 50%);
   animation: smokeCyan 70s linear infinite;
 }
 
-/* 🟠 ORANGE SMOKE */
+/* ORANGE */
 #smoke-bg::after{
   content: "";
   position: absolute;
   inset: -70%;
   background:
-    radial-gradient(circle at 30% 60%, rgba(255, 130, 0, 0.45), transparent 45%),
-    radial-gradient(circle at 70% 20%, rgba(255, 140, 0, 0.4), transparent 50%),
-    radial-gradient(circle at 60% 80%, rgba(255, 120, 0, 0.35), transparent 55%);
+    radial-gradient(circle at 30% 60%, rgba(255,130,0,0.45), transparent 45%),
+    radial-gradient(circle at 70% 20%, rgba(255,140,0,0.4), transparent 50%);
   animation: smokeOrange 80s linear infinite;
 }
 
-/* FOG */
-#smoke-bg .fog-layer{
-  position: absolute;
-  inset: -70%;
-  background:
-    radial-gradient(circle, rgba(255,255,255,0.06), transparent 60%);
-  animation: fogDrift 140s linear infinite;
+@keyframes smokeCyan {
+  0% { transform: translate(-30%, -30%); }
+  50% { transform: translate(30%, 20%); }
+  100% { transform: translate(-30%, -30%); }
 }
 
-/* ENERGY */
-#smoke-bg .energy-layer{
-  position: absolute;
-  inset: -70%;
-  background:
-    linear-gradient(120deg,
-      transparent,
-      rgba(0,220,255,0.15),
-      transparent,
-      rgba(255,120,0,0.1),
-      transparent);
-  animation: energyFlow 60s linear infinite;
+@keyframes smokeOrange {
+  0% { transform: translate(30%, 30%); }
+  50% { transform: translate(-30%, -20%); }
+  100% { transform: translate(30%, 30%); }
 }
 
-/* NOISE */
-#smoke-bg .noise-layer{
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-radial-gradient(circle,
-      rgba(255,255,255,0.02) 0px,
-      rgba(255,255,255,0.02) 1px,
-      transparent 2px,
-      transparent 4px);
-  opacity: 0.15;
-}
-
-/* PARALLAX */
-#smoke-bg .parallax-layer{
-  position: absolute;
-  inset: -80%;
-  background:
-    radial-gradient(circle at 60% 40%, rgba(0,200,255,0.2), transparent 60%),
-    radial-gradient(circle at 40% 70%, rgba(255,120,0,0.2), transparent 65%);
-  animation: parallaxDrift 120s linear infinite;
-}
-
-/* ============================= */
-/* ===== ANIMATIONS ============ */
-/* ============================= */
-
-@keyframes smokeCyan{
-  0%   { transform: translate(-30%, -30%) rotate(0deg); }
-  50%  { transform: translate(30%, 20%) rotate(180deg); }
-  100% { transform: translate(-30%, -30%) rotate(360deg); }
-}
-
-@keyframes smokeOrange{
-  0%   { transform: translate(30%, 30%) rotate(360deg); }
-  50%  { transform: translate(-30%, -20%) rotate(180deg); }
-  100% { transform: translate(30%, 30%) rotate(0deg); }
-}
-
-@keyframes fogDrift{
-  0%   { transform: translate(-10%, -10%) scale(1); }
-  50%  { transform: translate(10%, 5%) scale(1.05); }
-  100% { transform: translate(-10%, -10%) scale(1); }
-}
-
-@keyframes energyFlow{
-  0%   { transform: translateX(-40%) rotate(0deg); }
-  100% { transform: translateX(40%) rotate(360deg); }
-}
-
-@keyframes parallaxDrift{
-  0%   { transform: translate(-15%, -15%); }
-  50%  { transform: translate(15%, 10%); }
-  100% { transform: translate(-15%, -15%); }
-}
-
-/* FIX: alles über Smoke */
-body > *{
-  position: relative;
-  z-index: 1;
-}
-
-/* ============================= */
-/* ===== HEADER ================= */
-/* ============================= */
+/* ================= HEADER ================= */
 
 .hud-header {
   text-align: center;
-  padding: 30px 16px;
-  backdrop-filter: blur(12px);
+  padding: 30px;
 }
 
 .hud-header h1 {
@@ -161,356 +78,128 @@ body > *{
   -webkit-text-fill-color: transparent;
 }
 
-.hud-sub {
-  font-size: 0.75rem;
-  opacity: 0.6;
-  letter-spacing: 2px;
-}
-
-/* ============================= */
-/* ===== GRID ================== */
-/* ============================= */
+/* ================= GRID ================= */
 
 .operators-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
   gap: 30px;
   padding: 40px;
 }
 
-/* ============================= */
-/* ===== CARD ================== */
-/* ============================= */
+/* ================= CARD ================= */
 
 .operator-card {
+  position: relative;
+  overflow: hidden;
   background: linear-gradient(180deg, #070a14, #05060a);
   border-radius: 20px;
   padding: 30px;
   border: 1px solid rgba(255,255,255,0.06);
   transition: 0.3s;
+  animation: floatCard 6s ease-in-out infinite;
 }
 
 .operator-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-8px) scale(1.02);
 }
 
-/* NAME */
+/* ⭐ STARS */
+.operator-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 20% 30%, var(--rank-color, #00c8ff) 1px, transparent 2px),
+    radial-gradient(circle at 70% 50%, var(--rank-color, #ff7a00) 1px, transparent 2px),
+    radial-gradient(circle at 40% 80%, var(--rank-color, #00c8ff) 1px, transparent 2px);
+
+  opacity: 0.15;
+  animation: starTwinkle 5s ease-in-out infinite alternate;
+}
+
+/* 🌫️ NEBEL */
+.operator-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 30% 50%, var(--rank-color, #00c8ff), transparent 70%),
+    radial-gradient(circle at 70% 60%, var(--rank-color, #ff7a00), transparent 70%);
+
+  opacity: 0.08;
+  filter: blur(30px);
+  animation: smokePulse 8s ease-in-out infinite;
+}
+
+/* ================= TEXT ================= */
+
 .operator-name {
   font-size: 1.4rem;
   margin-bottom: 10px;
 }
 
-/* RANK */
 .rank {
   font-size: 0.9rem;
   margin-bottom: 12px;
-}
-
-/* KD */
-.kd-value {
-  font-size: 32px;
-  font-weight: bold;
-}
-
-/* STATS */
-.stat {
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-/* ============================= */
-/* ===== BUTTONS =============== */
-/* ============================= */
-
-.mode-switch {
-  display: flex;
-  justify-content: center;
-  margin: 20px;
-  gap: 10px;
-}
-
-.mode-switch button {
-  padding: 10px 20px;
-  border: none;
-  background: #111;
-  color: #aaa;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.mode-switch .active {
-  background: #00c3ff;
-  color: black;
-}
-
-/* ============================= */
-/* ===== NAV =================== */
-/* ============================= */
-
-.nav-bar {
-  display: flex;
-  justify-content: center;
-  margin: 20px;
-}
-
-.back-home {
-  padding: 12px 24px;
-  border-radius: 10px;
-  text-decoration: none;
-  color: white;
-  background: rgba(0,200,255,0.1);
-  border: 1px solid rgba(0,200,255,0.3);
-  transition: 0.3s;
-}
-
-.back-home:hover {
-  box-shadow: 0 0 25px rgba(0,200,255,0.4);
-}
-
-/* 🔥 FLOAT ANIMATION */
-.operator-card {
-  animation: floatCard 6s ease-in-out infinite;
-}
-
-@keyframes floatCard {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0px); }
-}
-
-/* 🔥 USER CARD SPECIAL */
-.user-card {
-  border: 2px solid rgba(0,255,200,0.5);
-  animation: pulseGlow 2s infinite alternate;
-}
-
-@keyframes pulseGlow {
-  0% { box-shadow: 0 0 20px rgba(0,255,200,0.2); }
-  100% { box-shadow: 0 0 60px rgba(0,255,200,0.7); }
-}
-
-/* 🔥 USER FONT */
-.user-card .operator-name {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 1.6rem;
-}
-
-/* 🔥 RANK GLOW BOOST */
-.rank {
   text-shadow: 0 0 10px currentColor;
 }
 
-/* ============================= */
-/* 🔥 ULTRA CARD ANIMATION PACK */
-/* ============================= */
-
-/* BASE UPGRADE */
-.operator-card {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
-}
-
-/* 🔥 HOVER LIFT + DEPTH */
-.operator-card:hover {
-  transform: translateY(-10px) scale(1.02);
-}
-
-/* 🔥 SCAN LINE EFFECT */
-.operator-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    120deg,
-    transparent 0%,
-    rgba(255,255,255,0.15) 50%,
-    transparent 100%
-  );
-  transform: translateX(-100%);
-  animation: scanMove 6s linear infinite;
-  pointer-events: none;
-  opacity: 0.3;
-}
-
-@keyframes scanMove {
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(120%); }
-}
-
-/* 🔥 BORDER ENERGY FLOW */
-.operator-card::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(0,200,255,0.4),
-    rgba(255,120,0,0.4),
-    transparent
-  );
-  z-index: -1;
-  animation: borderFlow 6s linear infinite;
-}
-
-@keyframes borderFlow {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 🔥 STAT BOX HOVER */
-.stat-box {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.stat-box:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(0,200,255,0.3);
-}
-
-/* 🔥 KD PULSE */
 .kd-value {
-  animation: kdPulse 2s ease-in-out infinite;
+  font-size: 32px;
+  font-weight: bold;
+  animation: kdPulse 2s infinite;
 }
 
-@keyframes kdPulse {
-  0% { text-shadow: 0 0 5px currentColor; }
-  50% { text-shadow: 0 0 20px currentColor; }
-  100% { text-shadow: 0 0 5px currentColor; }
+/* ================= STATS ================= */
+
+.stat {
+  font-size: 0.85rem;
+  opacity: 0.75;
 }
 
-/* 🔥 USER CARD EXTRA ANIMATION */
-/* ============================= */
-/* 🔥 ULTRA CARD ANIMATION PACK */
-/* ============================= */
+/* ================= USER CARD ================= */
 
-/* BASE UPGRADE */
-.operator-card {
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
-}
-
-/* 🔥 HOVER LIFT + DEPTH */
-.operator-card:hover {
-  transform: translateY(-10px) scale(1.02);
-}
-
-/* 🔥 SCAN LINE EFFECT */
-.operator-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    120deg,
-    transparent 0%,
-    rgba(255,255,255,0.15) 50%,
-    transparent 100%
-  );
-  transform: translateX(-100%);
-  animation: scanMove 6s linear infinite;
-  pointer-events: none;
-  opacity: 0.3;
-}
-
-@keyframes scanMove {
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(120%); }
-}
-
-/* 🔥 BORDER ENERGY FLOW */
-.operator-card::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(0,200,255,0.4),
-    rgba(255,120,0,0.4),
-    transparent
-  );
-  z-index: -1;
-  animation: borderFlow 6s linear infinite;
-}
-
-@keyframes borderFlow {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* 🔥 STAT BOX HOVER */
-.stat-box {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.stat-box:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 15px rgba(0,200,255,0.3);
-}
-
-/* 🔥 KD PULSE */
-.kd-value {
-  animation: kdPulse 2s ease-in-out infinite;
-}
-
-@keyframes kdPulse {
-  0% { text-shadow: 0 0 5px currentColor; }
-  50% { text-shadow: 0 0 20px currentColor; }
-  100% { text-shadow: 0 0 5px currentColor; }
-}
-
-/* 🔥 USER CARD EXTRA ANIMATION */
 .user-card {
-  animation: userGlow 1.5s infinite alternate, floatCard 6s ease-in-out infinite;
+  border: 2px solid rgba(0,255,200,0.4);
+  animation: userGlow 2s infinite alternate;
+}
+
+.user-card .operator-name {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+/* ================= ANIMATIONS ================= */
+
+@keyframes floatCard {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes starTwinkle {
+  0% { opacity: 0.1; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0.15; }
+}
+
+@keyframes smokePulse {
+  0% { opacity: 0.05; }
+  50% { opacity: 0.15; }
+  100% { opacity: 0.05; }
+}
+
+@keyframes kdPulse {
+  0% { text-shadow: 0 0 5px currentColor; }
+  50% { text-shadow: 0 0 20px currentColor; }
+  100% { text-shadow: 0 0 5px currentColor; }
 }
 
 @keyframes userGlow {
-  0% { box-shadow: 0 0 25px rgba(0,255,200,0.3); }
-  100% { box-shadow: 0 0 70px rgba(0,255,200,0.9); }
-}
-
-/* 🔥 NAME GLOW */
-.operator-name {
-  position: relative;
-}
-
-.operator-name::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle, currentColor, transparent 70%);
-  opacity: 0.1;
-  filter: blur(8px);
-}
-
-/* 🔥 SMOOTH FLOAT (falls noch nicht drin) */
-@keyframes floatCard {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
-}
-
-/* 🔥 NAME GLOW */
-.operator-name {
-  position: relative;
-}
-
-.operator-name::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle, currentColor, transparent 70%);
-  opacity: 0.1;
-  filter: blur(8px);
-}
-
-/* 🔥 SMOOTH FLOAT (falls noch nicht drin) */
-@keyframes floatCard {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
+  0% { box-shadow: 0 0 20px rgba(0,255,200,0.2); }
+  100% { box-shadow: 0 0 60px rgba(0,255,200,0.8); }
 }
