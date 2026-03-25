@@ -98,29 +98,38 @@
     document.getElementById(id).classList.add("active");
   }
 
-  // ✅ RANK SYSTEM (RICHTIG → MMR BASIERT)
+  // 🔥 FINAL RANK SYSTEM (R6 EXACT)
   function getRankFromMMR(mmr) {
-    if (!mmr || mmr === 0) return { name: "UNRANKED", color: "#777" };
+    if (!mmr || mmr === 0) {
+      return { name: "UNRANKED", color: "#777" };
+    }
 
-    if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0033" };
+    if (mmr >= 5000) {
+      return { name: "CHAMPION", color: "#ff0033" };
+    }
 
-    if (mmr >= 4500) return { name: "DIAMOND I", color: "#00e5ff" };
-    if (mmr >= 4200) return { name: "DIAMOND II", color: "#00e5ff" };
-    if (mmr >= 3900) return { name: "DIAMOND III", color: "#00e5ff" };
+    const ranks = [
+      { name: "KUPFER", color: "#cd7f32" },
+      { name: "BRONZE", color: "#a97142" },
+      { name: "SILBER", color: "#c0c0c0" },
+      { name: "GOLD", color: "#ffd700" },
+      { name: "PLATIN", color: "#4fc3f7" },
+      { name: "SMARAGD", color: "#00ff88" },
+      { name: "DIAMANT", color: "#00e5ff" }
+    ];
 
-    if (mmr >= 3600) return { name: "EMERALD I", color: "#00ff88" };
-    if (mmr >= 3300) return { name: "EMERALD II", color: "#00ff88" };
-    if (mmr >= 3000) return { name: "EMERALD III", color: "#00ff88" };
+    const base = Math.floor(mmr / 500);
+    const index = base - 2;
 
-    if (mmr >= 2700) return { name: "PLATINUM I", color: "#4fc3f7" };
-    if (mmr >= 2400) return { name: "PLATINUM II", color: "#4fc3f7" };
-    if (mmr >= 2100) return { name: "PLATINUM III", color: "#4fc3f7" };
+    const safeIndex = Math.max(0, Math.min(index, ranks.length - 1));
+    const rank = ranks[safeIndex];
 
-    if (mmr >= 1800) return { name: "GOLD I", color: "#ffd700" };
-    if (mmr >= 1500) return { name: "GOLD II", color: "#ffd700" };
-    if (mmr >= 1200) return { name: "GOLD III", color: "#ffd700" };
+    const division = 5 - Math.floor((mmr % 500) / 100);
 
-    return { name: "SILVER", color: "#c0c0c0" };
+    return {
+      name: `${rank.name} ${division}`,
+      color: rank.color
+    };
   }
 
   function getWinrate(w, l) {
