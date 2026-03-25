@@ -148,9 +148,11 @@ function render(p, glowClass) {
   const rank = getRankFromMMR(p.mmr);
 
   return `
-  <div class="operator-card ${glowClass}" 
+<div class="operator-card ${glowClass}" 
      style="--rank-color:${rank.color}; box-shadow:0 0 40px ${rank.color}33">
 
+  <div class="star-layer"></div>
+  
       <div class="operator-header">
         <div class="operator-name">${p.username}</div>
         <div class="operator-tag">${p.platform}</div>
