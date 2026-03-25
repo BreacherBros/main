@@ -4,222 +4,217 @@
   <meta charset="UTF-8">
   <title>R6 Operator Stats</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#05060a">
-
-  <link rel="stylesheet" href="./style.css">
 
   <style>
-    .mode-switch {
+    body {
+      background: #05060a;
+      color: white;
+      font-family: Arial;
+    }
+
+    .operators-grid {
       display: flex;
+      gap: 20px;
       justify-content: center;
-      gap: 10px;
-      margin: 20px;
-    }
-
-    .mode-switch button {
-      padding: 10px 20px;
-      border: none;
-      background: #111;
-      color: #aaa;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
-    .mode-switch .active {
-      background: #00c3ff;
-      color: black;
-    }
-
-    .kd {
-      font-size: 24px;
-      font-weight: bold;
+      flex-wrap: wrap;
     }
 
     .operator-card {
       background: linear-gradient(145deg, #0b0f1a, #111827);
-      border-radius: 14px;
+      border-radius: 16px;
       padding: 20px;
-      margin: 10px;
+      width: 260px;
       transition: 0.3s;
+      position: relative;
     }
 
     .operator-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 0 20px rgba(0,195,255,0.4);
+    }
+
+    .rank-icon {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .rank-text {
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #222;
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      transition: 0.4s;
+    }
+
+    .kd {
+      font-size: 22px;
+      font-weight: bold;
+    }
+
+    .mode-switch {
+      text-align: center;
+      margin: 20px;
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px;
+      background: #111;
+      color: #aaa;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .active {
+      background: #00c3ff;
+      color: black;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="energy-bg"></div>
+<div class="mode-switch">
+  <button id="rankedBtn" class="active">RANKED</button>
+  <button id="casualBtn">UNRANKED</button>
+</div>
 
-  <header class="hud-header">
-    <h1>R6 OPERATOR STATS</h1>
-    <span class="hud-sub">LIVE COMBAT DATA</span>
-  </header>
+<div class="operators-grid" id="players"></div>
 
-  <div class="nav-bar">
-    <a href="/" class="back-home">
-      <span class="arrow">⟵</span>
-      <span class="text">HOMEPAGE</span>
-    </a>
-  </div>
+<script>
+const API = "https://r6-api-backend.onrender.com/api/stats";
+let currentMode = "ranked";
 
-  <div class="mode-switch">
-    <button id="rankedBtn" class="active">RANKED</button>
-    <button id="casualBtn">UNRANKED</button>
-  </div>
-
-  <main class="hud-dashboard">
-    <div id="players" class="operators-grid"></div>
-  </main>
-
-  <script>
-  const API = "https://r6-api-backend.onrender.com/api/stats";
-
-  let currentMode = "ranked";
-
-  document.getElementById("rankedBtn").onclick = () => {
-    currentMode = "ranked";
-    setActive("rankedBtn");
-    loadStats();
-  };
-
-  document.getElementById("casualBtn").onclick = () => {
-    currentMode = "casual";
-    setActive("casualBtn");
-    loadStats();
-  };
-
-  function setActive(id) {
-    document.getElementById("rankedBtn").classList.remove("active");
-    document.getElementById("casualBtn").classList.remove("active");
-    document.getElementById(id).classList.add("active");
-  }
-
-  // 🔥 FINAL RANK SYSTEM (R6 EXACT)
-  function getRankFromMMR(mmr) {
-    if (!mmr || mmr === 0) {
-      return { name: "UNRANKED", color: "#777" };
-    }
-
-    if (mmr >= 5000) {
-      return { name: "CHAMPION", color: "#ff0033" };
-    }
-
-    const ranks = [
-      { name: "KUPFER", color: "#cd7f32" },
-      { name: "BRONZE", color: "#a97142" },
-      { name: "SILBER", color: "#c0c0c0" },
-      { name: "GOLD", color: "#ffd700" },
-      { name: "PLATIN", color: "#4fc3f7" },
-      { name: "SMARAGD", color: "#00ff88" },
-      { name: "DIAMANT", color: "#00e5ff" }
-    ];
-
-    const base = Math.floor(mmr / 500);
-    const index = base - 2;
-
-    const safeIndex = Math.max(0, Math.min(index, ranks.length - 1));
-    const rank = ranks[safeIndex];
-
-    const division = 5 - Math.floor((mmr % 500) / 100);
-
-    return {
-      name: `${rank.name} ${division}`,
-      color: rank.color
-    };
-  }
-
-  function getWinrate(w, l) {
-    if (w == null || l == null) return null;
-    if (w + l === 0) return null;
-    return ((w / (w + l)) * 100).toFixed(1);
-  }
-
-  function getKDColor(kd) {
-    if (kd == null) return "#aaa";
-
-    kd = parseFloat(kd);
-
-    if (kd >= 1.5) return "#00ff88";
-    if (kd >= 1.2) return "#4caf50";
-    if (kd >= 1.0) return "#ff9800";
-    return "#f44336";
-  }
-
-  async function fetchPlayer(name) {
-    try {
-      const res = await fetch(
-        `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
-      );
-
-      const data = await res.json();
-
-      return currentMode === "ranked"
-        ? data.ranked
-        : data.casual;
-
-    } catch (err) {
-      console.error("Fetch Fehler:", err);
-      return null;
-    }
-  }
-
-  function safe(v, f) {
-    return v ?? f;
-  }
-
-  function renderOperator(p, glowClass) {
-    if (!p) return `<div class="operator-card">NO DATA</div>`;
-
-    const rankData = getRankFromMMR(p.mmr);
-    const winrate = getWinrate(p.wins, p.losses);
-
-    return `
-      <div class="operator-card ${glowClass}">
-        
-        <h2>${safe(p.username, "-")}</h2>
-
-        <div style="color:${rankData.color}; font-weight:bold;">
-          ${rankData.name} • ${safe(p.mmr, 0)} MMR
-        </div>
-
-        <div class="kd" style="color:${getKDColor(p.kd)}">
-          ${safe(p.kd, "0.00")} KD
-        </div>
-
-        <div>Winrate: ${winrate ?? "-"}%</div>
-
-        <div>Kills: ${safe(p.kills, "-")}</div>
-        <div>Deaths: ${safe(p.deaths, "-")}</div>
-
-        <div>Wins: ${safe(p.wins, "-")}</div>
-        <div>Losses: ${safe(p.losses, "-")}</div>
-
-        <div>Level: ${safe(p.level, "-")}</div>
-
-      </div>
-    `;
-  }
-
-  async function loadStats() {
-    const container = document.getElementById("players");
-    container.innerHTML = "Loading...";
-
-    const [p1, p2] = await Promise.all([
-      fetchPlayer("BB_Pater_Odor"),
-      fetchPlayer("SomaRay_Jr")
-    ]);
-
-    container.innerHTML =
-      renderOperator(p1, "operator-glow-blue") +
-      renderOperator(p2, "operator-glow-orange");
-  }
-
+document.getElementById("rankedBtn").onclick = () => {
+  currentMode = "ranked";
+  setActive("rankedBtn");
   loadStats();
-  </script>
+};
+
+document.getElementById("casualBtn").onclick = () => {
+  currentMode = "casual";
+  setActive("casualBtn");
+  loadStats();
+};
+
+function setActive(id) {
+  rankedBtn.classList.remove("active");
+  casualBtn.classList.remove("active");
+  document.getElementById(id).classList.add("active");
+}
+
+/* 🔥 RANK SYSTEM */
+function getRankFromMMR(mmr) {
+  if (!mmr || mmr === 0) return { name: "UNRANKED", color: "#777", icon: "❔" };
+
+  if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0033", icon: "👑" };
+
+  const ranks = [
+    { name: "KUPFER", color: "#cd7f32", icon: "🟤" },
+    { name: "BRONZE", color: "#a97142", icon: "🟫" },
+    { name: "SILBER", color: "#c0c0c0", icon: "⚪" },
+    { name: "GOLD", color: "#ffd700", icon: "🟡" },
+    { name: "PLATIN", color: "#4fc3f7", icon: "🔵" },
+    { name: "SMARAGD", color: "#00ff88", icon: "🟢" },
+    { name: "DIAMANT", color: "#00e5ff", icon: "💎" }
+  ];
+
+  const base = Math.floor(mmr / 500);
+  const index = Math.max(0, Math.min(base - 2, ranks.length - 1));
+  const rank = ranks[index];
+
+  const division = 5 - Math.floor((mmr % 500) / 100);
+  const progress = (mmr % 100) / 100 * 100;
+
+  return {
+    name: `${rank.name} ${division}`,
+    color: rank.color,
+    icon: rank.icon,
+    progress
+  };
+}
+
+/* 🔥 KD COLOR */
+function getKDColor(kd) {
+  if (!kd) return "#aaa";
+  kd = parseFloat(kd);
+  if (kd >= 1.5) return "#00ff88";
+  if (kd >= 1.2) return "#4caf50";
+  if (kd >= 1.0) return "#ff9800";
+  return "#f44336";
+}
+
+function getWinrate(w, l) {
+  if (!w || !l) return "-";
+  return ((w / (w + l)) * 100).toFixed(1);
+}
+
+async function fetchPlayer(name) {
+  const res = await fetch(`${API}?nameOnPlatform=${name}&platformType=psn`);
+  const data = await res.json();
+  return currentMode === "ranked" ? data.ranked : data.casual;
+}
+
+/* 🔥 UI RENDER */
+function render(p) {
+  if (!p) return "NO DATA";
+
+  const rank = getRankFromMMR(p.mmr);
+
+  return `
+    <div class="operator-card" style="box-shadow: 0 0 20px ${rank.color}33">
+      
+      <div class="rank-icon">${rank.icon}</div>
+
+      <div class="rank-text" style="color:${rank.color}">
+        ${rank.name}
+      </div>
+
+      <div>${p.mmr || 0} MMR</div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" 
+             style="width:${rank.progress}%; background:${rank.color}">
+        </div>
+      </div>
+
+      <div class="kd" style="color:${getKDColor(p.kd)}">
+        ${p.kd || "0.00"} KD
+      </div>
+
+      <div>Winrate: ${getWinrate(p.wins, p.losses)}%</div>
+
+      <div>Kills: ${p.kills}</div>
+      <div>Deaths: ${p.deaths}</div>
+
+    </div>
+  `;
+}
+
+async function loadStats() {
+  const el = document.getElementById("players");
+  el.innerHTML = "Loading...";
+
+  const [p1, p2] = await Promise.all([
+    fetchPlayer("BB_Pater_Odor"),
+    fetchPlayer("SomaRay_Jr")
+  ]);
+
+  el.innerHTML = render(p1) + render(p2);
+}
+
+loadStats();
+</script>
 
 </body>
 </html>
