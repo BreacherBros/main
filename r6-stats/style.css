@@ -62,7 +62,7 @@ body {
   100% { transform: translate(30%, 30%); }
 }
 
-/* FIX: alles über Background */
+/* FIX */
 body > *{
   position: relative;
   z-index: 1;
@@ -135,7 +135,7 @@ body > *{
   transform: translateY(-8px) scale(1.02);
 }
 
-/* ⭐ RANDOM STARS */
+/* ⭐ STAR LAYER 1 */
 .operator-card::before {
   content: "";
   position: absolute;
@@ -143,20 +143,40 @@ body > *{
   pointer-events: none;
 
   background:
-    radial-gradient(circle at 10% 20%, var(--rank-color) 1.5px, transparent 3px),
-    radial-gradient(circle at 25% 80%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 40% 40%, var(--rank-color) 1.5px, transparent 3px),
-    radial-gradient(circle at 60% 10%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 75% 70%, var(--rank-color) 1.5px, transparent 3px),
-    radial-gradient(circle at 85% 30%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 50% 90%, var(--rank-color) 1.2px, transparent 3px),
-    radial-gradient(circle at 15% 60%, var(--rank-color) 1px, transparent 3px);
+    radial-gradient(circle at 8% 15%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 22% 75%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 35% 40%, var(--rank-color) 1.5px, transparent 3px),
+    radial-gradient(circle at 48% 10%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 60% 65%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 72% 30%, var(--rank-color) 1.5px, transparent 3px),
+    radial-gradient(circle at 85% 80%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 15% 55%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 55% 90%, var(--rank-color) 1.5px, transparent 3px),
+    radial-gradient(circle at 90% 20%, var(--rank-color) 1px, transparent 3px);
 
-  opacity: 0.25;
-  animation: starBlink 4s infinite ease-in-out;
+  opacity: 0.35;
+  animation: starBlinkFast 2.5s infinite ease-in-out;
 }
 
-/* 🌫️ MINIMAL SMOKE */
+/* ⭐ STAR LAYER 2 */
+.operator-card .star-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 12% 35%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 30% 15%, var(--rank-color) 1.5px, transparent 3px),
+    radial-gradient(circle at 65% 50%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 78% 25%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 50% 70%, var(--rank-color) 1.5px, transparent 3px),
+    radial-gradient(circle at 90% 60%, var(--rank-color) 1px, transparent 3px);
+
+  opacity: 0.25;
+  animation: starBlinkAlt 3.2s infinite ease-in-out reverse;
+}
+
+/* 🌫️ MINIMAL NEBEL */
 .operator-card::after {
   content: "";
   position: absolute;
@@ -189,13 +209,6 @@ body > *{
   animation: kdPulse 2s infinite;
 }
 
-/* ================= STATS ================= */
-
-.stat {
-  font-size: 0.85rem;
-  opacity: 0.75;
-}
-
 /* ================= USER CARD ================= */
 
 .user-card {
@@ -215,12 +228,19 @@ body > *{
   100% { transform: translateY(0); }
 }
 
-@keyframes starBlink {
-  0% { opacity: 0.15; transform: scale(1); }
-  25% { opacity: 0.35; transform: scale(1.05); }
-  50% { opacity: 0.2; }
-  75% { opacity: 0.4; transform: scale(1.08); }
-  100% { opacity: 0.18; transform: scale(1); }
+@keyframes starBlinkFast {
+  0%   { opacity: 0.2; transform: scale(1); }
+  20%  { opacity: 0.5; transform: scale(1.1); }
+  40%  { opacity: 0.25; }
+  60%  { opacity: 0.7; transform: scale(1.2); }
+  80%  { opacity: 0.3; }
+  100% { opacity: 0.2; transform: scale(1); }
+}
+
+@keyframes starBlinkAlt {
+  0%   { opacity: 0.15; }
+  50%  { opacity: 0.6; transform: scale(1.15); }
+  100% { opacity: 0.2; }
 }
 
 @keyframes kdPulse {
