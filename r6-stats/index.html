@@ -73,7 +73,7 @@ let players = [
 ];
 
 /* ===================== */
-/* SWITCH MODE */
+/* MODE SWITCH */
 /* ===================== */
 
 document.getElementById("rankedBtn").onclick = () => {
@@ -120,14 +120,27 @@ function searchPlayer() {
 function togglePlatform(index) {
   if (index > 1) return;
 
-  const current = players[index].platform;
+  players[index].platform =
+    players[index].platform === "psn" ? "uplay" : "psn";
 
-  players[index].platform = current === "psn" ? "uplay" : "psn";
-
-  console.log("Switch:", players[index]);
+  console.log("SWITCHED:", players[index]);
 
   loadStats();
 }
+
+/* ===================== */
+/* EVENT LISTENER (🔥 FIX) */
+/* ===================== */
+
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("platform-toggle")) {
+    const index = parseInt(e.target.dataset.index);
+
+    console.log("CLICKED BUTTON:", index);
+
+    togglePlatform(index);
+  }
+});
 
 /* ===================== */
 /* RANK SYSTEM */
@@ -224,8 +237,8 @@ function render(p, index, glowClass) {
 
       ${
         index <= 1
-          ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
-              ${p.platform === "psn" ? "PSN" : "UBISOFT"}
+          ? `<button class="platform-toggle" data-index="${index}">
+              ${p.platform === "psn" ? "🎮 PSN" : "🖥 UBISOFT"}
             </button>`
           : `<div class="operator-tag">${p.platform}</div>`
       }
