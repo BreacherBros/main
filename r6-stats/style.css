@@ -299,3 +299,115 @@ body > *{
 .rank {
   text-shadow: 0 0 10px currentColor;
 }
+
+/* ============================= */
+/* 🔥 ULTRA CARD ANIMATION PACK */
+/* ============================= */
+
+/* BASE UPGRADE */
+.operator-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* 🔥 HOVER LIFT + DEPTH */
+.operator-card:hover {
+  transform: translateY(-10px) scale(1.02);
+}
+
+/* 🔥 SCAN LINE EFFECT */
+.operator-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(255,255,255,0.15) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: scanMove 6s linear infinite;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+@keyframes scanMove {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* 🔥 BORDER ENERGY FLOW */
+.operator-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0,200,255,0.4),
+    rgba(255,120,0,0.4),
+    transparent
+  );
+  z-index: -1;
+  animation: borderFlow 6s linear infinite;
+}
+
+@keyframes borderFlow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 🔥 STAT BOX HOVER */
+.stat-box {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-box:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(0,200,255,0.3);
+}
+
+/* 🔥 KD PULSE */
+.kd-value {
+  animation: kdPulse 2s ease-in-out infinite;
+}
+
+@keyframes kdPulse {
+  0% { text-shadow: 0 0 5px currentColor; }
+  50% { text-shadow: 0 0 20px currentColor; }
+  100% { text-shadow: 0 0 5px currentColor; }
+}
+
+/* 🔥 USER CARD EXTRA ANIMATION */
+.user-card {
+  animation: userGlow 1.5s infinite alternate, floatCard 6s ease-in-out infinite;
+}
+
+@keyframes userGlow {
+  0% { box-shadow: 0 0 25px rgba(0,255,200,0.3); }
+  100% { box-shadow: 0 0 70px rgba(0,255,200,0.9); }
+}
+
+/* 🔥 NAME GLOW */
+.operator-name {
+  position: relative;
+}
+
+.operator-name::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, currentColor, transparent 70%);
+  opacity: 0.1;
+  filter: blur(8px);
+}
+
+/* 🔥 SMOOTH FLOAT (falls noch nicht drin) */
+@keyframes floatCard {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
