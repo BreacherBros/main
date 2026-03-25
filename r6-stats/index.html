@@ -86,13 +86,24 @@
     document.getElementById(id).classList.add("active");
   }
 
-  function getKDColor(kd) {
-    if (!kd) return "#aaa";
-    if (kd >= 1.3) return "#4caf50";
-    if (kd >= 1.0) return "#ff9800";
-    return "#f44336";
-  }
+function getRankData(mmr) {
+  if (!mmr) return { name: "UNRANKED", color: "#777" };
 
+  if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0033" };
+  if (mmr >= 4500) return { name: "DIAMOND", color: "#00e5ff" };
+  if (mmr >= 4000) return { name: "EMERALD", color: "#00ff88" };
+  if (mmr >= 3200) return { name: "PLATINUM", color: "#4fc3f7" };
+  if (mmr >= 2600) return { name: "GOLD", color: "#ffd700" };
+  if (mmr >= 2000) return { name: "SILVER", color: "#c0c0c0" };
+  return { name: "BRONZE", color: "#cd7f32" };
+}
+
+function getWinrate(w, l) {
+  if (w === null || l === null) return null;
+  if (w + l === 0) return null;
+  return ((w / (w + l)) * 100).toFixed(1);
+}
+    
 async function fetchPlayer(name) {
   try {
     const res = await fetch(
