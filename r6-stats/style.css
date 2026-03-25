@@ -129,7 +129,7 @@ body {
   100% { transform: translate(-15%, -15%); }
 }
 
-/* FIX Z-INDEX */
+/* FIX */
 body > * {
   position: relative;
   z-index: 1;
@@ -153,19 +153,13 @@ body > * {
   -webkit-text-fill-color: transparent;
 }
 
-.hud-sub {
-  font-size: 0.75rem;
-  opacity: 0.6;
-}
-
 /* ============================= */
-/* SWITCH FIX */
+/* SWITCH */
 /* ============================= */
 
 .mode-switch {
   display: flex;
   justify-content: center;
-  align-items: center;
   margin: 20px auto;
   gap: 10px;
 }
@@ -175,8 +169,8 @@ body > * {
   border: none;
   background: #111;
   color: #aaa;
-  cursor: pointer;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 .mode-switch .active {
@@ -206,42 +200,52 @@ body > * {
   border-radius: 20px;
   padding: 30px;
   border: 1px solid rgba(255,255,255,0.06);
+
+  box-shadow:
+    0 0 30px rgba(0,0,0,0.8),
+    0 0 40px var(--rank-color);
+
   transition: 0.4s;
 }
 
 .operator-card:hover {
-  transform: translateY(-8px) scale(1.02);
+  transform: translateY(-10px) scale(1.03);
+
+  box-shadow:
+    0 0 60px var(--rank-color),
+    0 0 120px var(--rank-color);
 }
 
-/* ⭐ FUNKELNDE STERNE */
+/* ============================= */
+/* ⭐ STAR SYSTEM */
+/* ============================= */
 
 .operator-card::before {
   content: "";
   position: absolute;
   inset: 0;
-  pointer-events: none;
 
   background:
-    radial-gradient(circle at 12% 20%, var(--rank-color) 2px, transparent 4px),
-    radial-gradient(circle at 25% 75%, var(--rank-color) 1.5px, transparent 4px),
-    radial-gradient(circle at 40% 40%, var(--rank-color) 2px, transparent 4px),
-    radial-gradient(circle at 60% 15%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 75% 70%, var(--rank-color) 2px, transparent 4px);
+    radial-gradient(circle at 10% 20%, var(--rank-color) 2px, transparent 8px),
+    radial-gradient(circle at 30% 80%, var(--rank-color) 1.5px, transparent 8px),
+    radial-gradient(circle at 60% 30%, var(--rank-color) 2px, transparent 8px),
+    radial-gradient(circle at 80% 70%, var(--rank-color) 2px, transparent 8px);
 
-  animation: star1 3s infinite linear;
+  filter: blur(1px);
+  animation: star1 2s infinite linear;
 }
 
 .operator-card .star-layer {
   position: absolute;
   inset: 0;
-  pointer-events: none;
 
   background:
-    radial-gradient(circle at 20% 60%, var(--rank-color) 1.5px, transparent 4px),
-    radial-gradient(circle at 55% 80%, var(--rank-color) 1px, transparent 3px),
-    radial-gradient(circle at 80% 30%, var(--rank-color) 2px, transparent 4px);
+    radial-gradient(circle at 20% 60%, var(--rank-color) 2px, transparent 8px),
+    radial-gradient(circle at 50% 90%, var(--rank-color) 1.5px, transparent 8px),
+    radial-gradient(circle at 90% 30%, var(--rank-color) 2px, transparent 8px);
 
-  animation: star2 4s infinite linear;
+  filter: blur(1.5px);
+  animation: star2 3s infinite linear;
 }
 
 .operator-card .star-layer::after {
@@ -250,36 +254,59 @@ body > * {
   inset: 0;
 
   background:
-    radial-gradient(circle at 50% 25%, var(--rank-color) 2px, transparent 4px),
-    radial-gradient(circle at 90% 60%, var(--rank-color) 1.5px, transparent 4px);
+    radial-gradient(circle at 40% 40%, var(--rank-color) 2px, transparent 8px),
+    radial-gradient(circle at 70% 10%, var(--rank-color) 2px, transparent 8px);
 
-  animation: star3 5s infinite linear;
+  filter: blur(2px);
+  animation: star3 4s infinite linear;
 }
 
-/* ⭐ REAL TWINKLE */
+.operator-card::before,
+.operator-card .star-layer,
+.operator-card .star-layer::after {
+  mix-blend-mode: screen;
+}
 
+/* ⭐ TWINKLE */
 @keyframes star1 {
   0%,100%{opacity:0}
-  20%{opacity:.9}
-  30%{opacity:.2}
-  40%{opacity:1}
-  60%{opacity:0}
+  20%{opacity:1}
+  40%{opacity:0}
 }
 
 @keyframes star2 {
   0%,100%{opacity:0}
-  10%{opacity:1}
-  25%{opacity:.3}
-  35%{opacity:.9}
-  55%{opacity:0}
+  30%{opacity:1}
+  60%{opacity:0}
 }
 
 @keyframes star3 {
   0%,100%{opacity:0}
-  15%{opacity:.8}
-  30%{opacity:.2}
-  45%{opacity:1}
-  70%{opacity:0}
+  50%{opacity:1}
+  80%{opacity:0}
+}
+
+/* ============================= */
+/* EDGE GLOW */
+/* ============================= */
+
+.operator-card::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+
+  background: radial-gradient(circle, var(--rank-color), transparent 70%);
+  opacity: 0.2;
+  z-index: -1;
+
+  animation: borderPulse 3s infinite ease-in-out;
+}
+
+@keyframes borderPulse {
+  0% { opacity: 0.1; transform: scale(0.98); }
+  50% { opacity: 0.3; transform: scale(1.02); }
+  100% { opacity: 0.1; transform: scale(0.98); }
 }
 
 /* ============================= */
@@ -291,35 +318,10 @@ body > * {
 }
 
 .rank {
-  margin: 10px 0;
-  text-shadow: 0 0 10px currentColor;
+  text-shadow: 0 0 12px currentColor;
 }
 
 .kd-value {
   font-size: 32px;
   font-weight: bold;
-}
-
-.stat {
-  font-size: 0.8rem;
-  opacity: 0.7;
-}
-
-/* ============================= */
-/* USER CARD */
-/* ============================= */
-
-.user-card {
-  border: 2px solid rgba(0,255,200,0.5);
-  animation: userGlow 1.5s infinite alternate;
-}
-
-@keyframes userGlow {
-  0% { box-shadow: 0 0 25px rgba(0,255,200,0.3); }
-  100% { box-shadow: 0 0 70px rgba(0,255,200,0.9); }
-}
-
-.user-card .operator-name {
-  font-family: 'Rajdhani', sans-serif;
-  font-size: 1.6rem;
 }
