@@ -180,9 +180,12 @@ function getWinrate(w, l) {
 /* FETCH */
 /* ===================== */
 
+
 async function fetchPlayer(p) {
   try {
     const name = p.names[p.platform];
+
+    console.log("FETCH:", name, p.platform); // 🔥 DEBUG
 
     const res = await fetch(
       `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${p.platform}`
@@ -196,12 +199,12 @@ async function fetchPlayer(p) {
       user: p.user
     };
 
-  } catch {
+  } catch (err) {
+    console.error("Fetch Fehler:", err);
     return null;
   }
 }
-
-/* ===================== */
+  /* ===================== */
 /* RENDER */
 /* ===================== */
 
