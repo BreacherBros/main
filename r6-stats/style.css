@@ -20,7 +20,7 @@ body {
 }
 
 /* ============================= */
-/* SMOKE BACKGROUND 🔥 */
+/* BACKGROUND */
 /* ============================= */
 
 #smoke-bg{
@@ -30,103 +30,6 @@ body {
   pointer-events: none;
   filter: blur(100px);
   opacity: 0.9;
-  overflow: hidden;
-}
-
-#smoke-bg::before{
-  content: "";
-  position: absolute;
-  inset: -70%;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(0,220,255,0.7), transparent 45%),
-    radial-gradient(circle at 80% 40%, rgba(0,200,255,0.6), transparent 50%),
-    radial-gradient(circle at 50% 80%, rgba(0,190,255,0.6), transparent 55%);
-  animation: smokeCyan 70s linear infinite;
-}
-
-#smoke-bg::after{
-  content: "";
-  position: absolute;
-  inset: -70%;
-  background:
-    radial-gradient(circle at 30% 60%, rgba(255,130,0,0.45), transparent 45%),
-    radial-gradient(circle at 70% 20%, rgba(255,140,0,0.4), transparent 50%),
-    radial-gradient(circle at 60% 80%, rgba(255,120,0,0.35), transparent 55%);
-  animation: smokeOrange 80s linear infinite;
-}
-
-#smoke-bg .fog-layer{
-  position: absolute;
-  inset: -70%;
-  background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 60%);
-  animation: fogDrift 140s linear infinite;
-}
-
-#smoke-bg .energy-layer{
-  position: absolute;
-  inset: -70%;
-  background:
-    linear-gradient(120deg,
-      transparent,
-      rgba(0,220,255,0.15),
-      transparent,
-      rgba(255,120,0,0.1),
-      transparent);
-  animation: energyFlow 60s linear infinite;
-}
-
-#smoke-bg .parallax-layer{
-  position: absolute;
-  inset: -80%;
-  background:
-    radial-gradient(circle at 60% 40%, rgba(0,200,255,0.2), transparent 60%),
-    radial-gradient(circle at 40% 70%, rgba(255,120,0,0.2), transparent 65%);
-  animation: parallaxDrift 120s linear infinite;
-}
-
-#smoke-bg .noise-layer{
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-radial-gradient(circle,
-      rgba(255,255,255,0.02) 0px,
-      rgba(255,255,255,0.02) 1px,
-      transparent 2px,
-      transparent 4px);
-  opacity: 0.15;
-}
-
-/* ============================= */
-/* ANIMATIONS */
-/* ============================= */
-
-@keyframes smokeCyan{
-  0% { transform: translate(-30%, -30%) rotate(0deg); }
-  50% { transform: translate(30%, 20%) rotate(180deg); }
-  100% { transform: translate(-30%, -30%) rotate(360deg); }
-}
-
-@keyframes smokeOrange{
-  0% { transform: translate(30%, 30%) rotate(360deg); }
-  50% { transform: translate(-30%, -20%) rotate(180deg); }
-  100% { transform: translate(30%, 30%) rotate(0deg); }
-}
-
-@keyframes fogDrift{
-  0% { transform: translate(-10%, -10%) scale(1); }
-  50% { transform: translate(10%, 5%) scale(1.05); }
-  100% { transform: translate(-10%, -10%) scale(1); }
-}
-
-@keyframes energyFlow{
-  0% { transform: translateX(-40%) rotate(0deg); }
-  100% { transform: translateX(40%) rotate(360deg); }
-}
-
-@keyframes parallaxDrift{
-  0% { transform: translate(-15%, -15%); }
-  50% { transform: translate(15%, 10%); }
-  100% { transform: translate(-15%, -15%); }
 }
 
 /* FIX */
@@ -202,8 +105,8 @@ body > * {
   border: 1px solid rgba(255,255,255,0.06);
 
   box-shadow:
-    0 0 30px rgba(0,0,0,0.8),
-    0 0 40px var(--rank-color);
+    0 0 40px var(--rank-color),
+    0 0 80px rgba(0,0,0,0.8);
 
   transition: 0.4s;
 }
@@ -212,78 +115,95 @@ body > * {
   transform: translateY(-10px) scale(1.03);
 
   box-shadow:
-    0 0 60px var(--rank-color),
-    0 0 120px var(--rank-color);
+    0 0 80px var(--rank-color),
+    0 0 160px var(--rank-color);
 }
 
 /* ============================= */
-/* ⭐ STAR SYSTEM */
+/* ⭐ STAR SYSTEM (FIXED) */
 /* ============================= */
 
+/* 🔥 wichtig: klick blockieren verhindern */
+.operator-card::before,
+.operator-card .star-layer,
+.operator-card .star-layer::after {
+  pointer-events: none;
+}
+
+/* LAYER 1 */
 .operator-card::before {
   content: "";
   position: absolute;
   inset: 0;
 
   background:
-    radial-gradient(circle at 10% 20%, var(--rank-color) 2px, transparent 8px),
-    radial-gradient(circle at 30% 80%, var(--rank-color) 1.5px, transparent 8px),
-    radial-gradient(circle at 60% 30%, var(--rank-color) 2px, transparent 8px),
-    radial-gradient(circle at 80% 70%, var(--rank-color) 2px, transparent 8px);
+    radial-gradient(circle at 15% 20%, var(--rank-color) 2px, transparent 10px),
+    radial-gradient(circle at 70% 30%, var(--rank-color) 1.5px, transparent 10px),
+    radial-gradient(circle at 40% 80%, var(--rank-color) 2px, transparent 10px);
 
   filter: blur(1px);
-  animation: star1 2s infinite linear;
+  animation: star1 1.8s infinite linear;
 }
 
+/* LAYER 2 */
 .operator-card .star-layer {
   position: absolute;
   inset: 0;
 
   background:
-    radial-gradient(circle at 20% 60%, var(--rank-color) 2px, transparent 8px),
-    radial-gradient(circle at 50% 90%, var(--rank-color) 1.5px, transparent 8px),
-    radial-gradient(circle at 90% 30%, var(--rank-color) 2px, transparent 8px);
+    radial-gradient(circle at 25% 70%, var(--rank-color) 2px, transparent 12px),
+    radial-gradient(circle at 80% 50%, var(--rank-color) 1.5px, transparent 12px),
+    radial-gradient(circle at 55% 10%, var(--rank-color) 2px, transparent 12px);
 
   filter: blur(1.5px);
-  animation: star2 3s infinite linear;
+  animation: star2 2.5s infinite linear;
 }
 
+/* LAYER 3 */
 .operator-card .star-layer::after {
   content: "";
   position: absolute;
   inset: 0;
 
   background:
-    radial-gradient(circle at 40% 40%, var(--rank-color) 2px, transparent 8px),
-    radial-gradient(circle at 70% 10%, var(--rank-color) 2px, transparent 8px);
+    radial-gradient(circle at 10% 60%, var(--rank-color) 2px, transparent 14px),
+    radial-gradient(circle at 60% 40%, var(--rank-color) 2px, transparent 14px),
+    radial-gradient(circle at 90% 80%, var(--rank-color) 2px, transparent 14px);
 
   filter: blur(2px);
-  animation: star3 4s infinite linear;
+  animation: star3 3.5s infinite linear;
 }
 
+/* GLOW */
 .operator-card::before,
 .operator-card .star-layer,
 .operator-card .star-layer::after {
   mix-blend-mode: screen;
 }
 
-/* ⭐ TWINKLE */
+/* ⭐ REAL TWINKLE */
 @keyframes star1 {
-  0%,100%{opacity:0}
-  20%{opacity:1}
-  40%{opacity:0}
+  0% {opacity:0}
+  20% {opacity:1}
+  40% {opacity:0}
+  60% {opacity:1}
+  100% {opacity:0}
 }
 
 @keyframes star2 {
-  0%,100%{opacity:0}
-  30%{opacity:1}
-  60%{opacity:0}
+  0% {opacity:0}
+  30% {opacity:1}
+  50% {opacity:0}
+  80% {opacity:1}
+  100% {opacity:0}
 }
 
 @keyframes star3 {
-  0%,100%{opacity:0}
-  50%{opacity:1}
-  80%{opacity:0}
+  0% {opacity:0}
+  40% {opacity:1}
+  60% {opacity:0}
+  90% {opacity:1}
+  100% {opacity:0}
 }
 
 /* ============================= */
@@ -297,16 +217,16 @@ body > * {
   border-radius: inherit;
 
   background: radial-gradient(circle, var(--rank-color), transparent 70%);
-  opacity: 0.2;
+  opacity: 0.25;
   z-index: -1;
 
   animation: borderPulse 3s infinite ease-in-out;
 }
 
 @keyframes borderPulse {
-  0% { opacity: 0.1; transform: scale(0.98); }
-  50% { opacity: 0.3; transform: scale(1.02); }
-  100% { opacity: 0.1; transform: scale(0.98); }
+  0% { opacity: 0.15; transform: scale(0.98); }
+  50% { opacity: 0.35; transform: scale(1.02); }
+  100% { opacity: 0.15; transform: scale(0.98); }
 }
 
 /* ============================= */
@@ -318,25 +238,35 @@ body > * {
 }
 
 .rank {
-  text-shadow: 0 0 12px currentColor;
+  text-shadow: 0 0 15px currentColor;
 }
 
 .kd-value {
   font-size: 32px;
   font-weight: bold;
 }
+
+/* ============================= */
+/* BUTTON FIX */
+/* ============================= */
+
 .platform-toggle {
+  position: relative;
+  z-index: 10; /* 🔥 WICHTIG */
+
   background: rgba(0,200,255,0.15);
   border: 1px solid rgba(0,200,255,0.4);
   color: #00c8ff;
+
   padding: 6px 10px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.7rem;
+
   transition: 0.3s;
 }
 
 .platform-toggle:hover {
   background: rgba(0,200,255,0.3);
-  box-shadow: 0 0 15px rgba(0,200,255,0.5);
+  box-shadow: 0 0 20px rgba(0,200,255,0.6);
 }
