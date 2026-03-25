@@ -266,3 +266,36 @@ body > *{
 .back-home:hover {
   box-shadow: 0 0 25px rgba(0,200,255,0.4);
 }
+
+/* 🔥 FLOAT ANIMATION */
+.operator-card {
+  animation: floatCard 6s ease-in-out infinite;
+}
+
+@keyframes floatCard {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
+/* 🔥 USER CARD SPECIAL */
+.user-card {
+  border: 2px solid rgba(0,255,200,0.5);
+  animation: pulseGlow 2s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 20px rgba(0,255,200,0.2); }
+  100% { box-shadow: 0 0 60px rgba(0,255,200,0.7); }
+}
+
+/* 🔥 USER FONT */
+.user-card .operator-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.6rem;
+}
+
+/* 🔥 RANK GLOW BOOST */
+.rank {
+  text-shadow: 0 0 10px currentColor;
+}
