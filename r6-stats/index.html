@@ -1,198 +1,325 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-<meta charset="UTF-8">
-<title>R6 Operator Stats</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Rajdhani:wght@500;700&display=swap');
 
-<link rel="stylesheet" href="./style.css">
-
-<!-- 🔥 USER FONT -->
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-
-</head>
-
-<body>
-
-<div id="smoke-bg">
-  <div class="fog-layer"></div>
-  <div class="energy-layer"></div>
-  <div class="noise-layer"></div>
-  <div class="parallax-layer"></div>
-</div>
-
-<header class="hud-header">
-  <h1>R6 OPERATOR STATS</h1>
-  <span class="hud-sub">LIVE COMBAT DATA</span>
-</header>
-
-<div class="search-box">
-  <input id="playerInput" placeholder="Gamertag eingeben">
-  
-  <select id="platformSelect">
-    <option value="psn">PSN</option>
-    <option value="uplay">UBISOFT</option>
-  </select>
-
-  <button onclick="searchPlayer()">ADD PLAYER</button>
-</div>
-
-<div class="mode-switch">
-  <button id="rankedBtn" class="active">RANKED</button>
-  <button id="casualBtn">UNRANKED</button>
-</div>
-
-<main class="hud-dashboard">
-  <div class="operators-grid" id="players"></div>
-</main>
-
-<script>
-const API = "https://r6-api-backend.onrender.com/api/stats";
-
-let currentMode = "ranked";
-
-let players = [
-  { name: "BB_Pater_Odor", platform: "psn", user: false },
-  { name: "SomaRay_Jr", platform: "psn", user: false }
-];
-
-rankedBtn.onclick = () => {
-  currentMode = "ranked";
-  setActive("rankedBtn");
-  loadStats();
-};
-
-casualBtn.onclick = () => {
-  currentMode = "casual";
-  setActive("casualBtn");
-  loadStats();
-};
-
-function setActive(id) {
-  rankedBtn.classList.remove("active");
-  casualBtn.classList.remove("active");
-  document.getElementById(id).classList.add("active");
+/* ============================= */
+/* RESET */
+/* ============================= */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  background: #05060a;
 }
 
-function searchPlayer() {
-  const name = document.getElementById("playerInput").value;
-  const platform = document.getElementById("platformSelect").value;
-
-  if (!name) return;
-
-  players.push({ name, platform, user: true });
-  loadStats();
+* {
+  box-sizing: border-box;
+  font-family: 'Orbitron', system-ui, sans-serif;
 }
 
-/* 🔥 RANK SYSTEM */
-function getRankFromMMR(mmr) {
-  if (!mmr) return { name: "UNRANKED", color: "#777" };
-
-  const tiers = [
-    { name: "COPPER", color: "#cd7f32" },
-    { name: "BRONZE", color: "#a97142" },
-    { name: "SILVER", color: "#c0c0c0" },
-    { name: "GOLD", color: "#ffd700" },
-    { name: "PLATINUM", color: "#4fc3f7" },
-    { name: "EMERALD", color: "#00ff88" },
-    { name: "DIAMOND", color: "#00e5ff" }
-  ];
-
-  let i = Math.floor(mmr / 500) - 2;
-  i = Math.max(0, Math.min(i, tiers.length - 1));
-
-  const div = 5 - Math.floor((mmr % 500) / 100);
-
-  return {
-    name: `${tiers[i].name} ${div}`,
-    color: tiers[i].color
-  };
+body {
+  color: #e5e7eb;
 }
 
-function getKDColor(kd) {
-  if (!kd) return "#aaa";
-  kd = parseFloat(kd);
+/* ============================= */
+/* SMOKE BACKGROUND 🔥 */
+/* ============================= */
 
-  if (kd >= 1.5) return "#00ff88";
-  if (kd >= 1.2) return "#4caf50";
-  if (kd >= 1.0) return "#ff9800";
-  return "#f44336";
+#smoke-bg{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  filter: blur(100px);
+  opacity: 0.9;
+  overflow: hidden;
 }
 
-function getWinrate(w, l) {
-  if (!w || !l) return "-";
-  return ((w / (w + l)) * 100).toFixed(1);
+#smoke-bg::before{
+  content: "";
+  position: absolute;
+  inset: -70%;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0,220,255,0.7), transparent 45%),
+    radial-gradient(circle at 80% 40%, rgba(0,200,255,0.6), transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(0,190,255,0.6), transparent 55%);
+  animation: smokeCyan 70s linear infinite;
 }
 
-async function fetchPlayer(p) {
-  try {
-    const res = await fetch(
-      `${API}?nameOnPlatform=${encodeURIComponent(p.name)}&platformType=${p.platform}`
-    );
-
-    const data = await res.json();
-
-    return {
-      ...(currentMode === "ranked" ? data.ranked : data.casual),
-      user: p.user
-    };
-
-  } catch {
-    return null;
-  }
+#smoke-bg::after{
+  content: "";
+  position: absolute;
+  inset: -70%;
+  background:
+    radial-gradient(circle at 30% 60%, rgba(255,130,0,0.45), transparent 45%),
+    radial-gradient(circle at 70% 20%, rgba(255,140,0,0.4), transparent 50%),
+    radial-gradient(circle at 60% 80%, rgba(255,120,0,0.35), transparent 55%);
+  animation: smokeOrange 80s linear infinite;
 }
 
-function render(p, glowClass) {
-  if (!p) return `<div class="operator-card">NO DATA</div>`;
-
-  const rank = getRankFromMMR(p.mmr);
-
-  return `
-<div class="operator-card ${glowClass}" 
-     style="--rank-color:${rank.color}; box-shadow:0 0 40px ${rank.color}33">
-
-  <div class="star-layer"></div>
-  
-      <div class="operator-header">
-        <div class="operator-name">${p.username}</div>
-        <div class="operator-tag">${p.platform}</div>
-      </div>
-
-      <div class="rank" style="color:${rank.color}">
-        ${rank.name} • ${p.mmr || 0} MMR
-      </div>
-
-      <div class="kd-value" style="color:${getKDColor(p.kd)}">
-        ${p.kd || "0.00"} KD
-      </div>
-
-      <div class="section-title">COMBAT</div>
-
-      <div class="stats-grid">
-        <div class="stat-box"><div class="stat-label">WINRATE</div><div class="stat-value">${getWinrate(p.wins, p.losses)}%</div></div>
-        <div class="stat-box"><div class="stat-label">KILLS</div><div class="stat-value">${p.kills ?? "-"}</div></div>
-        <div class="stat-box"><div class="stat-label">DEATHS</div><div class="stat-value">${p.deaths ?? "-"}</div></div>
-        <div class="stat-box"><div class="stat-label">WINS</div><div class="stat-value">${p.wins ?? "-"}</div></div>
-        <div class="stat-box"><div class="stat-label">LOSSES</div><div class="stat-value">${p.losses ?? "-"}</div></div>
-      </div>
-
-    </div>
-  `;
+#smoke-bg .fog-layer{
+  position: absolute;
+  inset: -70%;
+  background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 60%);
+  animation: fogDrift 140s linear infinite;
 }
 
-async function loadStats() {
-  const el = document.getElementById("players");
-  el.innerHTML = "Loading...";
-
-  const results = await Promise.all(players.map(fetchPlayer));
-
-  el.innerHTML = results
-    .map((p, i) => render(p, i === 0 ? "operator-glow-blue" : i === 1 ? "operator-glow-orange" : ""))
-    .join("");
+#smoke-bg .energy-layer{
+  position: absolute;
+  inset: -70%;
+  background:
+    linear-gradient(120deg,
+      transparent,
+      rgba(0,220,255,0.15),
+      transparent,
+      rgba(255,120,0,0.1),
+      transparent);
+  animation: energyFlow 60s linear infinite;
 }
 
-loadStats();
-</script>
+#smoke-bg .parallax-layer{
+  position: absolute;
+  inset: -80%;
+  background:
+    radial-gradient(circle at 60% 40%, rgba(0,200,255,0.2), transparent 60%),
+    radial-gradient(circle at 40% 70%, rgba(255,120,0,0.2), transparent 65%);
+  animation: parallaxDrift 120s linear infinite;
+}
 
-</body>
-</html>
+#smoke-bg .noise-layer{
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-radial-gradient(circle,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 1px,
+      transparent 2px,
+      transparent 4px);
+  opacity: 0.15;
+}
+
+/* ============================= */
+/* ANIMATIONS */
+/* ============================= */
+
+@keyframes smokeCyan{
+  0% { transform: translate(-30%, -30%) rotate(0deg); }
+  50% { transform: translate(30%, 20%) rotate(180deg); }
+  100% { transform: translate(-30%, -30%) rotate(360deg); }
+}
+
+@keyframes smokeOrange{
+  0% { transform: translate(30%, 30%) rotate(360deg); }
+  50% { transform: translate(-30%, -20%) rotate(180deg); }
+  100% { transform: translate(30%, 30%) rotate(0deg); }
+}
+
+@keyframes fogDrift{
+  0% { transform: translate(-10%, -10%) scale(1); }
+  50% { transform: translate(10%, 5%) scale(1.05); }
+  100% { transform: translate(-10%, -10%) scale(1); }
+}
+
+@keyframes energyFlow{
+  0% { transform: translateX(-40%) rotate(0deg); }
+  100% { transform: translateX(40%) rotate(360deg); }
+}
+
+@keyframes parallaxDrift{
+  0% { transform: translate(-15%, -15%); }
+  50% { transform: translate(15%, 10%); }
+  100% { transform: translate(-15%, -15%); }
+}
+
+/* FIX Z-INDEX */
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================= */
+/* HEADER */
+/* ============================= */
+
+.hud-header {
+  text-align: center;
+  padding: 30px 16px;
+}
+
+.hud-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 3px;
+  background: linear-gradient(90deg, #00c8ff, #ff7a00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hud-sub {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* ============================= */
+/* SWITCH FIX */
+/* ============================= */
+
+.mode-switch {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px auto;
+  gap: 10px;
+}
+
+.mode-switch button {
+  padding: 10px 20px;
+  border: none;
+  background: #111;
+  color: #aaa;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.mode-switch .active {
+  background: #00c3ff;
+  color: black;
+}
+
+/* ============================= */
+/* GRID */
+/* ============================= */
+
+.operators-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+  gap: 30px;
+  padding: 40px;
+}
+
+/* ============================= */
+/* CARD */
+/* ============================= */
+
+.operator-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #070a14, #05060a);
+  border-radius: 20px;
+  padding: 30px;
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: 0.4s;
+}
+
+.operator-card:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+/* ⭐ FUNKELNDE STERNE */
+
+.operator-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 12% 20%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 25% 75%, var(--rank-color) 1.5px, transparent 4px),
+    radial-gradient(circle at 40% 40%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 60% 15%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 75% 70%, var(--rank-color) 2px, transparent 4px);
+
+  animation: star1 3s infinite linear;
+}
+
+.operator-card .star-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(circle at 20% 60%, var(--rank-color) 1.5px, transparent 4px),
+    radial-gradient(circle at 55% 80%, var(--rank-color) 1px, transparent 3px),
+    radial-gradient(circle at 80% 30%, var(--rank-color) 2px, transparent 4px);
+
+  animation: star2 4s infinite linear;
+}
+
+.operator-card .star-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(circle at 50% 25%, var(--rank-color) 2px, transparent 4px),
+    radial-gradient(circle at 90% 60%, var(--rank-color) 1.5px, transparent 4px);
+
+  animation: star3 5s infinite linear;
+}
+
+/* ⭐ REAL TWINKLE */
+
+@keyframes star1 {
+  0%,100%{opacity:0}
+  20%{opacity:.9}
+  30%{opacity:.2}
+  40%{opacity:1}
+  60%{opacity:0}
+}
+
+@keyframes star2 {
+  0%,100%{opacity:0}
+  10%{opacity:1}
+  25%{opacity:.3}
+  35%{opacity:.9}
+  55%{opacity:0}
+}
+
+@keyframes star3 {
+  0%,100%{opacity:0}
+  15%{opacity:.8}
+  30%{opacity:.2}
+  45%{opacity:1}
+  70%{opacity:0}
+}
+
+/* ============================= */
+/* TEXT */
+/* ============================= */
+
+.operator-name {
+  font-size: 1.4rem;
+}
+
+.rank {
+  margin: 10px 0;
+  text-shadow: 0 0 10px currentColor;
+}
+
+.kd-value {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.stat {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* ============================= */
+/* USER CARD */
+/* ============================= */
+
+.user-card {
+  border: 2px solid rgba(0,255,200,0.5);
+  animation: userGlow 1.5s infinite alternate;
+}
+
+@keyframes userGlow {
+  0% { box-shadow: 0 0 25px rgba(0,255,200,0.3); }
+  100% { box-shadow: 0 0 70px rgba(0,255,200,0.9); }
+}
+
+.user-card .operator-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1.6rem;
+}
