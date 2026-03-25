@@ -12,6 +12,7 @@
 
 <body>
 
+<!-- 🔥 BACKGROUND -->
 <div id="smoke-bg">
   <div class="fog-layer"></div>
   <div class="energy-layer"></div>
@@ -24,6 +25,7 @@
   <span class="hud-sub">LIVE COMBAT DATA</span>
 </header>
 
+<!-- 🔍 SEARCH -->
 <div class="search-box">
   <input id="playerInput" placeholder="Gamertag eingeben">
   
@@ -35,6 +37,7 @@
   <button onclick="searchPlayer()">ADD PLAYER</button>
 </div>
 
+<!-- 🔁 MODE -->
 <div class="mode-switch">
   <button id="rankedBtn" class="active">RANKED</button>
   <button id="casualBtn">UNRANKED</button>
@@ -49,14 +52,28 @@ const API = "https://r6-api-backend.onrender.com/api/stats";
 
 let currentMode = "ranked";
 
-/* 🔥 PLAYERS */
+/* 🔥 FIXED PLAYERS */
 let players = [
-  { name: "BB_Pater_Odor", platform: "psn", user: false },
-  { name: "SomaRay_Jr", platform: "psn", user: false }
+  {
+    names: {
+      psn: "BB_Pater_Odor",
+      uplay: "BB_Pater_Odor"
+    },
+    platform: "psn",
+    user: false
+  },
+  {
+    names: {
+      psn: "SomaRay_Jr",
+      uplay: "BB_SomaRay"
+    },
+    platform: "psn",
+    user: false
+  }
 ];
 
 /* ===================== */
-/* MODE SWITCH */
+/* SWITCH MODE */
 /* ===================== */
 
 rankedBtn.onclick = () => {
@@ -87,15 +104,22 @@ function searchPlayer() {
 
   if (!name) return;
 
-  players.push({ name, platform, user: true });
+  players.push({
+    names: { psn: name, uplay: name },
+    platform,
+    user: true
+  });
+
   loadStats();
 }
 
 /* ===================== */
-/* 🔥 PLATFORM SWITCH */
+/* PLATFORM SWITCH */
 /* ===================== */
 
 function togglePlatform(index) {
+  if (index > 1) return;
+
   players[index].platform =
     players[index].platform === "psn" ? "uplay" : "psn";
 
@@ -155,8 +179,10 @@ function getWinrate(w, l) {
 
 async function fetchPlayer(p) {
   try {
+    const name = p.names[p.platform];
+
     const res = await fetch(
-      `${API}?nameOnPlatform=${encodeURIComponent(p.name)}&platformType=${p.platform}`
+      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${p.platform}`
     );
 
     const data = await res.json();
@@ -182,17 +208,21 @@ function render(p, index, glowClass) {
   const rank = getRankFromMMR(p.mmr);
 
   return `
-  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}" 
-       style="--rank-color:${rank.color}; box-shadow:0 0 40px ${rank.color}33">
+  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
+       style="--rank-color:${rank.color}">
 
     <div class="star-layer"></div>
 
     <div class="operator-header">
       <div class="operator-name">${p.username || "-"}</div>
 
-      <button class="platform-toggle" onclick="togglePlatform(${index})">
-        ${p.platform.toUpperCase()}
-      </button>
+      ${
+        index <= 1
+          ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
+              ${p.platform.toUpperCase()}
+            </button>`
+          : `<div class="operator-tag">${p.platform}</div>`
+      }
     </div>
 
     <div class="rank" style="color:${rank.color}">
