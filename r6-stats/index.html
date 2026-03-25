@@ -7,9 +7,7 @@
 
 <link rel="stylesheet" href="./style.css">
 
-<!-- 🔥 USER FONT -->
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-
 </head>
 
 <body>
@@ -51,10 +49,15 @@ const API = "https://r6-api-backend.onrender.com/api/stats";
 
 let currentMode = "ranked";
 
+/* 🔥 PLAYERS */
 let players = [
   { name: "BB_Pater_Odor", platform: "psn", user: false },
   { name: "SomaRay_Jr", platform: "psn", user: false }
 ];
+
+/* ===================== */
+/* MODE SWITCH */
+/* ===================== */
 
 rankedBtn.onclick = () => {
   currentMode = "ranked";
@@ -74,6 +77,10 @@ function setActive(id) {
   document.getElementById(id).classList.add("active");
 }
 
+/* ===================== */
+/* ADD PLAYER */
+/* ===================== */
+
 function searchPlayer() {
   const name = document.getElementById("playerInput").value;
   const platform = document.getElementById("platformSelect").value;
@@ -84,7 +91,21 @@ function searchPlayer() {
   loadStats();
 }
 
-/* 🔥 RANK SYSTEM */
+/* ===================== */
+/* 🔥 PLATFORM SWITCH */
+/* ===================== */
+
+function togglePlatform(index) {
+  players[index].platform =
+    players[index].platform === "psn" ? "uplay" : "psn";
+
+  loadStats();
+}
+
+/* ===================== */
+/* RANK SYSTEM */
+/* ===================== */
+
 function getRankFromMMR(mmr) {
   if (!mmr) return { name: "UNRANKED", color: "#777" };
 
@@ -109,6 +130,10 @@ function getRankFromMMR(mmr) {
   };
 }
 
+/* ===================== */
+/* HELPERS */
+/* ===================== */
+
 function getKDColor(kd) {
   if (!kd) return "#aaa";
   kd = parseFloat(kd);
@@ -124,6 +149,10 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
+/* ===================== */
+/* FETCH */
+/* ===================== */
+
 async function fetchPlayer(p) {
   try {
     const res = await fetch(
@@ -134,6 +163,7 @@ async function fetchPlayer(p) {
 
     return {
       ...(currentMode === "ranked" ? data.ranked : data.casual),
+      platform: p.platform,
       user: p.user
     };
 
@@ -142,43 +172,73 @@ async function fetchPlayer(p) {
   }
 }
 
-function render(p, glowClass) {
+/* ===================== */
+/* RENDER */
+/* ===================== */
+
+function render(p, index, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
 
   const rank = getRankFromMMR(p.mmr);
 
   return `
-<div class="operator-card ${glowClass}" 
-     style="--rank-color:${rank.color}; box-shadow:0 0 40px ${rank.color}33">
+  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}" 
+       style="--rank-color:${rank.color}; box-shadow:0 0 40px ${rank.color}33">
 
-  <div class="star-layer"></div>
-  
-      <div class="operator-header">
-        <div class="operator-name">${p.username}</div>
-        <div class="operator-tag">${p.platform}</div>
-      </div>
+    <div class="star-layer"></div>
 
-      <div class="rank" style="color:${rank.color}">
-        ${rank.name} • ${p.mmr || 0} MMR
-      </div>
+    <div class="operator-header">
+      <div class="operator-name">${p.username || "-"}</div>
 
-      <div class="kd-value" style="color:${getKDColor(p.kd)}">
-        ${p.kd || "0.00"} KD
-      </div>
-
-      <div class="section-title">COMBAT</div>
-
-      <div class="stats-grid">
-        <div class="stat-box"><div class="stat-label">WINRATE</div><div class="stat-value">${getWinrate(p.wins, p.losses)}%</div></div>
-        <div class="stat-box"><div class="stat-label">KILLS</div><div class="stat-value">${p.kills ?? "-"}</div></div>
-        <div class="stat-box"><div class="stat-label">DEATHS</div><div class="stat-value">${p.deaths ?? "-"}</div></div>
-        <div class="stat-box"><div class="stat-label">WINS</div><div class="stat-value">${p.wins ?? "-"}</div></div>
-        <div class="stat-box"><div class="stat-label">LOSSES</div><div class="stat-value">${p.losses ?? "-"}</div></div>
-      </div>
-
+      <button class="platform-toggle" onclick="togglePlatform(${index})">
+        ${p.platform.toUpperCase()}
+      </button>
     </div>
+
+    <div class="rank" style="color:${rank.color}">
+      ${rank.name} • ${p.mmr || 0} MMR
+    </div>
+
+    <div class="kd-value" style="color:${getKDColor(p.kd)}">
+      ${p.kd || "0.00"} KD
+    </div>
+
+    <div class="section-title">COMBAT</div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">WINRATE</div>
+        <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">KILLS</div>
+        <div class="stat-value">${p.kills ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">DEATHS</div>
+        <div class="stat-value">${p.deaths ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">WINS</div>
+        <div class="stat-value">${p.wins ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">LOSSES</div>
+        <div class="stat-value">${p.losses ?? "-"}</div>
+      </div>
+    </div>
+
+  </div>
   `;
 }
+
+/* ===================== */
+/* LOAD */
+/* ===================== */
 
 async function loadStats() {
   const el = document.getElementById("players");
@@ -187,7 +247,14 @@ async function loadStats() {
   const results = await Promise.all(players.map(fetchPlayer));
 
   el.innerHTML = results
-    .map((p, i) => render(p, i === 0 ? "operator-glow-blue" : i === 1 ? "operator-glow-orange" : ""))
+    .map((p, i) =>
+      render(
+        p,
+        i,
+        i === 0 ? "operator-glow-blue" :
+        i === 1 ? "operator-glow-orange" : ""
+      )
+    )
     .join("");
 }
 
