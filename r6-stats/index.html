@@ -76,21 +76,21 @@ let players = [
 /* SWITCH MODE */
 /* ===================== */
 
-rankedBtn.onclick = () => {
+document.getElementById("rankedBtn").onclick = () => {
   currentMode = "ranked";
   setActive("rankedBtn");
   loadStats();
 };
 
-casualBtn.onclick = () => {
+document.getElementById("casualBtn").onclick = () => {
   currentMode = "casual";
   setActive("casualBtn");
   loadStats();
 };
 
 function setActive(id) {
-  rankedBtn.classList.remove("active");
-  casualBtn.classList.remove("active");
+  document.getElementById("rankedBtn").classList.remove("active");
+  document.getElementById("casualBtn").classList.remove("active");
   document.getElementById(id).classList.add("active");
 }
 
@@ -117,7 +117,6 @@ function searchPlayer() {
 /* PLATFORM SWITCH */
 /* ===================== */
 
-  }
 function togglePlatform(index) {
   if (index > 1) return;
 
@@ -125,10 +124,11 @@ function togglePlatform(index) {
 
   players[index].platform = current === "psn" ? "uplay" : "psn";
 
-  console.log("Switch:", players[index]); // DEBUG
+  console.log("Switch:", players[index]);
 
-  loadStats(); // 🔥 GANZ WICHTIG
+  loadStats();
 }
+
 /* ===================== */
 /* RANK SYSTEM */
 /* ===================== */
@@ -180,12 +180,11 @@ function getWinrate(w, l) {
 /* FETCH */
 /* ===================== */
 
-
 async function fetchPlayer(p) {
   try {
     const name = p.names[p.platform];
 
-    console.log("FETCH:", name, p.platform); // 🔥 DEBUG
+    console.log("FETCH:", name, p.platform);
 
     const res = await fetch(
       `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${p.platform}`
@@ -204,7 +203,8 @@ async function fetchPlayer(p) {
     return null;
   }
 }
-  /* ===================== */
+
+/* ===================== */
 /* RENDER */
 /* ===================== */
 
@@ -225,8 +225,8 @@ function render(p, index, glowClass) {
       ${
         index <= 1
           ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
-  ${p.platform === "psn" ? "PSN" : "UBISOFT"}
-</button>`
+              ${p.platform === "psn" ? "🎮 PSN" : "🖥 UBISOFT"}
+            </button>`
           : `<div class="operator-tag">${p.platform}</div>`
       }
     </div>
