@@ -34,6 +34,19 @@
       font-size: 24px;
       font-weight: bold;
     }
+
+    .operator-card {
+      background: linear-gradient(145deg, #0b0f1a, #111827);
+      border-radius: 14px;
+      padding: 20px;
+      margin: 10px;
+      transition: 0.3s;
+    }
+
+    .operator-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 20px rgba(0,195,255,0.4);
+    }
   </style>
 </head>
 
@@ -53,7 +66,6 @@
     </a>
   </div>
 
-  <!-- 🔥 SWITCH -->
   <div class="mode-switch">
     <button id="rankedBtn" class="active">RANKED</button>
     <button id="casualBtn">UNRANKED</button>
@@ -86,69 +98,77 @@
     document.getElementById(id).classList.add("active");
   }
 
-function getRankData(mmr) {
-  if (!mmr) return { name: "UNRANKED", color: "#777" };
+  // 🔥 RICHTIGES RANK SYSTEM (auf rank basierend)
+  function getRankData(rank) {
+    if (!rank) return { name: "UNRANKED", color: "#777" };
 
-  if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0033" };
-  if (mmr >= 4500) return { name: "DIAMOND", color: "#00e5ff" };
-  if (mmr >= 4000) return { name: "EMERALD", color: "#00ff88" };
-  if (mmr >= 3200) return { name: "PLATINUM", color: "#4fc3f7" };
-  if (mmr >= 2600) return { name: "GOLD", color: "#ffd700" };
-  if (mmr >= 2000) return { name: "SILVER", color: "#c0c0c0" };
-  return { name: "BRONZE", color: "#cd7f32" };
-}
-
-function getWinrate(w, l) {
-  if (w === null || l === null) return null;
-  if (w + l === 0) return null;
-  return ((w / (w + l)) * 100).toFixed(1);
-}
-    
-async function fetchPlayer(name) {
-  try {
-    const res = await fetch(
-      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
-    );
-
-    const data = await res.json();
-
-    // 🔥 DAS ist entscheidend
-    return currentMode === "ranked"
-      ? data.ranked
-      : data.casual;
-
-  } catch (err) {
-    console.error("Fetch Fehler:", err);
-    return null;
+    if (rank >= 25) return { name: "CHAMPION", color: "#ff0033" };
+    if (rank >= 20) return { name: "DIAMOND", color: "#00e5ff" };
+    if (rank >= 15) return { name: "EMERALD", color: "#00ff88" };
+    if (rank >= 10) return { name: "PLATINUM", color: "#4fc3f7" };
+    if (rank >= 5) return { name: "GOLD", color: "#ffd700" };
+    return { name: "SILVER", color: "#c0c0c0" };
   }
-}
+
+  function getWinrate(w, l) {
+    if (w === null || l === null) return null;
+    if (w + l === 0) return null;
+    return ((w / (w + l)) * 100).toFixed(1);
+  }
+
+  function getKDColor(kd) {
+    if (kd === null || kd === undefined) return "#aaa";
+
+    kd = parseFloat(kd);
+
+    if (kd >= 1.5) return "#00ff88";
+    if (kd >= 1.2) return "#4caf50";
+    if (kd >= 1.0) return "#ff9800";
+    return "#f44336";
+  }
+
+  async function fetchPlayer(name) {
+    try {
+      const res = await fetch(
+        `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
+      );
+
+      const data = await res.json();
+
+      return currentMode === "ranked"
+        ? data.ranked
+        : data.casual;
+
+    } catch (err) {
+      console.error("Fetch Fehler:", err);
+      return null;
+    }
+  }
 
   function safe(v, f) {
     return v ?? f;
   }
-function getKDColor(kd) {
-  if (kd === null || kd === undefined) return "#aaa";
 
-  kd = parseFloat(kd);
-
-  if (kd >= 1.5) return "#00ff88";   // 🔥 sehr gut
-  if (kd >= 1.2) return "#4caf50";   // gut
-  if (kd >= 1.0) return "#ff9800";   // average
-  return "#f44336";                  // schlecht
-}
-    
   function renderOperator(p, glowClass) {
     if (!p) return `<div class="operator-card">NO DATA</div>`;
+
+    const rankData = getRankData(p.rank);
+    const winrate = getWinrate(p.wins, p.losses);
 
     return `
       <div class="operator-card ${glowClass}">
         
         <h2>${safe(p.username, "-")}</h2>
-        <div>${safe(p.rank, "UNRANKED")} • ${safe(p.mmr, 0)} MMR</div>
+
+        <div style="color:${rankData.color}; font-weight:bold;">
+          ${rankData.name} • ${safe(p.mmr, 0)} MMR
+        </div>
 
         <div class="kd" style="color:${getKDColor(p.kd)}">
-          ${safe(p.kd, "0.00")} KD
+          ${p.kd ? p.kd : "0.00"} KD
         </div>
+
+        <div>Winrate: ${winrate ?? "-"}%</div>
 
         <div>Kills: ${safe(p.kills, "-")}</div>
         <div>Deaths: ${safe(p.deaths, "-")}</div>
@@ -178,13 +198,6 @@ function getKDColor(kd) {
 
   loadStats();
   </script>
-
-  <div id="smoke-bg">
-    <div class="fog-layer"></div>
-    <div class="energy-layer"></div>
-    <div class="noise-layer"></div>
-    <div class="parallax-layer"></div>
-  </div>
 
 </body>
 </html>
