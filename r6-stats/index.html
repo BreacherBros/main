@@ -9,8 +9,27 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: radial-gradient(circle at top, #0b1020, #05060a 70%);
   color: white;
+  overflow-x: hidden;
+}
+
+/* 🔥 ANIMATED BACKGROUND */
+body::before {
+  content: "";
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, #00c3ff22, transparent 40%),
+              radial-gradient(circle, #ff004422, transparent 40%),
+              #05060a;
+  animation: moveBg 20s linear infinite;
+  z-index: -1;
+}
+
+@keyframes moveBg {
+  0% { transform: translate(0,0); }
+  50% { transform: translate(-25%, -25%); }
+  100% { transform: translate(0,0); }
 }
 
 /* HEADER */
@@ -23,11 +42,30 @@ header h1 {
   letter-spacing: 2px;
 }
 
-header span {
-  color: #aaa;
+/* INPUT */
+.search-box {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-/* BUTTONS */
+.search-box input, select {
+  padding: 10px;
+  border-radius: 6px;
+  border: none;
+}
+
+.search-box button {
+  padding: 10px 20px;
+  border: none;
+  background: #00c3ff;
+  color: black;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* SWITCH */
 .mode-switch {
   display: flex;
   justify-content: center;
@@ -49,50 +87,48 @@ header span {
   color: black;
 }
 
-/* CARDS */
+/* GRID */
 .operators-grid {
   display: flex;
   justify-content: center;
-  gap: 30px;
-  margin-top: 40px;
+  gap: 40px;
+  margin-top: 50px;
+  flex-wrap: wrap;
 }
 
+/* CARD */
 .operator-card {
   background: linear-gradient(160deg, rgba(30,40,70,0.9), rgba(10,15,30,0.9));
-  border-radius: 14px;
-  padding: 20px;
-  width: 300px;
+  border-radius: 16px;
+  padding: 30px;
+  width: 350px;
   transition: 0.3s;
 }
 
 .operator-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px) scale(1.02);
 }
 
-/* NAME */
+/* TEXT */
 .player-name {
-  font-size: 20px;
-  font-weight: bold;
-  margin-bottom: 10px;
-}
-
-/* RANK */
-.rank {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-/* KD */
-.kd {
   font-size: 22px;
   font-weight: bold;
-  margin: 10px 0;
 }
 
-/* STATS */
+.rank {
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.kd {
+  font-size: 26px;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
 .stat {
-  font-size: 14px;
   color: #ccc;
+  font-size: 15px;
 }
 </style>
 </head>
@@ -104,6 +140,19 @@ header span {
   <span>LIVE COMBAT DATA</span>
 </header>
 
+<!-- 🔥 PLAYER SEARCH -->
+<div class="search-box">
+  <input id="playerInput" placeholder="Gamertag eingeben">
+  
+  <select id="platformSelect">
+    <option value="psn">PSN</option>
+    <option value="uplay">UBISOFT</option>
+  </select>
+
+  <button onclick="searchPlayer()">ADD PLAYER</button>
+</div>
+
+<!-- MODE -->
 <div class="mode-switch">
   <button id="rankedBtn" class="active">RANKED</button>
   <button id="casualBtn">UNRANKED</button>
@@ -113,7 +162,14 @@ header span {
 
 <script>
 const API = "https://r6-api-backend.onrender.com/api/stats";
+
 let currentMode = "ranked";
+
+/* 🔥 DEFAULT PLAYERS */
+let players = [
+  { name: "BB_Pater_Odor", platform: "psn" },
+  { name: "SomaRay_Jr", platform: "psn" }
+];
 
 /* SWITCH */
 rankedBtn.onclick = () => {
@@ -134,13 +190,22 @@ function setActive(id) {
   document.getElementById(id).classList.add("active");
 }
 
-/* 🔥 RANK SYSTEM (5 DIVISIONS) */
+/* ADD PLAYER */
+function searchPlayer() {
+  const name = document.getElementById("playerInput").value;
+  const platform = document.getElementById("platformSelect").value;
+
+  if (!name) return;
+
+  players.push({ name, platform });
+  loadStats();
+}
+
+/* RANK SYSTEM */
 function getRankFromMMR(mmr) {
   if (!mmr) return { name: "UNRANKED", color: "#777" };
 
-  if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0033" };
-
-  const ranks = [
+  const tiers = [
     { name: "KUPFER", color: "#cd7f32" },
     { name: "BRONZE", color: "#a97142" },
     { name: "SILBER", color: "#c0c0c0" },
@@ -150,19 +215,17 @@ function getRankFromMMR(mmr) {
     { name: "DIAMANT", color: "#00e5ff" }
   ];
 
-  const base = Math.floor(mmr / 500);
-  const index = Math.max(0, Math.min(base - 2, ranks.length - 1));
-  const rank = ranks[index];
+  let index = Math.floor(mmr / 500) - 2;
+  index = Math.max(0, Math.min(index, tiers.length - 1));
 
   const division = 5 - Math.floor((mmr % 500) / 100);
 
   return {
-    name: `${rank.name} ${division}`,
-    color: rank.color
+    name: `${tiers[index].name} ${division}`,
+    color: tiers[index].color
   };
 }
 
-/* HELPERS */
 function getKDColor(kd) {
   if (!kd) return "#aaa";
   kd = parseFloat(kd);
@@ -178,16 +241,21 @@ function getWinrate(w, l) {
 }
 
 /* FETCH */
-async function fetchPlayer(name) {
-  const res = await fetch(
-    `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
-  );
+async function fetchPlayer(p) {
+  try {
+    const res = await fetch(
+      `${API}?nameOnPlatform=${encodeURIComponent(p.name)}&platformType=${p.platform}`
+    );
 
-  const data = await res.json();
+    const data = await res.json();
 
-  return currentMode === "ranked"
-    ? data.ranked
-    : data.casual;
+    return currentMode === "ranked"
+      ? data.ranked
+      : data.casual;
+
+  } catch {
+    return null;
+  }
 }
 
 /* RENDER */
@@ -197,11 +265,9 @@ function render(p) {
   const rank = getRankFromMMR(p.mmr);
 
   return `
-    <div class="operator-card" style="box-shadow: 0 0 15px ${rank.color}55">
+    <div class="operator-card" style="box-shadow:0 0 20px ${rank.color}55">
 
-      <div class="player-name">
-        ${p.username || "-"}
-      </div>
+      <div class="player-name">${p.username}</div>
 
       <div class="rank" style="color:${rank.color}">
         ${rank.name} • ${p.mmr || 0} MMR
@@ -227,12 +293,9 @@ async function loadStats() {
   const el = document.getElementById("players");
   el.innerHTML = "Loading...";
 
-  const [p1, p2] = await Promise.all([
-    fetchPlayer("BB_Pater_Odor"),
-    fetchPlayer("SomaRay_Jr")
-  ]);
+  const results = await Promise.all(players.map(fetchPlayer));
 
-  el.innerHTML = render(p1) + render(p2);
+  el.innerHTML = results.map(render).join("");
 }
 
 loadStats();
