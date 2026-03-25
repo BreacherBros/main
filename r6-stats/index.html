@@ -1,104 +1,108 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>R6 Operator Stats</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>R6 Operator Stats</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #0b1020, #05060a 70%);
-      color: white;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #0b1020, #05060a 70%);
+  color: white;
+}
 
-    .mode-switch {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 20px;
-    }
+/* HEADER */
+header {
+  text-align: center;
+  margin-top: 40px;
+}
 
-    .mode-switch button {
-      padding: 10px 20px;
-      border: none;
-      background: #111;
-      color: #aaa;
-      cursor: pointer;
-      border-radius: 6px;
-    }
+header h1 {
+  letter-spacing: 2px;
+}
 
-    .mode-switch .active {
-      background: #00c3ff;
-      color: black;
-    }
+header span {
+  color: #aaa;
+}
 
-    .operators-grid {
-      display: flex;
-      justify-content: center;
-      gap: 25px;
-      margin-top: 40px;
-      flex-wrap: wrap;
-    }
+/* BUTTONS */
+.mode-switch {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px;
+}
 
-    .operator-card {
-      background: linear-gradient(160deg, rgba(20,25,40,0.95), rgba(10,15,30,0.95));
-      border-radius: 16px;
-      padding: 22px;
-      width: 260px;
+.mode-switch button {
+  padding: 10px 20px;
+  border: none;
+  background: #111;
+  color: #aaa;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-      border: 1px solid rgba(255,255,255,0.08);
-      backdrop-filter: blur(10px);
+.mode-switch .active {
+  background: #00c3ff;
+  color: black;
+}
 
-      transition: all 0.3s ease;
+/* CARDS */
+.operators-grid {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 40px;
+}
 
-      position: relative;
-      overflow: hidden;
-    }
+.operator-card {
+  background: linear-gradient(160deg, rgba(30,40,70,0.9), rgba(10,15,30,0.9));
+  border-radius: 14px;
+  padding: 20px;
+  width: 300px;
+  transition: 0.3s;
+}
 
-    .operator-card:hover {
-      transform: translateY(-6px) scale(1.02);
-    }
+.operator-card:hover {
+  transform: translateY(-5px);
+}
 
-    .operator-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.15), transparent);
-      opacity: 0.2;
-    }
+/* NAME */
+.player-name {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
 
-    .rank-text {
-      font-size: 18px;
-      font-weight: bold;
-      letter-spacing: 1px;
-    }
+/* RANK */
+.rank {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
 
-    .progress-bar {
-      height: 6px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 6px;
-      overflow: hidden;
-      margin: 10px 0;
-    }
+/* KD */
+.kd {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 10px 0;
+}
 
-    .progress-fill {
-      height: 100%;
-      border-radius: 6px;
-      transition: width 0.4s ease;
-    }
-
-    .kd {
-      font-size: 26px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-  </style>
+/* STATS */
+.stat {
+  font-size: 14px;
+  color: #ccc;
+}
+</style>
 </head>
 
 <body>
+
+<header>
+  <h1>R6 OPERATOR STATS</h1>
+  <span>LIVE COMBAT DATA</span>
+</header>
 
 <div class="mode-switch">
   <button id="rankedBtn" class="active">RANKED</button>
@@ -112,13 +116,13 @@ const API = "https://r6-api-backend.onrender.com/api/stats";
 let currentMode = "ranked";
 
 /* SWITCH */
-document.getElementById("rankedBtn").onclick = () => {
+rankedBtn.onclick = () => {
   currentMode = "ranked";
   setActive("rankedBtn");
   loadStats();
 };
 
-document.getElementById("casualBtn").onclick = () => {
+casualBtn.onclick = () => {
   currentMode = "casual";
   setActive("casualBtn");
   loadStats();
@@ -130,15 +134,11 @@ function setActive(id) {
   document.getElementById(id).classList.add("active");
 }
 
-/* 🔥 RANK SYSTEM (EXACT) */
+/* 🔥 RANK SYSTEM (5 DIVISIONS) */
 function getRankFromMMR(mmr) {
-  if (!mmr || mmr === 0) {
-    return { name: "UNRANKED", color: "#777", progress: 0 };
-  }
+  if (!mmr) return { name: "UNRANKED", color: "#777" };
 
-  if (mmr >= 5000) {
-    return { name: "CHAMPION", color: "#ff0033", progress: 100 };
-  }
+  if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0033" };
 
   const ranks = [
     { name: "KUPFER", color: "#cd7f32" },
@@ -155,12 +155,10 @@ function getRankFromMMR(mmr) {
   const rank = ranks[index];
 
   const division = 5 - Math.floor((mmr % 500) / 100);
-  const progress = (mmr % 100) / 100 * 100;
 
   return {
     name: `${rank.name} ${division}`,
-    color: rank.color,
-    progress
+    color: rank.color
   };
 }
 
@@ -168,7 +166,6 @@ function getRankFromMMR(mmr) {
 function getKDColor(kd) {
   if (!kd) return "#aaa";
   kd = parseFloat(kd);
-
   if (kd >= 1.5) return "#00ff88";
   if (kd >= 1.2) return "#4caf50";
   if (kd >= 1.0) return "#ff9800";
@@ -180,6 +177,7 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
+/* FETCH */
 async function fetchPlayer(name) {
   const res = await fetch(
     `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
@@ -199,31 +197,26 @@ function render(p) {
   const rank = getRankFromMMR(p.mmr);
 
   return `
-    <div class="operator-card" style="
-      box-shadow: 0 0 25px ${rank.color}55,
-                  inset 0 0 15px rgba(255,255,255,0.05);
-    ">
+    <div class="operator-card" style="box-shadow: 0 0 15px ${rank.color}55">
 
-      <div class="rank-text" style="color:${rank.color}">
-        ${rank.name}
+      <div class="player-name">
+        ${p.username || "-"}
       </div>
 
-      <div>${p.mmr || 0} MMR</div>
-
-      <div class="progress-bar">
-        <div class="progress-fill" 
-             style="width:${rank.progress}%; background:${rank.color}">
-        </div>
+      <div class="rank" style="color:${rank.color}">
+        ${rank.name} • ${p.mmr || 0} MMR
       </div>
 
       <div class="kd" style="color:${getKDColor(p.kd)}">
         ${p.kd || "0.00"} KD
       </div>
 
-      <div>Winrate: ${getWinrate(p.wins, p.losses)}%</div>
+      <div class="stat">Winrate: ${getWinrate(p.wins, p.losses)}%</div>
 
-      <div>Kills: ${p.kills}</div>
-      <div>Deaths: ${p.deaths}</div>
+      <div class="stat">Kills: ${p.kills}</div>
+      <div class="stat">Deaths: ${p.deaths}</div>
+      <div class="stat">Wins: ${p.wins}</div>
+      <div class="stat">Losses: ${p.losses}</div>
 
     </div>
   `;
