@@ -7,44 +7,78 @@
 
   <style>
     body {
-      background: #05060a;
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #0b1020, #05060a 70%);
       color: white;
-      font-family: Arial;
+    }
+
+    .mode-switch {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px;
+    }
+
+    .mode-switch button {
+      padding: 10px 20px;
+      border: none;
+      background: #111;
+      color: #aaa;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .mode-switch .active {
+      background: #00c3ff;
+      color: black;
     }
 
     .operators-grid {
       display: flex;
-      gap: 20px;
       justify-content: center;
+      gap: 25px;
+      margin-top: 40px;
       flex-wrap: wrap;
     }
 
     .operator-card {
-      background: linear-gradient(145deg, #0b0f1a, #111827);
+      background: linear-gradient(160deg, rgba(20,25,40,0.95), rgba(10,15,30,0.95));
       border-radius: 16px;
-      padding: 20px;
+      padding: 22px;
       width: 260px;
-      transition: 0.3s;
+
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+
+      transition: all 0.3s ease;
+
       position: relative;
+      overflow: hidden;
     }
 
     .operator-card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-6px) scale(1.02);
     }
 
-    .rank-icon {
-      font-size: 28px;
-      margin-bottom: 10px;
+    .operator-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      background: linear-gradient(120deg, transparent, rgba(255,255,255,0.15), transparent);
+      opacity: 0.2;
     }
 
     .rank-text {
-      font-weight: bold;
       font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 1px;
     }
 
     .progress-bar {
-      height: 8px;
-      background: #222;
+      height: 6px;
+      background: rgba(255,255,255,0.08);
       border-radius: 6px;
       overflow: hidden;
       margin: 10px 0;
@@ -52,32 +86,14 @@
 
     .progress-fill {
       height: 100%;
-      transition: 0.4s;
+      border-radius: 6px;
+      transition: width 0.4s ease;
     }
 
     .kd {
-      font-size: 22px;
+      font-size: 26px;
       font-weight: bold;
-    }
-
-    .mode-switch {
-      text-align: center;
-      margin: 20px;
-    }
-
-    button {
-      padding: 10px;
-      margin: 5px;
-      background: #111;
-      color: #aaa;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    .active {
-      background: #00c3ff;
-      color: black;
+      margin: 10px 0;
     }
   </style>
 </head>
@@ -95,6 +111,7 @@
 const API = "https://r6-api-backend.onrender.com/api/stats";
 let currentMode = "ranked";
 
+/* SWITCH */
 document.getElementById("rankedBtn").onclick = () => {
   currentMode = "ranked";
   setActive("rankedBtn");
@@ -113,20 +130,24 @@ function setActive(id) {
   document.getElementById(id).classList.add("active");
 }
 
-/* 🔥 RANK SYSTEM */
+/* 🔥 RANK SYSTEM (EXACT) */
 function getRankFromMMR(mmr) {
-  if (!mmr || mmr === 0) return { name: "UNRANKED", color: "#777", icon: "❔" };
+  if (!mmr || mmr === 0) {
+    return { name: "UNRANKED", color: "#777", progress: 0 };
+  }
 
-  if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0033", icon: "👑" };
+  if (mmr >= 5000) {
+    return { name: "CHAMPION", color: "#ff0033", progress: 100 };
+  }
 
   const ranks = [
-    { name: "KUPFER", color: "#cd7f32", icon: "🟤" },
-    { name: "BRONZE", color: "#a97142", icon: "🟫" },
-    { name: "SILBER", color: "#c0c0c0", icon: "⚪" },
-    { name: "GOLD", color: "#ffd700", icon: "🟡" },
-    { name: "PLATIN", color: "#4fc3f7", icon: "🔵" },
-    { name: "SMARAGD", color: "#00ff88", icon: "🟢" },
-    { name: "DIAMANT", color: "#00e5ff", icon: "💎" }
+    { name: "KUPFER", color: "#cd7f32" },
+    { name: "BRONZE", color: "#a97142" },
+    { name: "SILBER", color: "#c0c0c0" },
+    { name: "GOLD", color: "#ffd700" },
+    { name: "PLATIN", color: "#4fc3f7" },
+    { name: "SMARAGD", color: "#00ff88" },
+    { name: "DIAMANT", color: "#00e5ff" }
   ];
 
   const base = Math.floor(mmr / 500);
@@ -139,15 +160,15 @@ function getRankFromMMR(mmr) {
   return {
     name: `${rank.name} ${division}`,
     color: rank.color,
-    icon: rank.icon,
     progress
   };
 }
 
-/* 🔥 KD COLOR */
+/* HELPERS */
 function getKDColor(kd) {
   if (!kd) return "#aaa";
   kd = parseFloat(kd);
+
   if (kd >= 1.5) return "#00ff88";
   if (kd >= 1.2) return "#4caf50";
   if (kd >= 1.0) return "#ff9800";
@@ -160,21 +181,28 @@ function getWinrate(w, l) {
 }
 
 async function fetchPlayer(name) {
-  const res = await fetch(`${API}?nameOnPlatform=${name}&platformType=psn`);
+  const res = await fetch(
+    `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=psn`
+  );
+
   const data = await res.json();
-  return currentMode === "ranked" ? data.ranked : data.casual;
+
+  return currentMode === "ranked"
+    ? data.ranked
+    : data.casual;
 }
 
-/* 🔥 UI RENDER */
+/* RENDER */
 function render(p) {
-  if (!p) return "NO DATA";
+  if (!p) return `<div class="operator-card">NO DATA</div>`;
 
   const rank = getRankFromMMR(p.mmr);
 
   return `
-    <div class="operator-card" style="box-shadow: 0 0 20px ${rank.color}33">
-      
-      <div class="rank-icon">${rank.icon}</div>
+    <div class="operator-card" style="
+      box-shadow: 0 0 25px ${rank.color}55,
+                  inset 0 0 15px rgba(255,255,255,0.05);
+    ">
 
       <div class="rank-text" style="color:${rank.color}">
         ${rank.name}
@@ -201,6 +229,7 @@ function render(p) {
   `;
 }
 
+/* LOAD */
 async function loadStats() {
   const el = document.getElementById("players");
   el.innerHTML = "Loading...";
