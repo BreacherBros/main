@@ -126,7 +126,17 @@ async function fetchPlayer(name) {
   function safe(v, f) {
     return v ?? f;
   }
+function getKDColor(kd) {
+  if (kd === null || kd === undefined) return "#aaa";
 
+  kd = parseFloat(kd);
+
+  if (kd >= 1.5) return "#00ff88";   // 🔥 sehr gut
+  if (kd >= 1.2) return "#4caf50";   // gut
+  if (kd >= 1.0) return "#ff9800";   // average
+  return "#f44336";                  // schlecht
+}
+    
   function renderOperator(p, glowClass) {
     if (!p) return `<div class="operator-card">NO DATA</div>`;
 
