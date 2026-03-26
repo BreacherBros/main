@@ -331,3 +331,64 @@ body > *:not(#smoke-bg){
   font-size: 32px;
   font-weight: bold;
 }
+
+/* ============================= */
+/* 📱 RESPONSIVE DESIGN */
+/* ============================= */
+
+/* TABLET */
+@media (max-width: 1000px) {
+  .operators-grid {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .operator-card {
+    padding: 20px;
+  }
+}
+
+/* MOBILE */
+@media (max-width: 600px) {
+  .hud-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .search-box {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 0 15px;
+  }
+
+  .search-box input,
+  .search-box select,
+  .search-box button {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .mode-switch {
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .operator-name {
+    font-size: 1.1rem;
+  }
+
+  .kd-value {
+    font-size: 24px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ULTRA SMALL */
+@media (max-width: 400px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
