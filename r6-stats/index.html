@@ -1,181 +1,233 @@
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
-import youtubeRoutes from "./youtube.js";
-import tiktokRoutes from "./tiktok.js";
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>R6 Operator Stats</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const app = express();
+<link rel="stylesheet" href="./style.css">
 
-/* =========================
-   GLOBAL CORS
-========================= */
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+</head>
 
-app.use(express.json());
+<body>
 
-/* =========================
-   ROUTES
-========================= */
-app.use("/api", youtubeRoutes);
-app.use("/api", tiktokRoutes);
+<div id="smoke-bg">
+  <div class="fog-layer"></div>
+  <div class="energy-layer"></div>
+  <div class="noise-layer"></div>
+  <div class="parallax-layer"></div>
+</div>
 
-/* =========================
-   ROOT TEST
-========================= */
-app.get("/", (req, res) => {
-  res.send("Backend running");
-});
+<header class="hud-header">
+  <h1>R6 OPERATOR STATS</h1>
+  <span class="hud-sub">LIVE COMBAT DATA</span>
+</header>
 
-/* =========================
-   🔥 R6DATA FINAL FIXED (PC + CONSOLE)
-========================= */
-const API_KEY = process.env.API_KEY;
+<!-- 🔍 SEARCH -->
+<div class="search-box">
+  <input id="playerInput" placeholder="Gamertag eingeben">
+  
+  <select id="platformSelect">
+    <option value="psn">PSN</option>
+    <option value="uplay">UBISOFT</option>
+  </select>
 
-app.get("/api/stats", async (req, res) => {
-  try {
-    const { nameOnPlatform, platformType } = req.query;
+  <button onclick="searchPlayer()">ADD PLAYER</button>
+</div>
 
-    if (!nameOnPlatform || !platformType) {
-      return res.status(400).json({ error: "Missing parameters" });
-    }
+<!-- 🔁 MODE -->
+<div class="mode-switch">
+  <button id="rankedBtn" class="active">RANKED</button>
+  <button id="casualBtn">UNRANKED</button>
+</div>
 
-    if (!API_KEY) {
-      return res.status(500).json({ error: "API KEY missing" });
-    }
+<main class="hud-dashboard">
+  <div class="operators-grid" id="players"></div>
+</main>
 
-    const url = `https://r6data.eu/api/stats?type=seasonal&nameOnPlatform=${encodeURIComponent(nameOnPlatform)}&platformType=${platformType}&platform_families=console,pc`;
+<script>
+const API = "https://r6-api-backend.onrender.com/api/stats";
 
-    const response = await fetch(url, {
-      headers: { "api-key": API_KEY }
-    });
+let currentMode = "ranked";
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(500).json({
-        error: "R6Data API error",
-        details: data
-      });
-    }
-
-    const profile = data?.profiles?.[0];
-
-    if (!profile) {
-      return res.status(404).json({ error: "Player not found" });
-    }
-
-    const username =
-      profile?.platformInfo?.platformUserHandle || nameOnPlatform;
-
-    /* =========================
-       🔥 BOARD FIX (PC + CONSOLE)
-    ========================= */
-
-    const root = data?.platform_families_full_profiles?.[0];
-    const boards = root?.board_ids_full_profiles || [];
-
-    const rankedBoard = boards.find(b =>
-      b.board_id === "pvp_ranked" || b.board_id === "ranked"
-    );
-
-    const casualBoard = boards.find(b =>
-      b.board_id === "pvp_casual" || b.board_id === "standard"
-    );
-
-    /* =========================
-       🔥 STATS FIX (PC API)
-    ========================= */
-
-    const rankedProfile = rankedBoard?.full_profiles?.[0]?.profile || null;
-    const rankedStats = rankedBoard?.full_profiles?.[0]?.season_statistics || null;
-
-    const casualProfile = casualBoard?.full_profiles?.[0]?.profile || null;
-    const casualStats = casualBoard?.full_profiles?.[0]?.season_statistics || null;
-
-    /* =========================
-       HELPERS
-    ========================= */
-
-    const calcKD = (k, d) => {
-      if (!k || !d || d === 0) return null;
-      return (k / d).toFixed(2);
-    };
-
-    /* =========================
-       🎮 CASUAL
-    ========================= */
-
-    const casualKills = casualStats?.kills ?? null;
-    const casualDeaths = casualStats?.deaths ?? null;
-
-    const casual = {
-      username,
-      platform: platformType.toUpperCase(),
-
-      kills: casualKills,
-      deaths: casualDeaths,
-      kd: calcKD(casualKills, casualDeaths),
-
-      wins: casualStats?.match_outcomes?.wins ?? null,
-      losses: casualStats?.match_outcomes?.losses ?? null,
-
-      level: null,
-
-      rank: "UNRANKED",
-      mmr: null
-    };
-
-    /* =========================
-       🏆 RANKED
-    ========================= */
-
-    const rankedKills = rankedStats?.kills ?? null;
-    const rankedDeaths = rankedStats?.deaths ?? null;
-
-    const ranked = {
-      username,
-      platform: platformType.toUpperCase(),
-
-      kills: rankedKills,
-      deaths: rankedDeaths,
-      kd: calcKD(rankedKills, rankedDeaths),
-
-      wins: rankedStats?.match_outcomes?.wins ?? null,
-      losses: rankedStats?.match_outcomes?.losses ?? null,
-
-      rank: rankedProfile?.rank ?? 0,
-      mmr: rankedProfile?.rank_points ?? 0
-    };
-
-    /* =========================
-       RESPONSE
-    ========================= */
-
-    res.setHeader("Cache-Control", "no-store");
-
-    res.json({
-      ranked,
-      casual
-    });
-
-  } catch (err) {
-    console.error("❌ Backend Fehler:", err);
-
-    res.status(500).json({
-      error: "Server error",
-      details: err.message
-    });
+let players = [
+  {
+    names: { psn: "BB_Pater_Odor", uplay: "BB_Pater_Odor" },
+    platform: "psn",
+    user: false
+  },
+  {
+    names: { psn: "SomaRay_Jr", uplay: "BB_SomaRay" },
+    platform: "psn",
+    user: false
   }
-});
+];
 
-/* =========================
-   SERVER START
-========================= */
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Backend running on port", PORT);
-});
+rankedBtn.onclick = () => {
+  currentMode = "ranked";
+  setActive("rankedBtn");
+  loadStats();
+};
+
+casualBtn.onclick = () => {
+  currentMode = "casual";
+  setActive("casualBtn");
+  loadStats();
+};
+
+function setActive(id) {
+  rankedBtn.classList.remove("active");
+  casualBtn.classList.remove("active");
+  document.getElementById(id).classList.add("active");
+}
+
+function searchPlayer() {
+  const name = playerInput.value;
+  const platform = platformSelect.value;
+  if (!name) return;
+
+  players.push({
+    names: { psn: name, uplay: name },
+    platform,
+    user: true
+  });
+
+  loadStats();
+}
+
+function togglePlatform(index) {
+  if (index > 1) return;
+  players[index].platform =
+    players[index].platform === "psn" ? "uplay" : "psn";
+  loadStats();
+}
+
+function getRankFromMMR(mmr) {
+  if (!mmr) return { name: "UNRANKED", color: "#777" };
+
+  const tiers = [
+    { name: "COPPER", color: "#cd7f32" },
+    { name: "BRONZE", color: "#a97142" },
+    { name: "SILVER", color: "#c0c0c0" },
+    { name: "GOLD", color: "#ffd700" },
+    { name: "PLATINUM", color: "#4fc3f7" },
+    { name: "EMERALD", color: "#00ff88" },
+    { name: "DIAMOND", color: "#00e5ff" }
+  ];
+
+  let i = Math.floor(mmr / 500) - 2;
+  i = Math.max(0, Math.min(i, tiers.length - 1));
+
+  const div = 5 - Math.floor((mmr % 500) / 100);
+
+  return {
+    name: `${tiers[i].name} ${div}`,
+    color: tiers[i].color
+  };
+}
+
+function getKDColor(kd) {
+  if (!kd) return "#aaa";
+  kd = parseFloat(kd);
+  if (kd >= 1.5) return "#00ff88";
+  if (kd >= 1.2) return "#4caf50";
+  if (kd >= 1.0) return "#ff9800";
+  return "#f44336";
+}
+
+function getWinrate(w, l) {
+  if (!w || !l) return "-";
+  return ((w / (w + l)) * 100).toFixed(1);
+}
+
+async function fetchPlayer(p) {
+  try {
+    const name = p.names[p.platform];
+    const platform = p.platform === "uplay" ? "ubi" : p.platform;
+
+    const res = await fetch(
+      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${platform}`
+    );
+
+    const data = await res.json();
+
+    return {
+      ...(currentMode === "ranked" ? data.ranked : data.casual),
+      platform: p.platform,
+      user: p.user
+    };
+
+  } catch {
+    return null;
+  }
+}
+
+function render(p, index, glowClass) {
+  if (!p) return `<div class="operator-card">NO DATA</div>`;
+
+  const rank = getRankFromMMR(p.mmr);
+
+  return `
+  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
+       style="--rank-color:${rank.color}">
+
+    <div class="star-layer"></div>
+
+    <div class="operator-header">
+      <div class="operator-name">${p.username || "-"}</div>
+
+      ${
+        index <= 1
+          ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
+              ${p.platform === "psn" ? "PSN" : "UBISOFT"}
+            </button>`
+          : `<div class="operator-tag">${p.platform}</div>`
+      }
+    </div>
+
+    <div class="rank" style="color:${rank.color}">
+      ${rank.name} • ${p.mmr || 0} MMR
+    </div>
+
+    <div class="kd-value" style="color:${getKDColor(p.kd)}">
+      ${p.kd || "0.00"} KD
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box"><div>WINRATE</div><div>${getWinrate(p.wins, p.losses)}%</div></div>
+      <div class="stat-box"><div>KILLS</div><div>${p.kills ?? "-"}</div></div>
+      <div class="stat-box"><div>DEATHS</div><div>${p.deaths ?? "-"}</div></div>
+      <div class="stat-box"><div>WINS</div><div>${p.wins ?? "-"}</div></div>
+      <div class="stat-box"><div>LOSSES</div><div>${p.losses ?? "-"}</div></div>
+    </div>
+
+  </div>
+  `;
+}
+
+async function loadStats() {
+  players = players.slice(0, 10); // limit for mobile performance
+
+  const el = document.getElementById("players");
+  el.innerHTML = "Loading...";
+
+  const results = await Promise.all(players.map(fetchPlayer));
+
+  el.innerHTML = results
+    .map((p, i) =>
+      render(
+        p,
+        i,
+        i === 0 ? "operator-glow-blue" :
+        i === 1 ? "operator-glow-orange" : ""
+      )
+    )
+    .join("");
+}
+
+loadStats();
+</script>
+
+</body>
+</html>
