@@ -83,8 +83,9 @@ function setActive(id) {
 
 /* ADD PLAYER */
 function searchPlayer() {
-  const name = playerInput.value;
+  const name = playerInput.value.trim();
   const platform = platformSelect.value;
+
   if (!name) return;
 
   players.push({
@@ -93,17 +94,19 @@ function searchPlayer() {
     user: true
   });
 
+  playerInput.value = "";
   loadStats();
 }
 
-/* 🔥 PLATFORM SWITCH FIX */
+/* 🔥 PLATFORM SWITCH (FIXED) */
 function togglePlatform(index) {
   if (index > 1) return;
 
-  players[index].platform =
-    players[index].platform === "psn" ? "uplay" : "psn";
+  const p = players[index];
 
-  console.log("SWITCH:", players[index]); // DEBUG
+  p.platform = p.platform === "psn" ? "uplay" : "psn";
+
+  console.log("SWITCH:", p);
 
   loadStats();
 }
@@ -149,11 +152,11 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
-/* 🔥 FETCH FIX (KEIN "ubi" MEHR!) */
+/* 🔥 FETCH (STABIL) */
 async function fetchPlayer(p) {
   try {
     const name = p.names[p.platform];
-    const platform = p.platform; // ✅ FIX
+    const platform = p.platform;
 
     console.log("REQUEST:", name, platform);
 
@@ -161,7 +164,17 @@ async function fetchPlayer(p) {
       `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${platform}`
     );
 
+    if (!res.ok) {
+      console.error("API ERROR:", res.status);
+      return null;
+    }
+
     const data = await res.json();
+
+    if (!data || (!data.ranked && !data.casual)) {
+      console.error("INVALID DATA:", data);
+      return null;
+    }
 
     return {
       ...(currentMode === "ranked" ? data.ranked : data.casual),
@@ -188,7 +201,7 @@ function render(p, index, glowClass) {
     <div class="star-layer"></div>
 
     <div class="operator-header">
-      <div class="operator-name">${p.username || "-"}</div>
+      <div class="operator-name">${p.username || "UNKNOWN"}</div>
 
       ${
         index <= 1
