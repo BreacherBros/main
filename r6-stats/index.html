@@ -12,7 +12,6 @@
 
 <body>
 
-<!-- 🔥 BACKGROUND -->
 <div id="smoke-bg">
   <div class="fog-layer"></div>
   <div class="energy-layer"></div>
@@ -52,29 +51,18 @@ const API = "https://r6-api-backend.onrender.com/api/stats";
 
 let currentMode = "ranked";
 
-/* 🔥 FIXED PLAYERS */
 let players = [
   {
-    names: {
-      psn: "BB_Pater_Odor",
-      uplay: "BB_Pater_Odor"
-    },
+    names: { psn: "BB_Pater_Odor", uplay: "BB_Pater_Odor" },
     platform: "psn",
     user: false
   },
   {
-    names: {
-      psn: "SomaRay_Jr",
-      uplay: "BB_SomaRay"
-    },
+    names: { psn: "SomaRay_Jr", uplay: "BB_SomaRay" },
     platform: "psn",
     user: false
   }
 ];
-
-/* ===================== */
-/* MODE SWITCH */
-/* ===================== */
 
 rankedBtn.onclick = () => {
   currentMode = "ranked";
@@ -94,14 +82,9 @@ function setActive(id) {
   document.getElementById(id).classList.add("active");
 }
 
-/* ===================== */
-/* ADD PLAYER */
-/* ===================== */
-
 function searchPlayer() {
-  const name = document.getElementById("playerInput").value;
-  const platform = document.getElementById("platformSelect").value;
-
+  const name = playerInput.value;
+  const platform = platformSelect.value;
   if (!name) return;
 
   players.push({
@@ -113,22 +96,12 @@ function searchPlayer() {
   loadStats();
 }
 
-/* ===================== */
-/* PLATFORM SWITCH */
-/* ===================== */
-
 function togglePlatform(index) {
   if (index > 1) return;
-
   players[index].platform =
     players[index].platform === "psn" ? "uplay" : "psn";
-
   loadStats();
 }
-
-/* ===================== */
-/* RANK SYSTEM */
-/* ===================== */
 
 function getRankFromMMR(mmr) {
   if (!mmr) return { name: "UNRANKED", color: "#777" };
@@ -154,14 +127,9 @@ function getRankFromMMR(mmr) {
   };
 }
 
-/* ===================== */
-/* HELPERS */
-/* ===================== */
-
 function getKDColor(kd) {
   if (!kd) return "#aaa";
   kd = parseFloat(kd);
-
   if (kd >= 1.5) return "#00ff88";
   if (kd >= 1.2) return "#4caf50";
   if (kd >= 1.0) return "#ff9800";
@@ -173,18 +141,10 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
-/* ===================== */
-/* FETCH (FIXED 🔥) */
-/* ===================== */
-
 async function fetchPlayer(p) {
   try {
     const name = p.names[p.platform];
-
-    // 🔥 UPLAY FIX
     const platform = p.platform === "uplay" ? "ubi" : p.platform;
-
-    console.log("FETCH:", name, platform);
 
     const res = await fetch(
       `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${platform}`
@@ -198,15 +158,10 @@ async function fetchPlayer(p) {
       user: p.user
     };
 
-  } catch (err) {
-    console.error("Fetch Fehler:", err);
+  } catch {
     return null;
   }
 }
-
-/* ===================== */
-/* RENDER */
-/* ===================== */
 
 function render(p, index, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
@@ -239,44 +194,21 @@ function render(p, index, glowClass) {
       ${p.kd || "0.00"} KD
     </div>
 
-    <div class="section-title">COMBAT</div>
-
     <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-label">WINRATE</div>
-        <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">KILLS</div>
-        <div class="stat-value">${p.kills ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">DEATHS</div>
-        <div class="stat-value">${p.deaths ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">WINS</div>
-        <div class="stat-value">${p.wins ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">LOSSES</div>
-        <div class="stat-value">${p.losses ?? "-"}</div>
-      </div>
+      <div class="stat-box"><div>WINRATE</div><div>${getWinrate(p.wins, p.losses)}%</div></div>
+      <div class="stat-box"><div>KILLS</div><div>${p.kills ?? "-"}</div></div>
+      <div class="stat-box"><div>DEATHS</div><div>${p.deaths ?? "-"}</div></div>
+      <div class="stat-box"><div>WINS</div><div>${p.wins ?? "-"}</div></div>
+      <div class="stat-box"><div>LOSSES</div><div>${p.losses ?? "-"}</div></div>
     </div>
 
   </div>
   `;
 }
 
-/* ===================== */
-/* LOAD */
-/* ===================== */
-
 async function loadStats() {
+  players = players.slice(0, 10); // limit for mobile performance
+
   const el = document.getElementById("players");
   el.innerHTML = "Loading...";
 
