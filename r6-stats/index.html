@@ -153,6 +153,7 @@ function getWinrate(w, l) {
 }
 
 /* 🔥 FETCH (STABIL) */
+  }
 async function fetchPlayer(p) {
   try {
     const name = p.names[p.platform];
@@ -165,16 +166,21 @@ async function fetchPlayer(p) {
     );
 
     if (!res.ok) {
-      console.error("API ERROR:", res.status);
-      return null;
+      console.warn("NOT FOUND:", name, platform);
+      return {
+        username: name,
+        platform,
+        mmr: 0,
+        kd: null,
+        kills: null,
+        deaths: null,
+        wins: null,
+        losses: null,
+        error: true
+      };
     }
 
     const data = await res.json();
-
-    if (!data || (!data.ranked && !data.casual)) {
-      console.error("INVALID DATA:", data);
-      return null;
-    }
 
     return {
       ...(currentMode === "ranked" ? data.ranked : data.casual),
@@ -187,7 +193,6 @@ async function fetchPlayer(p) {
     return null;
   }
 }
-
 /* RENDER */
 function render(p, index, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
