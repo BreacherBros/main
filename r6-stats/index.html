@@ -76,21 +76,21 @@ let players = [
 /* MODE SWITCH */
 /* ===================== */
 
-document.getElementById("rankedBtn").onclick = () => {
+rankedBtn.onclick = () => {
   currentMode = "ranked";
   setActive("rankedBtn");
   loadStats();
 };
 
-document.getElementById("casualBtn").onclick = () => {
+casualBtn.onclick = () => {
   currentMode = "casual";
   setActive("casualBtn");
   loadStats();
 };
 
 function setActive(id) {
-  document.getElementById("rankedBtn").classList.remove("active");
-  document.getElementById("casualBtn").classList.remove("active");
+  rankedBtn.classList.remove("active");
+  casualBtn.classList.remove("active");
   document.getElementById(id).classList.add("active");
 }
 
@@ -123,24 +123,8 @@ function togglePlatform(index) {
   players[index].platform =
     players[index].platform === "psn" ? "uplay" : "psn";
 
-  console.log("SWITCHED:", players[index]);
-
   loadStats();
 }
-
-/* ===================== */
-/* EVENT LISTENER (🔥 FIX) */
-/* ===================== */
-
-document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("platform-toggle")) {
-    const index = parseInt(e.target.dataset.index);
-
-    console.log("CLICKED BUTTON:", index);
-
-    togglePlatform(index);
-  }
-});
 
 /* ===================== */
 /* RANK SYSTEM */
@@ -150,7 +134,7 @@ function getRankFromMMR(mmr) {
   if (!mmr) return { name: "UNRANKED", color: "#777" };
 
   const tiers = [
-    { name: "COPPER", color: "#9b111e" },
+    { name: "COPPER", color: "#cd7f32" },
     { name: "BRONZE", color: "#a97142" },
     { name: "SILVER", color: "#c0c0c0" },
     { name: "GOLD", color: "#ffd700" },
@@ -190,17 +174,20 @@ function getWinrate(w, l) {
 }
 
 /* ===================== */
-/* FETCH */
+/* FETCH (FIXED 🔥) */
 /* ===================== */
 
 async function fetchPlayer(p) {
   try {
     const name = p.names[p.platform];
 
-    console.log("FETCH:", name, p.platform);
+    // 🔥 UPLAY FIX
+    const platform = p.platform === "uplay" ? "ubi" : p.platform;
+
+    console.log("FETCH:", name, platform);
 
     const res = await fetch(
-      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${p.platform}`
+      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${platform}`
     );
 
     const data = await res.json();
@@ -237,8 +224,8 @@ function render(p, index, glowClass) {
 
       ${
         index <= 1
-          ? `<button class="platform-toggle" data-index="${index}">
-              ${p.platform === "psn" ? "🎮 PSN" : "🖥 UBISOFT"}
+          ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
+              ${p.platform === "psn" ? "PSN" : "UBISOFT"}
             </button>`
           : `<div class="operator-tag">${p.platform}</div>`
       }
