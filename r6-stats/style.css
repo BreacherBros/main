@@ -348,12 +348,14 @@ body > *:not(#smoke-bg){
   }
 }
 /* BACK BUTTON */
-/* 🔥 HUD HOME BUTTON */
+
+/* 🔥 HOME BUTTON FINAL STYLE */
 .home-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 9999;
+  position: fixed !important;
+  bottom: 25px !important;
+  right: 25px !important;
+
+  z-index: 99999;
 
   display: flex;
   align-items: center;
@@ -364,16 +366,15 @@ body > *:not(#smoke-bg){
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
   font-size: 14px;
-  letter-spacing: 1px;
 
-  color: #00e5ff;
-  text-decoration: none;
+  color: #00e5ff !important;
+  text-decoration: none !important;
 
   background: linear-gradient(
     135deg,
     rgba(10, 20, 40, 0.9),
     rgba(0, 10, 25, 0.95)
-  );
+  ) !important;
 
   border: 1px solid rgba(0, 229, 255, 0.4);
   border-radius: 10px;
@@ -389,10 +390,10 @@ body > *:not(#smoke-bg){
   animation: floatBtn 4s ease-in-out infinite;
 }
 
-/* Hover Effekt */
+/* Hover */
 .home-btn:hover {
-  color: #000;
-  background: #00e5ff;
+  color: #000 !important;
+  background: #00e5ff !important;
 
   box-shadow:
     0 0 20px #00e5ff,
@@ -401,19 +402,17 @@ body > *:not(#smoke-bg){
   transform: translateY(-4px) scale(1.05);
 }
 
-/* Icon etwas größer */
+/* Icon */
 .home-btn span:first-child {
   font-size: 16px;
 }
 
-/* 🔥 Floating Animation */
+/* Floating Animation */
 @keyframes floatBtn {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
   100% { transform: translateY(0px); }
 }
-
-
 /* MOBILE */
 @media (max-width: 600px) {
   .hud-header h1 {
