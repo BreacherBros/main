@@ -47,8 +47,8 @@
 const API = "https://r6-api-backend.onrender.com/api/stats";
 
 let currentMode = "ranked";
+let isLoading = false; // 🔥 FIX
 
-/* 🔥 FIXED PLAYERS */
 let players = [
   {
     names: { psn: "BB_Pater_Odor", uplay: "BB_Pater_Odor" },
@@ -83,6 +83,8 @@ function setActive(id) {
 
 /* ADD PLAYER */
 function searchPlayer() {
+  if (isLoading) return; // 🔥 verhindert Spam
+
   const name = playerInput.value.trim();
   const platform = platformSelect.value;
 
@@ -98,12 +100,11 @@ function searchPlayer() {
   loadStats();
 }
 
-/* 🔥 PLATFORM SWITCH (FIXED) */
+/* PLATFORM SWITCH */
 function togglePlatform(index) {
-  if (index > 1) return;
+  if (index > 1 || isLoading) return;
 
   const p = players[index];
-
   p.platform = p.platform === "psn" ? "uplay" : "psn";
 
   console.log("SWITCH:", p);
@@ -152,9 +153,11 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
-/* 🔥 FETCH (STABIL) */
+/* FETCH (STABIL) */
 async function fetchPlayer(p) {
   try {
+    await new Promise(r => setTimeout(r, 200)); // 🔥 API entlasten
+
     const name = p.names[p.platform];
     const platform = p.platform;
 
@@ -171,7 +174,7 @@ async function fetchPlayer(p) {
 
     const data = await res.json();
 
-    if (!data || (!data.ranked && !data.casual)) {
+    if (!data || data.error) {
       console.error("INVALID DATA:", data);
       return null;
     }
@@ -253,12 +256,21 @@ function render(p, index, glowClass) {
   `;
 }
 
-/* LOAD */
+/* LOAD (FIXED) */
 async function loadStats() {
+  if (isLoading) return;
+
+  isLoading = true;
+
   const el = document.getElementById("players");
   el.innerHTML = "Loading...";
 
-  const results = await Promise.all(players.map(fetchPlayer));
+  const results = [];
+
+  for (const p of players) {
+    const data = await fetchPlayer(p); // 🔥 kein Promise.all mehr
+    results.push(data);
+  }
 
   el.innerHTML = results
     .map((p, i) =>
@@ -270,6 +282,8 @@ async function loadStats() {
       )
     )
     .join("");
+
+  isLoading = false;
 }
 
 loadStats();
