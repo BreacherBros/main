@@ -196,9 +196,17 @@ function render(p, index, glowClass) {
   <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
        style="--rank-color:${rank.color}">
 
-    <div class="operator-header">
-      <div class="operator-name">${p.username}</div>
-    </div>
+  <div class="operator-header">
+  <div class="operator-name">${p.username}</div>
+
+  ${
+    index <= 1
+      ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
+          ${p.platform === "psn" ? "PSN" : "UBISOFT"}
+        </button>`
+      : `<div class="operator-tag">${p.platform}</div>`
+  }
+</div>
 
     <div class="rank">${rank.name} • ${p.mmr || 0} MMR</div>
 
