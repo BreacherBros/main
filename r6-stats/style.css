@@ -392,3 +392,45 @@ body > *:not(#smoke-bg){
     grid-template-columns: 1fr;
   }
 }
+.home-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+
+  padding: 12px 18px;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+
+  color: #fff;
+  text-decoration: none;
+
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #00e5ff;
+  border-radius: 6px;
+
+  backdrop-filter: blur(6px);
+
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+/* Hover Effekt */
+.home-btn:hover {
+  background: #00e5ff;
+  color: #000;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 0 15px #00e5ff;
+}
+
+/* Optional: leichtes „schweben“ */
+@keyframes floatBtn {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
+.home-btn {
+  animation: floatBtn 3s ease-in-out infinite;
+}
