@@ -387,53 +387,47 @@ body > *:not(#smoke-bg){
 }
 
 /* BACK BUTTON */
-.home-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 9999;
+/* 🔥 HARD FIX BUTTON */
+#homeBtn {
+  position: fixed !important;
+  bottom: 25px !important;
+  right: 25px !important;
 
-  padding: 14px 22px;
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  font-size: 16px;
-  letter-spacing: 1px;
+  z-index: 999999 !important;
 
-  color: #00e5ff;
-  text-decoration: none;
+  padding: 14px 24px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  font-family: 'Rajdhani', sans-serif !important;
 
-  background: rgba(10, 15, 25, 0.85);
-  border: 1px solid rgba(0, 229, 255, 0.4);
-  border-radius: 8px;
+  color: #00e5ff !important;
+  background: rgba(0, 10, 20, 0.85) !important;
 
-  backdrop-filter: blur(8px);
+  border: 1px solid #00e5ff !important;
+  border-radius: 8px !important;
 
-  box-shadow: 
-    0 0 10px rgba(0, 229, 255, 0.3),
-    inset 0 0 10px rgba(0, 229, 255, 0.1);
+  text-decoration: none !important;
 
-  transition: all 0.25s ease;
+  box-shadow: 0 0 12px rgba(0,229,255,0.4) !important;
+
+  backdrop-filter: blur(6px) !important;
+
+  display: inline-block !important;
+
+  animation: floatHomeBtn 4s ease-in-out infinite !important;
 }
 
-/* Hover = nicer HUD glow */
-.home-btn:hover {
-  color: #000;
-  background: #00e5ff;
-
-  box-shadow:
-    0 0 20px #00e5ff,
-    0 0 40px rgba(0, 229, 255, 0.5);
-
-  transform: translateY(-3px) scale(1.05);
+/* Hover */
+#homeBtn:hover {
+  background: #00e5ff !important;
+  color: #000 !important;
+  transform: scale(1.05) translateY(-3px) !important;
+  box-shadow: 0 0 20px #00e5ff !important;
 }
 
-/* 🔥 leichtes Schweben */
-@keyframes floatBtn {
+/* Floating Animation */
+@keyframes floatHomeBtn {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
   100% { transform: translateY(0px); }
-}
-
-.home-btn {
-  animation: floatBtn 4s ease-in-out infinite;
 }
