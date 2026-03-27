@@ -451,20 +451,4 @@ body > *:not(#smoke-bg){
   50% { transform: translateY(-6px); }
   100% { transform: translateY(0px); }
 }
-/* 📱 MOBILE OPTIMIERUNG */
-@media (max-width: 768px) {
-  .home-btn {
-    bottom: 15px;
-    right: 15px;
 
-    padding: 10px 14px;
-    font-size: 12px;
-    gap: 6px;
-
-    border-radius: 8px;
-  }
-
-  .home-btn span:first-child {
-    font-size: 14px;
-  }
-}
