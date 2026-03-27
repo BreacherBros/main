@@ -11,7 +11,6 @@
 
 <body>
 
-<!-- ✅ HOME BUTTON RICHTIG -->
 <a href="/" class="home-btn">
   <span>HOME</span>
 </a>
@@ -155,6 +154,11 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
+function formatTime(ms) {
+  if (!ms) return "-";
+  return Math.floor(ms / 3600000) + "h";
+}
+
 /* FETCH */
 async function fetchPlayer(p) {
   try {
@@ -169,9 +173,7 @@ async function fetchPlayer(p) {
 
     const data = await res.json();
 
-    if (!data || data.error) {
-      return null;
-    }
+    if (!data || data.error) return null;
 
     return {
       ...(currentMode === "ranked" ? data.ranked : data.casual),
@@ -179,24 +181,69 @@ async function fetchPlayer(p) {
       user: p.user
     };
 
-  } catch (err) {
+  } catch {
     return null;
   }
 }
 
-/* RENDER */
+/* RENDER (FULL UPGRADE) */
 function render(p, index, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
 
   const rank = getRankFromMMR(p.mmr);
 
   return `
-  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}">
-    <div class="operator-name">${p.username}</div>
-    <div>${p.kd} KD</div>
-    <div>HS: ${p.hsRate ?? "-"}%</div>
-    <div>K/M: ${p.kpm ?? "-"}</div>
-    <div>CLUTCHES: ${p.clutches ?? "-"}</div>
+  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
+       style="--rank-color:${rank.color}">
+
+    <div class="operator-header">
+      <div class="operator-name">${p.username}</div>
+    </div>
+
+    <div class="rank">${rank.name} • ${p.mmr || 0} MMR</div>
+
+    <div class="kd-value" style="color:${getKDColor(p.kd)}">
+      ${p.kd || "0.00"} KD
+    </div>
+
+    <div class="stats-grid">
+
+      <div class="stat-box">
+        <div class="stat-label">WINRATE</div>
+        <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">HS RATE</div>
+        <div class="stat-value">${p.hsRate ?? "-"}%</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">K/MATCH</div>
+        <div class="stat-value">${p.kpm ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">ASSISTS</div>
+        <div class="stat-value">${p.assists ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">CLUTCHES</div>
+        <div class="stat-value">${p.clutches ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">FIRST BLOODS</div>
+        <div class="stat-value">${p.firstBloods ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">PLAYTIME</div>
+        <div class="stat-value">${formatTime(p.playtime)}</div>
+      </div>
+
+    </div>
   </div>
   `;
 }
@@ -219,7 +266,16 @@ async function loadStats() {
     results.push(await fetchPlayer(p));
   }
 
-  el.innerHTML = results.map(render).join("");
+  el.innerHTML = results
+    .map((p, i) =>
+      render(
+        p,
+        i,
+        i === 0 ? "operator-glow-blue" :
+        i === 1 ? "operator-glow-orange" : ""
+      )
+    )
+    .join("");
 
   isLoading = false;
 
