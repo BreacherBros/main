@@ -83,7 +83,12 @@ function setActive(id) {
 
 /* ADD PLAYER */
 function searchPlayer() {
-  if (isLoading) return; // 🔥 verhindert Spam
+  if (isLoading) {
+  console.log("⛔ BLOCKED duplicate load");
+  return;
+}
+
+isLoading = true; // 🔥 verhindert Spam
 
   const name = playerInput.value.trim();
   const platform = platformSelect.value;
@@ -117,7 +122,7 @@ function getRankFromMMR(mmr) {
   if (!mmr) return { name: "UNRANKED", color: "#777" };
 
   const tiers = [
-    { name: "COPPER", color: "#cd7f32" },
+    { name: "COPPER", color: "#a52019" },
     { name: "BRONZE", color: "#a97142" },
     { name: "SILVER", color: "#c0c0c0" },
     { name: "GOLD", color: "#ffd700" },
@@ -174,10 +179,22 @@ async function fetchPlayer(p) {
 
     const data = await res.json();
 
-    if (!data || data.error) {
-      console.error("INVALID DATA:", data);
-      return null;
-    }
+  if (!data || data.error) {
+  console.error("INVALID DATA:", data);
+
+  return {
+    username: p.names[p.platform],
+    kd: 0,
+    kills: 0,
+    deaths: 0,
+    wins: 0,
+    losses: 0,
+    mmr: 0,
+    platform: p.platform,
+    user: p.user,
+    error: true
+  };
+}
 
     return {
       ...(currentMode === "ranked" ? data.ranked : data.casual),
