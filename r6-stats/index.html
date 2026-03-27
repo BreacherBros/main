@@ -11,9 +11,6 @@
 
 <body>
 
-<a href="/" class="home-btn">
-  <span>HOME</span>
-</a>
 
 <div id="smoke-bg">
   <div class="fog-layer"></div>
@@ -110,6 +107,8 @@ function togglePlatform(index) {
   const p = players[index];
   p.platform = p.platform === "psn" ? "uplay" : "psn";
 
+  console.log("SWITCH:", p);
+
   loadStats();
 }
 
@@ -154,13 +153,7 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
-function formatTime(ms) {
-  if (!ms) return "-";
-  return Math.floor(ms / 3600000) + "h";
-}
-
 /* FETCH */
-
 async function fetchPlayer(p) {
   try {
     await new Promise(r => setTimeout(r, 200));
@@ -168,47 +161,35 @@ async function fetchPlayer(p) {
     const name = p.names[p.platform];
     const platform = p.platform;
 
+    console.log("REQUEST:", name, platform);
+
     const res = await fetch(
       `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${platform}`
     );
 
-    const data = await res.json();
-
-    if (!data) return null;
-
-    // 🔥 FALLBACK FIX
-    let selectedData = null;
-
-    if (currentMode === "ranked") {
-      selectedData = data.ranked || data.casual;
-    } else {
-      selectedData = data.casual || data.ranked;
+    if (!res.ok) {
+      console.error("API ERROR:", res.status);
+      return null;
     }
 
-    if (!selectedData) {
+    const data = await res.json();
+
+    if (!data || data.error) {
       return {
-        username: name,
+        username: p.names[p.platform],
         kd: 0,
         kills: 0,
         deaths: 0,
         wins: 0,
         losses: 0,
         mmr: 0,
-
-        hsRate: 0,
-        kpm: 0,
-        assists: 0,
-        clutches: 0,
-        firstBloods: 0,
-        playtime: 0,
-
-        platform: platform,
+        platform: p.platform,
         user: p.user
       };
     }
 
     return {
-      ...selectedData,
+      ...(currentMode === "ranked" ? data.ranked : data.casual),
       platform: p.platform,
       user: p.user
     };
@@ -218,19 +199,8 @@ async function fetchPlayer(p) {
     return null;
   }
 }
-  
-  return {
-      ...(currentMode === "ranked" ? data.ranked : data.casual),
-      platform: p.platform,
-      user: p.user
-    };
 
-  } catch {
-    return null;
-  }
-}
-
-/* RENDER (FULL UPGRADE) */
+/* RENDER (FIXED FULL STATS) */
 function render(p, index, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
 
@@ -240,67 +210,62 @@ function render(p, index, glowClass) {
   <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
        style="--rank-color:${rank.color}">
 
-  <div class="operator-header">
-  <div class="operator-name">${p.username}</div>
+    <div class="star-layer"></div>
 
-  ${
-    index <= 1
-      ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
-          ${p.platform === "psn" ? "PSN" : "UBISOFT"}
-        </button>`
-      : `<div class="operator-tag">${p.platform}</div>`
-  }
-</div>
+    <div class="operator-header">
+      <div class="operator-name">${p.username || "UNKNOWN"}</div>
 
-    <div class="rank">${rank.name} • ${p.mmr || 0} MMR</div>
+      ${
+        index <= 1
+          ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
+              ${p.platform === "psn" ? "PSN" : "UBISOFT"}
+            </button>`
+          : `<div class="operator-tag">${p.platform}</div>`
+      }
+    </div>
+
+    <div class="rank" style="color:${rank.color}">
+      ${rank.name} • ${p.mmr || 0} MMR
+    </div>
 
     <div class="kd-value" style="color:${getKDColor(p.kd)}">
       ${p.kd || "0.00"} KD
     </div>
 
-    <div class="stats-grid">
+    <div class="section-title">COMBAT</div>
 
+    <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-label">WINRATE</div>
         <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
       </div>
 
       <div class="stat-box">
-        <div class="stat-label">HS RATE</div>
-        <div class="stat-value">${p.hsRate ?? "-"}%</div>
+        <div class="stat-label">KILLS</div>
+        <div class="stat-value">${p.kills ?? "-"}</div>
       </div>
 
       <div class="stat-box">
-        <div class="stat-label">K/MATCH</div>
-        <div class="stat-value">${p.kpm ?? "-"}</div>
+        <div class="stat-label">DEATHS</div>
+        <div class="stat-value">${p.deaths ?? "-"}</div>
       </div>
 
       <div class="stat-box">
-        <div class="stat-label">ASSISTS</div>
-        <div class="stat-value">${p.assists ?? "-"}</div>
+        <div class="stat-label">WINS</div>
+        <div class="stat-value">${p.wins ?? "-"}</div>
       </div>
 
       <div class="stat-box">
-        <div class="stat-label">CLUTCHES</div>
-        <div class="stat-value">${p.clutches ?? "-"}</div>
+        <div class="stat-label">LOSSES</div>
+        <div class="stat-value">${p.losses ?? "-"}</div>
       </div>
-
-      <div class="stat-box">
-        <div class="stat-label">FIRST BLOODS</div>
-        <div class="stat-value">${p.firstBloods ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">PLAYTIME</div>
-        <div class="stat-value">${formatTime(p.playtime)}</div>
-      </div>
-
     </div>
+
   </div>
   `;
 }
 
-/* LOAD */
+/* LOAD (QUEUE SYSTEM) */
 async function loadStats() {
   if (isLoading) {
     reloadQueued = true;
@@ -315,7 +280,8 @@ async function loadStats() {
   const results = [];
 
   for (const p of players) {
-    results.push(await fetchPlayer(p));
+    const data = await fetchPlayer(p);
+    results.push(data);
   }
 
   el.innerHTML = results
@@ -341,4 +307,9 @@ loadStats();
 </script>
 
 </body>
+
+  <body>
+
+<a href="/" id="homeBtn">HOME</a>
+    
 </html>
