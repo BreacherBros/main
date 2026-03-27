@@ -247,8 +247,8 @@ body > *:not(#smoke-bg){
     radial-gradient(circle at 70% 30%, var(--rank-color) 1.5px, transparent 10px),
     radial-gradient(circle at 40% 80%, var(--rank-color) 2px, transparent 10px);
 
-  animation: starFlash1 1.5s infinite ease-in-out;
-  filter: blur(0.8px);
+  animation: starFlash1 1.3s infinite ease-in-out;
+  filter: blur(1.2px);
 }
 
 .operator-card .star-layer {
@@ -260,7 +260,7 @@ body > *:not(#smoke-bg){
     radial-gradient(circle at 80% 60%, var(--rank-color) 2px, transparent 10px);
 
   animation: starFlash2 2s infinite ease-in-out;
-  filter: blur(1.2px);
+  filter: blur(1.6px);
 }
 
 .operator-card .star-layer::after {
@@ -336,26 +336,13 @@ body > *:not(#smoke-bg){
 /* 📱 RESPONSIVE DESIGN */
 /* ============================= */
 
-/* TABLET */
-@media (max-width: 1000px) {
-  .operators-grid {
-    grid-template-columns: 1fr;
-    padding: 20px;
-  }
 
-  .operator-card {
-    padding: 20px;
-  }
-}
 /* BACK BUTTON */
-
-/* 🔥 HOME BUTTON FINAL STYLE */
 .home-btn {
-  position: fixed !important;
-  bottom: 25px !important;
-  right: 25px !important;
-
-  z-index: 99999;
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 9999;
 
   display: flex;
   align-items: center;
@@ -366,15 +353,16 @@ body > *:not(#smoke-bg){
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
   font-size: 14px;
+  letter-spacing: 1px;
 
-  color: #00e5ff !important;
-  text-decoration: none !important;
+  color: #00e5ff;
+  text-decoration: none;
 
   background: linear-gradient(
     135deg,
     rgba(10, 20, 40, 0.9),
     rgba(0, 10, 25, 0.95)
-  ) !important;
+  );
 
   border: 1px solid rgba(0, 229, 255, 0.4);
   border-radius: 10px;
@@ -390,10 +378,10 @@ body > *:not(#smoke-bg){
   animation: floatBtn 4s ease-in-out infinite;
 }
 
-/* Hover */
+/* Hover Effekt */
 .home-btn:hover {
-  color: #000 !important;
-  background: #00e5ff !important;
+  color: #000;
+  background: #00e5ff;
 
   box-shadow:
     0 0 20px #00e5ff,
@@ -402,17 +390,19 @@ body > *:not(#smoke-bg){
   transform: translateY(-4px) scale(1.05);
 }
 
-/* Icon */
+/* Icon etwas größer */
 .home-btn span:first-child {
   font-size: 16px;
 }
 
-/* Floating Animation */
+/* 🔥 Floating Animation */
 @keyframes floatBtn {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
   100% { transform: translateY(0px); }
 }
+
+
 /* MOBILE */
 @media (max-width: 600px) {
   .hud-header h1 {
@@ -451,3 +441,14 @@ body > *:not(#smoke-bg){
   }
 }
 
+/* TABLET */
+@media (max-width: 1000px) {
+  .operators-grid {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .operator-card {
+    padding: 20px;
+  }
+}
