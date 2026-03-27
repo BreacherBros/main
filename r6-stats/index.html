@@ -47,7 +47,8 @@
 const API = "https://r6-api-backend.onrender.com/api/stats";
 
 let currentMode = "ranked";
-let isLoading = false; // 🔥 FIX
+let isLoading = false;
+let reloadQueued = false; // 🔥 QUEUE SYSTEM
 
 let players = [
   {
@@ -83,13 +84,6 @@ function setActive(id) {
 
 /* ADD PLAYER */
 function searchPlayer() {
-  if (isLoading) {
-  console.log("⛔ BLOCKED duplicate load");
-  return;
-}
-
-isLoading = true; // 🔥 verhindert Spam
-
   const name = playerInput.value.trim();
   const platform = platformSelect.value;
 
@@ -102,12 +96,12 @@ isLoading = true; // 🔥 verhindert Spam
   });
 
   playerInput.value = "";
-  loadStats();
+  loadStats(); // 🔥 wird ggf. gequeued
 }
 
 /* PLATFORM SWITCH */
 function togglePlatform(index) {
-  if (index > 1 || isLoading) return;
+  if (index > 1) return;
 
   const p = players[index];
   p.platform = p.platform === "psn" ? "uplay" : "psn";
@@ -158,10 +152,10 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
-/* FETCH (STABIL) */
+/* FETCH */
 async function fetchPlayer(p) {
   try {
-    await new Promise(r => setTimeout(r, 200)); // 🔥 API entlasten
+    await new Promise(r => setTimeout(r, 200));
 
     const name = p.names[p.platform];
     const platform = p.platform;
@@ -179,22 +173,19 @@ async function fetchPlayer(p) {
 
     const data = await res.json();
 
-  if (!data || data.error) {
-  console.error("INVALID DATA:", data);
-
-  return {
-    username: p.names[p.platform],
-    kd: 0,
-    kills: 0,
-    deaths: 0,
-    wins: 0,
-    losses: 0,
-    mmr: 0,
-    platform: p.platform,
-    user: p.user,
-    error: true
-  };
-}
+    if (!data || data.error) {
+      return {
+        username: p.names[p.platform],
+        kd: 0,
+        kills: 0,
+        deaths: 0,
+        wins: 0,
+        losses: 0,
+        mmr: 0,
+        platform: p.platform,
+        user: p.user
+      };
+    }
 
     return {
       ...(currentMode === "ranked" ? data.ranked : data.casual),
@@ -240,42 +231,16 @@ function render(p, index, glowClass) {
       ${p.kd || "0.00"} KD
     </div>
 
-    <div class="section-title">COMBAT</div>
-
-    <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-label">WINRATE</div>
-        <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">KILLS</div>
-        <div class="stat-value">${p.kills ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">DEATHS</div>
-        <div class="stat-value">${p.deaths ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">WINS</div>
-        <div class="stat-value">${p.wins ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">LOSSES</div>
-        <div class="stat-value">${p.losses ?? "-"}</div>
-      </div>
-    </div>
-
   </div>
   `;
 }
 
-/* LOAD (FIXED) */
+/* LOAD (QUEUE SYSTEM) */
 async function loadStats() {
-  if (isLoading) return;
+  if (isLoading) {
+    reloadQueued = true;
+    return;
+  }
 
   isLoading = true;
 
@@ -285,7 +250,7 @@ async function loadStats() {
   const results = [];
 
   for (const p of players) {
-    const data = await fetchPlayer(p); // 🔥 kein Promise.all mehr
+    const data = await fetchPlayer(p);
     results.push(data);
   }
 
@@ -301,6 +266,11 @@ async function loadStats() {
     .join("");
 
   isLoading = false;
+
+  if (reloadQueued) {
+    reloadQueued = false;
+    loadStats();
+  }
 }
 
 loadStats();
