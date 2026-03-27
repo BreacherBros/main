@@ -173,7 +173,30 @@ async function fetchPlayer(p) {
 
     const data = await res.json();
 
-    if (!data || data.error) return null;
+   if (!data) return null;
+
+if (data.error) {
+  return {
+    username: p.names[p.platform],
+
+    kd: 0,
+    kills: 0,
+    deaths: 0,
+    wins: 0,
+    losses: 0,
+    mmr: 0,
+
+    hsRate: 0,
+    kpm: 0,
+    assists: 0,
+    clutches: 0,
+    firstBloods: 0,
+    playtime: 0,
+
+    platform: p.platform,
+    user: p.user
+  };
+}
 
     return {
       ...(currentMode === "ranked" ? data.ranked : data.casual),
