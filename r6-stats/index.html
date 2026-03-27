@@ -8,11 +8,11 @@
 <link rel="stylesheet" href="./style.css">
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
 </head>
-  
-<a href="/" class="home-btn">← Zurück zur Homepage</a>
-  
-  
+
 <body>
+
+<!-- 🔥 FIX: Button gehört in den Body -->
+<a href="/" class="home-btn">← Zurück zur Homepage</a>
 
 <div id="smoke-bg">
   <div class="fog-layer"></div>
@@ -51,7 +51,7 @@ const API = "https://r6-api-backend.onrender.com/api/stats";
 
 let currentMode = "ranked";
 let isLoading = false;
-let reloadQueued = false; // 🔥 QUEUE SYSTEM
+let reloadQueued = false;
 
 let players = [
   {
@@ -99,7 +99,7 @@ function searchPlayer() {
   });
 
   playerInput.value = "";
-  loadStats(); // 🔥 wird ggf. gequeued
+  loadStats();
 }
 
 /* PLATFORM SWITCH */
@@ -151,7 +151,7 @@ function getKDColor(kd) {
 }
 
 function getWinrate(w, l) {
-  if (!w || !l) return "-";
+  if (w == null || l == null) return "-";
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
@@ -202,7 +202,7 @@ async function fetchPlayer(p) {
   }
 }
 
-/* RENDER */
+/* RENDER (FIXED FULL STATS) */
 function render(p, index, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
 
@@ -232,6 +232,35 @@ function render(p, index, glowClass) {
 
     <div class="kd-value" style="color:${getKDColor(p.kd)}">
       ${p.kd || "0.00"} KD
+    </div>
+
+    <div class="section-title">COMBAT</div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">WINRATE</div>
+        <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">KILLS</div>
+        <div class="stat-value">${p.kills ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">DEATHS</div>
+        <div class="stat-value">${p.deaths ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">WINS</div>
+        <div class="stat-value">${p.wins ?? "-"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">LOSSES</div>
+        <div class="stat-value">${p.losses ?? "-"}</div>
+      </div>
     </div>
 
   </div>
