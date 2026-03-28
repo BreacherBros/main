@@ -336,6 +336,10 @@ body > *:not(#smoke-bg){
 
   animation: floatBtn 4s ease-in-out infinite;
 }
+.home-btn {
+  display: inline-flex;   /* 🔥 wichtig */
+  width: auto;            /* 🔥 verhindert Full-Width */
+}
 
 /* Hover Effekt */
 .home-btn:hover {
