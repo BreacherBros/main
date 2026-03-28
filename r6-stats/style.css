@@ -301,18 +301,18 @@ body > *:not(#smoke-bg){
   position: fixed;
   bottom: 30px;
   right: 30px;
-  z-index: 9999;
+  z-index: 99999;
 
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 
-  padding: 12px 18px;
+  width: auto;
+  padding: 14px 20px;
 
   font-family: 'Rajdhani', sans-serif;
   font-weight: 700;
   font-size: 14px;
-  letter-spacing: 1px;
 
   color: #00e5ff;
   text-decoration: none;
@@ -324,23 +324,17 @@ body > *:not(#smoke-bg){
   );
 
   border: 1px solid rgba(0, 229, 255, 0.4);
-  border-radius: 10px;
+  border-radius: 12px;
 
   backdrop-filter: blur(8px);
 
   box-shadow:
-    0 0 10px rgba(0, 229, 255, 0.3),
-    inset 0 0 8px rgba(0, 229, 255, 0.1);
+    0 0 12px rgba(0, 229, 255, 0.3),
+    inset 0 0 10px rgba(0, 229, 255, 0.15);
 
   transition: all 0.25s ease;
-
   animation: floatBtn 4s ease-in-out infinite;
 }
-.home-btn {
-  display: inline-flex;   /* 🔥 wichtig */
-  width: auto;            /* 🔥 verhindert Full-Width */
-}
-
 /* Hover Effekt */
 .home-btn:hover {
   color: #000;
