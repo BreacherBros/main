@@ -229,3 +229,20 @@ body > *:not(#smoke-bg):not(.home-btn){
     bottom: 20px;
   }
 }
+
+.peak-rank {
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 13px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  text-shadow: 0 0 10px currentColor;
+}
+
+.peak-rank img {
+  width: 20px;
+  height: 20px;
+}
