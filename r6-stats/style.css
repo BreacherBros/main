@@ -294,47 +294,6 @@ body > *:not(#smoke-bg){
   50% { opacity:1; transform:scale(1.4); }
 }
 
-/* ============================= */
-/* BUTTON FIX */
-/* ============================= */
-
-.platform-toggle {
-  position: relative;
-  z-index: 5;
-  background: rgba(0,200,255,0.15);
-  border: 1px solid rgba(0,200,255,0.4);
-  color: #00c8ff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.7rem;
-}
-
-.platform-toggle:hover {
-  background: rgba(0,200,255,0.3);
-  box-shadow: 0 0 15px rgba(0,200,255,0.5);
-}
-
-/* ============================= */
-/* TEXT */
-/* ============================= */
-
-.operator-name {
-  font-size: 1.4rem;
-}
-
-.rank {
-  text-shadow: 0 0 12px currentColor;
-}
-
-.kd-value {
-  font-size: 32px;
-  font-weight: bold;
-}
-
-/* ============================= */
-/* 📱 RESPONSIVE DESIGN */
-/* ============================= */
 
 
 /* BACK BUTTON */
