@@ -224,9 +224,21 @@ function render(p, index, glowClass) {
       }
     </div>
 
+    <!-- 🔥 CURRENT RANK -->
     <div class="rank" style="color:${rank.color}">
       ${rank.name} • ${p.mmr || 0} MMR
     </div>
+
+    <!-- 🔥 PEAK RANK (JETZT RICHTIG) -->
+    ${
+      p.bestRank
+        ? `
+        <div class="peak-rank" style="color:${p.bestRankColor}">
+          🏆 ${p.bestRank} • ${p.bestMMR}
+        </div>
+      `
+        : ""
+    }
 
     <div class="kd-value" style="color:${getKDColor(p.kd)}">
       ${p.kd || "0.00"} KD
