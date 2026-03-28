@@ -301,7 +301,7 @@ body > *:not(#smoke-bg){
   position: fixed;
   bottom: 30px;
   right: 30px;
-  z-index: 99999;
+  z-index: 999;
 
   display: inline-flex;
   align-items: center;
