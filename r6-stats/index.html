@@ -230,16 +230,17 @@ function render(p, index, glowClass) {
     </div>
 
     <!-- 🔥 PEAK RANK (JETZT RICHTIG) -->
-  ${
-  p.bestRank
+ 
+ ${
+  p.bestRank && p.bestMMR
     ? `
     <div class="peak-rank" style="color:${p.bestRankColor}">
       🏆 ${p.bestRank} • ${p.bestMMR}
     </div>
   `
-    : `<div class="peak-rank">No Peak Data</div>`
+    : ""
 }
-
+   
     <div class="kd-value" style="color:${getKDColor(p.kd)}">
       ${p.kd || "0.00"} KD
     </div>
