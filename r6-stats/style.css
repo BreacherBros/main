@@ -300,7 +300,7 @@ body > *:not(#smoke-bg){
 .home-btn {
   position: fixed;
   bottom: 30px;
-  right: 30px;
+  right: 20px;
   z-index: 999;
 
   display: inline-flex;
