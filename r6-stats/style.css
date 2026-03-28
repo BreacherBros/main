@@ -57,51 +57,6 @@ body {
   animation: smokeOrange 80s linear infinite;
 }
 
-/* DEPTH */
-#smoke-bg .fog-layer{
-  position: absolute;
-  inset: -60%;
-  background: radial-gradient(circle, rgba(255,255,255,0.05), transparent 60%);
-  animation: fogDrift 140s linear infinite;
-}
-
-/* ENERGY FLOW */
-#smoke-bg .energy-layer{
-  position: absolute;
-  inset: -60%;
-  background:
-    linear-gradient(120deg,
-      transparent,
-      rgba(0,220,255,0.15),
-      transparent,
-      rgba(255,120,0,0.1),
-      transparent);
-  animation: energyFlow 60s linear infinite;
-}
-
-/* PARALLAX */
-#smoke-bg .parallax-layer{
-  position: absolute;
-  inset: -70%;
-  background:
-    radial-gradient(circle at 60% 40%, rgba(0,200,255,0.2), transparent 60%),
-    radial-gradient(circle at 40% 70%, rgba(255,120,0,0.2), transparent 65%);
-  animation: parallaxDrift 120s linear infinite;
-}
-
-/* NOISE */
-#smoke-bg .noise-layer{
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-radial-gradient(circle,
-      rgba(255,255,255,0.02) 0px,
-      rgba(255,255,255,0.02) 1px,
-      transparent 2px,
-      transparent 4px);
-  opacity: 0.12;
-}
-
 /* ============================= */
 /* ANIMATIONS */
 /* ============================= */
@@ -118,28 +73,11 @@ body {
   100% { transform: translate(30%, 30%) rotate(0deg); }
 }
 
-@keyframes fogDrift{
-  0% { transform: translate(-10%, -10%) scale(1); }
-  50% { transform: translate(10%, 5%) scale(1.05); }
-  100% { transform: translate(-10%, -10%) scale(1); }
-}
-
-@keyframes energyFlow{
-  0% { transform: translateX(-40%) rotate(0deg); }
-  100% { transform: translateX(40%) rotate(360deg); }
-}
-
-@keyframes parallaxDrift{
-  0% { transform: translate(-15%, -15%); }
-  50% { transform: translate(15%, 10%); }
-  100% { transform: translate(-15%, -15%); }
-}
-
 /* ============================= */
-/* 🔥 LAYER FIX */
+/* 🔥 LAYER FIX (WICHTIG FIXED) */
 /* ============================= */
 
-body > *:not(#smoke-bg){
+body > *:not(#smoke-bg):not(.home-btn){
   position: relative;
   z-index: 2;
 }
@@ -160,31 +98,6 @@ body > *:not(#smoke-bg){
   background: linear-gradient(90deg, #00c8ff, #ff7a00);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-/* ============================= */
-/* SWITCH */
-/* ============================= */
-
-.mode-switch {
-  display: flex;
-  justify-content: center;
-  margin: 20px auto;
-  gap: 10px;
-}
-
-.mode-switch button {
-  padding: 10px 20px;
-  border: none;
-  background: #111;
-  color: #aaa;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.mode-switch .active {
-  background: #00c3ff;
-  color: black;
 }
 
 /* ============================= */
@@ -226,88 +139,20 @@ body > *:not(#smoke-bg){
 }
 
 /* ============================= */
-/* ⭐ REAL STAR TWINKLE */
+/* 🔥 HOME BUTTON (FIXED & SAFE) */
 /* ============================= */
 
-.operator-card::before,
-.operator-card .star-layer,
-.operator-card .star-layer::after {
-  pointer-events: none;
-  mix-blend-mode: screen;
-}
-
-/* RANDOM LOOK STARS */
-.operator-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-
-  background:
-    radial-gradient(circle at 15% 25%, var(--rank-color) 2px, transparent 10px),
-    radial-gradient(circle at 70% 30%, var(--rank-color) 1.5px, transparent 10px),
-    radial-gradient(circle at 40% 80%, var(--rank-color) 2px, transparent 10px);
-
-  animation: starFlash1 1.3s infinite ease-in-out;
-  filter: blur(1.2px);
-}
-
-.operator-card .star-layer {
-  position: absolute;
-  inset: 0;
-
-  background:
-    radial-gradient(circle at 25% 70%, var(--rank-color) 2px, transparent 10px),
-    radial-gradient(circle at 80% 60%, var(--rank-color) 2px, transparent 10px);
-
-  animation: starFlash2 2s infinite ease-in-out;
-  filter: blur(1.6px);
-}
-
-.operator-card .star-layer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-
-  background:
-    radial-gradient(circle at 50% 40%, var(--rank-color) 2px, transparent 10px),
-    radial-gradient(circle at 90% 20%, var(--rank-color) 1.5px, transparent 10px);
-
-  animation: starFlash3 2.5s infinite ease-in-out;
-  filter: blur(1.5px);
-}
-
-/* ⭐ TWINKLE */
-@keyframes starFlash1 {
-  0%,100% { opacity:0; transform:scale(0.8); }
-  30% { opacity:1; transform:scale(1.3); }
-  60% { opacity:0; }
-}
-
-@keyframes starFlash2 {
-  0%,100% { opacity:0; }
-  40% { opacity:1; }
-  70% { opacity:0; }
-}
-
-@keyframes starFlash3 {
-  0%,100% { opacity:0; }
-  50% { opacity:1; transform:scale(1.4); }
-}
-
-
-
-/* BACK BUTTON */
 .home-btn {
-  position: fixed;
-  bottom: 30px;
-  right: 20px;
-  z-index: 999;
+  position: fixed !important;
+  bottom: 30px !important;
+  right: 30px !important;
+
+  z-index: 999999;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  width: auto;
   padding: 14px 20px;
 
   font-family: 'Rajdhani', sans-serif;
@@ -334,8 +179,11 @@ body > *:not(#smoke-bg){
 
   transition: all 0.25s ease;
   animation: floatBtn 4s ease-in-out infinite;
+
+  white-space: nowrap;
 }
-/* Hover Effekt */
+
+/* Hover */
 .home-btn:hover {
   color: #000;
   background: #00e5ff;
@@ -347,65 +195,37 @@ body > *:not(#smoke-bg){
   transform: translateY(-4px) scale(1.05);
 }
 
-/* Icon etwas größer */
-.home-btn span:first-child {
-  font-size: 16px;
+/* Glow Effekt */
+.home-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+
+  background: linear-gradient(90deg, #00e5ff, #ff7a00);
+  opacity: 0.2;
+  filter: blur(10px);
+  z-index: -1;
 }
 
-/* 🔥 Floating Animation */
+/* Animation */
 @keyframes floatBtn {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }
   100% { transform: translateY(0px); }
 }
 
-
+/* ============================= */
 /* MOBILE */
+/* ============================= */
+
 @media (max-width: 600px) {
-  .hud-header h1 {
-    font-size: 1.4rem;
-  }
-
-  .search-box {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 0 15px;
-  }
-
-  .search-box input,
-  .search-box select,
-  .search-box button {
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .mode-switch {
-    flex-direction: row;
-    gap: 8px;
-  }
-
-  .operator-name {
-    font-size: 1.1rem;
-  }
-
-  .kd-value {
-    font-size: 24px;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-/* TABLET */
-@media (max-width: 1000px) {
   .operators-grid {
-    grid-template-columns: 1fr;
     padding: 20px;
   }
 
-  .operator-card {
-    padding: 20px;
+  .home-btn {
+    right: 20px;
+    bottom: 20px;
   }
 }
