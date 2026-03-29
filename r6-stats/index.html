@@ -127,18 +127,19 @@ function getRankFromMMR(mmr) {
     { name: "CHAMPION", color: "#ff0000" }
   ];
 
-  // ✅ KEIN OFFSET!!!
-  let tierIndex = Math.floor(mmr / 500) - 1;
+  // 🔥 FIX: kein -2 mehr
+  let tierIndex = Math.floor((mmr - 1000) / 500);
 
   tierIndex = Math.max(0, Math.min(tierIndex, tiers.length - 1));
 
-  const division = 5 - Math.floor((mmr % 500) / 100);
+  const division = 5 - Math.floor(((mmr - 1000) % 500) / 100);
 
   return {
     name: `${tiers[tierIndex].name} ${division}`,
     color: tiers[tierIndex].color
   };
 }
+
   
 /* HELPERS */
 function getKDColor(kd) {
