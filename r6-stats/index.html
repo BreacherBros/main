@@ -188,6 +188,29 @@ async function fetchPlayer(p) {
       };
     }
 
+    /* 🔥 NEU: MODE DATA */
+    const modeData = currentMode === "ranked"
+      ? data.ranked
+      : data.casual;
+
+    return {
+      ...modeData,
+
+      /* 🔥 PEAK FIX (IMMER AUS RANKED!) */
+      bestRank: data.ranked?.bestRank || null,
+      bestMMR: data.ranked?.bestMMR || null,
+      bestRankColor: data.ranked?.bestRankColor || null,
+
+      platform: p.platform,
+      user: p.user
+    };
+
+  } catch (err) {
+    console.error("Fetch Fehler:", err);
+    return null;
+  }
+}
+
     return {
       ...(currentMode === "ranked" ? data.ranked : data.casual),
       platform: p.platform,
