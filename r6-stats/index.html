@@ -1,5 +1,3 @@
-MAIN
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -226,10 +224,23 @@ function render(p, index, glowClass) {
       }
     </div>
 
+    <!-- 🔥 CURRENT RANK -->
     <div class="rank" style="color:${rank.color}">
       ${rank.name} • ${p.mmr || 0} MMR
     </div>
 
+    <!-- 🔥 PEAK RANK (JETZT RICHTIG) -->
+ 
+ ${
+  p.bestRank && p.bestMMR
+    ? `
+    <div class="peak-rank" style="color:${p.bestRankColor}">
+      🏆 ${p.bestRank} • ${p.bestMMR}
+    </div>
+  `
+    : ""
+}
+   
     <div class="kd-value" style="color:${getKDColor(p.kd)}">
       ${p.kd || "0.00"} KD
     </div>
@@ -310,8 +321,10 @@ loadStats();
 
 </body>
 
-  <body>
 
-<a href="/" id="homeBtn">HOME</a>
+
+<a href="/" class="home-btn">
+  <span>HOME</span>
+</a>
     
 </html>
