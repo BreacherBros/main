@@ -188,11 +188,19 @@ async function fetchPlayer(p) {
       };
     }
 
-    return {
-      ...(currentMode === "ranked" ? data.ranked : data.casual),
-      platform: p.platform,
-      user: p.user
-    };
+  const modeData = currentMode === "ranked" ? data.ranked : data.casual;
+
+return {
+  ...modeData,
+
+  // 🔥 PEAK RANK FIX
+  bestRank: data.ranked?.maxRank,
+  bestMMR: data.ranked?.maxRankPoints,
+  bestRankColor: getRankFromMMR(data.ranked?.maxRankPoints).color,
+
+  platform: p.platform,
+  user: p.user
+};
 
   } catch (err) {
     console.error("Fetch Fehler:", err);
