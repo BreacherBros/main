@@ -173,7 +173,7 @@ async function fetchPlayer(p) {
     }
 
     const data = await res.json();
-    console.log("FULL DATA:", data);
+   console.log("FULL DATA:", JSON.stringify(data, null, 2));
 
     if (!data || data.error) {
       return {
