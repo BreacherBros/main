@@ -173,6 +173,8 @@ async function fetchPlayer(p) {
     }
 
     const data = await res.json();
+    console.log("FULL API:", data);
+console.log("PEAK CHECK:", data.ranked?.bestRank, data.ranked?.bestMMR);
 
     if (!data || data.error) {
       return {
