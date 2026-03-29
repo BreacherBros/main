@@ -11,27 +11,16 @@
 
 <body>
 
-
-<div id="smoke-bg">
-  <div class="fog-layer"></div>
-  <div class="energy-layer"></div>
-  <div class="noise-layer"></div>
-  <div class="parallax-layer"></div>
-</div>
-
 <header class="hud-header">
   <h1>R6 OPERATOR STATS</h1>
-  <span class="hud-sub">LIVE COMBAT DATA</span>
 </header>
 
 <div class="search-box">
   <input id="playerInput" placeholder="Gamertag eingeben">
-  
   <select id="platformSelect">
     <option value="psn">PSN</option>
     <option value="uplay">UBISOFT</option>
   </select>
-
   <button onclick="searchPlayer()">ADD PLAYER</button>
 </div>
 
@@ -40,48 +29,39 @@
   <button id="casualBtn">UNRANKED</button>
 </div>
 
-<main class="hud-dashboard">
-  <div class="operators-grid" id="players"></div>
-</main>
+<div id="players"></div>
 
 <script>
 const API = "https://r6-api-backend.onrender.com/api/stats";
 
+const rankedBtn = document.getElementById("rankedBtn");
+const casualBtn = document.getElementById("casualBtn");
+const playerInput = document.getElementById("playerInput");
+const platformSelect = document.getElementById("platformSelect");
+
 let currentMode = "ranked";
-let isLoading = false;
-let reloadQueued = false;
 
 let players = [
   {
     names: { psn: "BB_Pater_Odor", uplay: "BB_Pater_Odor" },
-    platform: "psn",
-    user: false
+    platform: "psn"
   },
   {
     names: { psn: "SomaRay_Jr", uplay: "BB_SomaRay" },
-    platform: "psn",
-    user: false
+    platform: "psn"
   }
 ];
 
-/* MODE SWITCH */
+/* MODE */
 rankedBtn.onclick = () => {
   currentMode = "ranked";
-  setActive("rankedBtn");
   loadStats();
 };
 
 casualBtn.onclick = () => {
   currentMode = "casual";
-  setActive("casualBtn");
   loadStats();
 };
-
-function setActive(id) {
-  rankedBtn.classList.remove("active");
-  casualBtn.classList.remove("active");
-  document.getElementById(id).classList.add("active");
-}
 
 /* ADD PLAYER */
 function searchPlayer() {
@@ -92,307 +72,38 @@ function searchPlayer() {
 
   players.push({
     names: { psn: name, uplay: name },
-    platform,
-    user: true
+    platform
   });
 
   playerInput.value = "";
   loadStats();
 }
 
-/* PLATFORM SWITCH */
-function togglePlatform(index) {
-  if (index > 1) return;
-
-  const p = players[index];
-  p.platform = p.platform === "psn" ? "uplay" : "psn";
-
-  console.log("SWITCH:", p);
-
-  loadStats();
-}
-
-/* RANK SYSTEM */
-function getRankFromMMR(mmr) {
-  if (!mmr) return { name: "UNRANKED", color: "#777" };
-
-  const tiers = [
-    { name: "COPPER", color: "#a52019" },
-    { name: "BRONZE", color: "#a97142" },
-    { name: "SILVER", color: "#c0c0c0" },
-    { name: "GOLD", color: "#ffd700" },
-    { name: "PLATINUM", color: "#4fc3f7" },
-    { name: "EMERALD", color: "#00ff88" },
-    { name: "DIAMOND", color: "#00e5ff" }
-  ];
-
-  let i = Math.floor(mmr / 500) - 2;
-  i = Math.max(0, Math.min(i, tiers.length - 1));
-
-  const div = 5 - Math.floor((mmr % 500) / 100);
-
-  return {
-    name: `${tiers[i].name} ${div}`,
-    color: tiers[i].color
-  };
-}
-
-/* HELPERS */
-function getKDColor(kd) {
-  if (!kd) return "#aaa";
-  kd = parseFloat(kd);
-
-  if (kd >= 1.5) return "#00ff88";
-  if (kd >= 1.2) return "#4caf50";
-  if (kd >= 1.0) return "#ff9800";
-  return "#f44336";
-}
-
-function getWinrate(w, l) {
-  if (w == null || l == null) return "-";
-  return ((w / (w + l)) * 100).toFixed(1);
-}
-
 /* FETCH */
-import express from "express";
-import fetch from "node-fetch";
-import cors from "cors";
-import youtubeRoutes from "./youtube.js";
-import tiktokRoutes from "./tiktok.js";
-
-const app = express();
-
-/* ============================= */
-/* 🔥 CORS */
-/* ============================= */
-app.use(cors({
-  origin: (origin, callback) => {
-    const allowed = [
-      "https://breacherbros.com",
-      "https://www.breacherbros.com"
-    ];
-
-    if (!origin || allowed.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log("❌ Blocked by CORS:", origin);
-      callback(null, true);
-    }
-  }
-}));
-
-app.use(express.json());
-
-app.use("/api", youtubeRoutes);
-app.use("/api", tiktokRoutes);
-
-app.get("/", (req, res) => {
-  res.send("Backend running");
-});
-
-const API_KEY = process.env.API_KEY;
-
-/* ============================= */
-/* 🔥 PEAK FUNCTION */
-/* ============================= */
-function getHighestRank(historyArray) {
-  if (!Array.isArray(historyArray) || historyArray.length === 0) {
-    return null;
-  }
-
-  let best = null;
-
-  for (const entry of historyArray) {
-    const data = entry?.[1];
-
-    if (!data || typeof data.value !== "number") continue;
-
-    if (!best || data.value > best.value) {
-      best = data;
-    }
-  }
-
-  if (!best) return null;
-
-  return {
-    mmr: best.value,
-    rank: best.metadata?.rank || "UNKNOWN",
-    image: best.metadata?.imageUrl || null,
-    color: best.metadata?.color || "#fff"
-  };
-}
-
-/* ============================= */
-/* 🔥 HELPERS */
-/* ============================= */
-const calcKD = (k, d) => {
-  if (!k || !d || d === 0) return null;
-  return (k / d).toFixed(2);
-};
-
-const getRankName = (rank) => {
-  if (rank == null) return "UNRANKED";
-  if (rank >= 25) return "CHAMPION";
-  if (rank >= 20) return "DIAMOND";
-  if (rank >= 15) return "EMERALD";
-  if (rank >= 10) return "PLATINUM";
-  if (rank >= 5) return "GOLD";
-  return "SILVER";
-};
-
-/* ============================= */
-/* 🔥 API */
-/* ============================= */
-app.get("/api/stats", async (req, res) => {
+async function fetchPlayer(p) {
   try {
-    const { nameOnPlatform, platformType } = req.query;
+    const name = p.names[p.platform];
 
-    if (!nameOnPlatform || !platformType) {
-      return res.status(400).json({ error: "Missing parameters" });
-    }
-
-    if (!API_KEY) {
-      return res.status(500).json({ error: "API KEY missing" });
-    }
-
-    const platformMap = {
-      psn: "psn",
-      xbox: "xbl",
-      xbl: "xbl",
-      pc: "uplay",
-      uplay: "uplay"
-    };
-
-    const apiPlatform = platformMap[platformType.toLowerCase()];
-    if (!apiPlatform) {
-      return res.status(400).json({ error: "Invalid platform" });
-    }
-
-    const isPC = apiPlatform === "uplay";
-
-    const statsUrl = `https://r6data.eu/api/stats?type=stats&nameOnPlatform=${encodeURIComponent(nameOnPlatform)}&platformType=${apiPlatform}&platform_families=${isPC ? "pc" : "console"}`;
-
-    const historyUrl = `https://r6data.eu/api/stats?type=history&nameOnPlatform=${encodeURIComponent(nameOnPlatform)}&platformType=${apiPlatform}`;
-
-    /* ============================= */
-    /* 🔥 PARALLEL FETCH */
-/* ============================= */
-    const [statsRes, historyRes] = await Promise.all([
-      fetch(statsUrl, { headers: { "api-key": API_KEY } }),
-      fetch(historyUrl, { headers: { "api-key": API_KEY } }).catch(() => null)
-    ]);
-
-    const statsData = await statsRes.json();
-
-    if (!statsRes.ok || !statsData?.platform_families_full_profiles) {
-      return res.json({ ranked: null, casual: null });
-    }
-
-    /* ============================= */
-    /* 🔥 PEAK FIX */
-/* ============================= */
-    let bestRank = null;
-
-    if (historyRes) {
-      try {
-        const historyJson = await historyRes.json();
-
-        const historyArray =
-          historyJson?.data?.history?.data ||
-          historyJson?.history?.data ||
-          [];
-
-        bestRank = getHighestRank(historyArray);
-
-        console.log("🔥 PEAK:", bestRank); // DEBUG
-      } catch (e) {
-        console.log("⚠️ History parsing failed");
-      }
-    }
-
-    /* ============================= */
-    /* 🔥 PARSE DATA */
-/* ============================= */
-    const root = statsData.platform_families_full_profiles[0];
-    const boards = root?.board_ids_full_profiles || [];
-
-    const rankedBoard = boards.find(b =>
-      ["pvp_ranked", "ranked"].includes(b.board_id)
+    const res = await fetch(
+      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${p.platform}`
     );
 
-    const casualBoard = boards.find(b =>
-      ["pvp_casual", "standard"].includes(b.board_id)
-    );
+    const data = await res.json();
 
-    const rankedProfile = rankedBoard?.full_profiles?.[0]?.profile || {};
-    const rankedStats = rankedBoard?.full_profiles?.[0]?.season_statistics || {};
+    console.log("API DATA:", data);
 
-    const casualProfile = casualBoard?.full_profiles?.[0]?.profile || {};
-    const casualStats = casualBoard?.full_profiles?.[0]?.season_statistics || {};
+    const modeData = currentMode === "ranked"
+      ? data.ranked
+      : data.casual;
 
-    /* ============================= */
-    /* 🔥 OUTPUT */
-/* ============================= */
-    const ranked = {
-      username: nameOnPlatform,
-      platform: apiPlatform.toUpperCase(),
+    return {
+      ...modeData,
 
-      kills: rankedStats.kills ?? rankedProfile.kills ?? 0,
-      deaths: rankedStats.deaths ?? rankedProfile.deaths ?? 0,
-      kd: calcKD(
-        rankedStats.kills ?? rankedProfile.kills,
-        rankedStats.deaths ?? rankedProfile.deaths
-      ),
-
-      wins: rankedStats.match_outcomes?.wins ?? rankedProfile.wins ?? 0,
-      losses: rankedStats.match_outcomes?.losses ?? rankedProfile.losses ?? 0,
-
-      rank: getRankName(rankedProfile.rank),
-      mmr: rankedProfile.rank_points ?? 0,
-
-      /* 🔥 FIXED PEAK */
-      bestRank: bestRank?.rank || null,
-      bestMMR: bestRank?.mmr || null,
-      bestRankImg: bestRank?.image || null,
-      bestRankColor: bestRank?.color || null
+      /* 🔥 PEAK KOMMT IMMER AUS RANKED */
+      bestRank: data.ranked?.bestRank,
+      bestMMR: data.ranked?.bestMMR,
+      bestRankColor: data.ranked?.bestRankColor || "#ffd700"
     };
-
-    const casual = {
-      username: nameOnPlatform,
-      platform: apiPlatform.toUpperCase(),
-
-      kills: casualStats.kills ?? casualProfile.kills ?? 0,
-      deaths: casualStats.deaths ?? casualProfile.deaths ?? 0,
-      kd: calcKD(
-        casualStats.kills ?? casualProfile.kills,
-        casualStats.deaths ?? casualProfile.deaths
-      ),
-
-      wins: casualStats.match_outcomes?.wins ?? casualProfile.wins ?? 0,
-      losses: casualStats.match_outcomes?.losses ?? casualProfile.losses ?? 0,
-
-      rank: "UNRANKED",
-      mmr: null
-    };
-
-    res.setHeader("Cache-Control", "no-store");
-    res.json({ ranked, casual });
-
-  } catch (err) {
-    console.error("❌ BACKEND CRASH:", err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-/* ============================= */
-/* 🔥 START */
-/* ============================= */
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Backend running on port", PORT);
-});
-
- 
 
   } catch (err) {
     console.error("Fetch Fehler:", err);
@@ -400,131 +111,45 @@ app.listen(PORT, () => {
   }
 }
 
-/* RENDER (FIXED FULL STATS) */
-function render(p, index, glowClass) {
-  if (!p) return `<div class="operator-card">NO DATA</div>`;
-
-  const rank = getRankFromMMR(p.mmr);
+/* RENDER */
+function render(p) {
+  if (!p) return `<div>NO DATA</div>`;
 
   return `
-  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
-       style="--rank-color:${rank.color}">
+    <div style="border:1px solid #444; padding:15px; margin:10px;">
+      <h2>${p.username}</h2>
 
-    <div class="star-layer"></div>
-
-    <div class="operator-header">
-      <div class="operator-name">${p.username || "UNKNOWN"}</div>
+      <div>MMR: ${p.mmr || 0}</div>
 
       ${
-        index <= 1
-          ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
-              ${p.platform === "psn" ? "PSN" : "UBISOFT"}
-            </button>`
-          : `<div class="operator-tag">${p.platform}</div>`
+        p.bestMMR
+          ? `<div style="color:${p.bestRankColor}">
+               🏆 ${p.bestRank} • ${p.bestMMR}
+             </div>`
+          : ""
       }
+
+      <div>KD: ${p.kd || "0.00"}</div>
     </div>
-
-    <!-- 🔥 CURRENT RANK -->
-    <div class="rank" style="color:${rank.color}">
-      ${rank.name} • ${p.mmr || 0} MMR
-    </div>
-
-    <!-- 🔥 PEAK RANK (JETZT RICHTIG) -->
- 
- ${
-  p.bestRank && p.bestMMR
-    ? `
-    <div class="peak-rank" style="color:${p.bestRankColor}">
-      🏆 ${p.bestRank} • ${p.bestMMR}
-    </div>
-  `
-    : ""
-}
-   
-    <div class="kd-value" style="color:${getKDColor(p.kd)}">
-      ${p.kd || "0.00"} KD
-    </div>
-
-    <div class="section-title">COMBAT</div>
-
-    <div class="stats-grid">
-      <div class="stat-box">
-        <div class="stat-label">WINRATE</div>
-        <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">KILLS</div>
-        <div class="stat-value">${p.kills ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">DEATHS</div>
-        <div class="stat-value">${p.deaths ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">WINS</div>
-        <div class="stat-value">${p.wins ?? "-"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">LOSSES</div>
-        <div class="stat-value">${p.losses ?? "-"}</div>
-      </div>
-    </div>
-
-  </div>
   `;
 }
 
-/* LOAD (QUEUE SYSTEM) */
+/* LOAD */
 async function loadStats() {
-  if (isLoading) {
-    reloadQueued = true;
-    return;
-  }
-
-  isLoading = true;
-
   const el = document.getElementById("players");
   el.innerHTML = "Loading...";
 
   const results = [];
 
   for (const p of players) {
-    const data = await fetchPlayer(p);
-    results.push(data);
+    results.push(await fetchPlayer(p));
   }
 
-  el.innerHTML = results
-    .map((p, i) =>
-      render(
-        p,
-        i,
-        i === 0 ? "operator-glow-blue" :
-        i === 1 ? "operator-glow-orange" : ""
-      )
-    )
-    .join("");
-
-  isLoading = false;
-
-  if (reloadQueued) {
-    reloadQueued = false;
-    loadStats();
-  }
+  el.innerHTML = results.map(render).join("");
 }
 
 loadStats();
 </script>
 
 </body>
-
-
-
-<a href="/" class="home-btn">
-  <span>HOME</span>
-</a>
-    
 </html>
