@@ -116,17 +116,29 @@ function togglePlatform(index) {
 function getRankFromMMR(mmr) {
   if (!mmr) return { name: "UNRANKED", color: "#777" };
 
-  if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0000" };
-  if (mmr >= 4500) return { name: "DIAMOND", color: "#00e5ff" };
-  if (mmr >= 4000) return { name: "EMERALD", color: "#00ff88" };
-  if (mmr >= 3500) return { name: "PLATINUM", color: "#4fc3f7" };
-  if (mmr >= 3000) return { name: "GOLD", color: "#ffd700" };
-  if (mmr >= 2500) return { name: "SILVER", color: "#c0c0c0" };
-  if (mmr >= 2000) return { name: "BRONZE", color: "#a97142" };
+  const tiers = [
+    { name: "COPPER", color: "#a52019" },
+    { name: "BRONZE", color: "#a97142" },
+    { name: "SILVER", color: "#c0c0c0" },
+    { name: "GOLD", color: "#ffd700" },
+    { name: "PLATINUM", color: "#4fc3f7" },
+    { name: "EMERALD", color: "#00ff88" },
+    { name: "DIAMOND", color: "#00e5ff" },
+    { name: "CHAMPION", color: "#ff0000" }
+  ];
 
-  return { name: "COPPER", color: "#a52019" };
+  // 🔥 WICHTIG: Offset!
+  let tierIndex = Math.floor(mmr / 500) - 2;
+
+  tierIndex = Math.max(0, Math.min(tierIndex, tiers.length - 1));
+
+  const division = 5 - Math.floor((mmr % 500) / 100);
+
+  return {
+    name: `${tiers[tierIndex].name} ${division}`,
+    color: tiers[tierIndex].color
+  };
 }
-
 /* HELPERS */
 function getKDColor(kd) {
   if (!kd) return "#aaa";
