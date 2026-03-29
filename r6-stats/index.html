@@ -116,25 +116,15 @@ function togglePlatform(index) {
 function getRankFromMMR(mmr) {
   if (!mmr) return { name: "UNRANKED", color: "#777" };
 
-  const tiers = [
-    { name: "COPPER", color: "#a52019" },
-    { name: "BRONZE", color: "#a97142" },
-    { name: "SILVER", color: "#c0c0c0" },
-    { name: "GOLD", color: "#ffd700" },
-    { name: "PLATINUM", color: "#4fc3f7" },
-    { name: "EMERALD", color: "#00ff88" },
-    { name: "DIAMOND", color: "#00e5ff" }
-  ];
+  if (mmr >= 5000) return { name: "CHAMPION", color: "#ff0000" };
+  if (mmr >= 4500) return { name: "DIAMOND", color: "#00e5ff" };
+  if (mmr >= 4000) return { name: "EMERALD", color: "#00ff88" };
+  if (mmr >= 3500) return { name: "PLATINUM", color: "#4fc3f7" };
+  if (mmr >= 3000) return { name: "GOLD", color: "#ffd700" };
+  if (mmr >= 2500) return { name: "SILVER", color: "#c0c0c0" };
+  if (mmr >= 2000) return { name: "BRONZE", color: "#a97142" };
 
-  let i = Math.floor(mmr / 500) - 2;
-  i = Math.max(0, Math.min(i, tiers.length - 1));
-
-  const div = 5 - Math.floor((mmr % 500) / 100);
-
-  return {
-    name: `${tiers[i].name} ${div}`,
-    color: tiers[i].color
-  };
+  return { name: "COPPER", color: "#a52019" };
 }
 
 /* HELPERS */
@@ -239,11 +229,11 @@ function render(p, index, glowClass) {
 
     <!-- 🔥 PEAK RANK (JETZT RICHTIG) -->
  
- ${
-  p.bestRank && p.bestMMR
+${
+  p.bestMMR
     ? `
     <div class="peak-rank" style="color:${p.bestRankColor}">
-      🏆 ${p.bestRank} • ${p.bestMMR}
+       ${p.bestRank} • ${p.bestMMR}
     </div>
   `
     : ""
