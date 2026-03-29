@@ -173,8 +173,7 @@ async function fetchPlayer(p) {
     }
 
     const data = await res.json();
-   console.log("FULL DATA:", JSON.stringify(data, null, 2));
-
+console.log("RANKED:", JSON.stringify(data.ranked, null, 2));
     if (!data || data.error) {
       return {
         username: p.names[p.platform],
@@ -194,10 +193,25 @@ async function fetchPlayer(p) {
 return {
   ...modeData,
 
-  // 🔥 PEAK RANK FIX
-  bestRank: data.ranked?.maxRank,
-  bestMMR: data.ranked?.maxRankPoints,
-  bestRankColor: getRankFromMMR(data.ranked?.maxRankPoints).color,
+  // 🔥 QUICK FIX (ALLE FELDER ABGEDECKT)
+  bestMMR: data.ranked?.maxRankPoints 
+        || data.ranked?.max_mmr 
+        || data.ranked?.peak_mmr 
+        || data.ranked?.seasonMaxMmr,
+
+  bestRank: getRankFromMMR(
+    data.ranked?.maxRankPoints 
+    || data.ranked?.max_mmr 
+    || data.ranked?.peak_mmr 
+    || data.ranked?.seasonMaxMmr
+  ).name,
+
+  bestRankColor: getRankFromMMR(
+    data.ranked?.maxRankPoints 
+    || data.ranked?.max_mmr 
+    || data.ranked?.peak_mmr 
+    || data.ranked?.seasonMaxMmr
+  ).color,
 
   platform: p.platform,
   user: p.user
