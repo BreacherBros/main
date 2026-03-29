@@ -217,6 +217,7 @@ function render(p, index, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
 
   const rank = getRankFromMMR(p.mmr);
+  const peak = getRankFromMMR(p.bestMMR);
 
   return `
   <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
@@ -246,8 +247,8 @@ function render(p, index, glowClass) {
 ${
   p.bestMMR
     ? `
-    <div class="peak-rank" style="color:${p.bestRankColor}">
-       ${p.bestRank} • ${p.bestMMR}
+    <div class="peak-rank" style="color:${peak.color}">
+       ${peak.name} • ${p.bestMMR}
     </div>
   `
     : ""
