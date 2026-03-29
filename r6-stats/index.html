@@ -1,9 +1,16 @@
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+
 const API = "https://r6-api-backend.onrender.com/api/stats";
+
+// ✅ DOM FIX (kein weißer Screen mehr)
+const rankedBtn = document.getElementById("rankedBtn");
+const casualBtn = document.getElementById("casualBtn");
+const playerInput = document.getElementById("playerInput");
+const platformSelect = document.getElementById("platformSelect");
 
 let currentMode = "ranked";
 let isLoading = false;
-let reloadQueued = false;
 
 let players = [
   {
@@ -38,7 +45,7 @@ function setActive(id) {
 }
 
 /* ADD PLAYER */
-function searchPlayer() {
+window.searchPlayer = function () {
   const name = playerInput.value.trim();
   const platform = platformSelect.value;
 
@@ -52,17 +59,7 @@ function searchPlayer() {
 
   playerInput.value = "";
   loadStats();
-}
-
-/* PLATFORM SWITCH */
-function togglePlatform(index) {
-  if (index > 1) return;
-
-  const p = players[index];
-  p.platform = p.platform === "psn" ? "uplay" : "psn";
-
-  loadStats();
-}
+};
 
 /* RANK SYSTEM */
 function getRankFromMMR(mmr) {
@@ -105,11 +102,9 @@ function getWinrate(w, l) {
   return ((w / (w + l)) * 100).toFixed(1);
 }
 
-/* 🔥 PEAK AUS HISTORY */
+/* 🔥 PEAK BERECHNEN */
 function getPeakFromHistory(history) {
-  if (!history || !history.data || history.data.length === 0) {
-    return null;
-  }
+  if (!history || !history.data) return null;
 
   let peak = history.data[0][1];
 
@@ -122,8 +117,7 @@ function getPeakFromHistory(history) {
   return {
     mmr: peak.value,
     rank: peak.metadata.rank,
-    color: peak.metadata.color,
-    img: peak.metadata.imageUrl
+    color: peak.metadata.color
   };
 }
 
@@ -132,18 +126,15 @@ async function fetchPlayer(p) {
   try {
     const name = p.names[p.platform];
 
-    // 🔹 MAIN STATS API
+    // 🔹 MAIN API
     const res = await fetch(
       `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${p.platform}`
     );
-
     const data = await res.json();
 
-    if (!data || data.error) {
-      return null;
-    }
+    if (!data || data.error) return null;
 
-    // 🔹 R6DATA HISTORY (PEAK)
+    // 🔹 HISTORY (OPTIONAL)
     let peak = null;
 
     try {
@@ -153,7 +144,7 @@ async function fetchPlayer(p) {
       const historyJson = await historyRes.json();
       peak = getPeakFromHistory(historyJson.data?.history);
     } catch (e) {
-      console.warn("No history data");
+      console.warn("No history available");
     }
 
     const modeData = currentMode === "ranked" ? data.ranked : data.casual;
@@ -161,11 +152,10 @@ async function fetchPlayer(p) {
     return {
       ...modeData,
 
-      // 🔥 ECHTER PEAK
-      bestMMR: peak?.mmr,
-      bestRank: peak?.rank,
-      bestRankColor: peak?.color,
-      bestRankImg: peak?.img,
+      // 🔥 PEAK (fallback = aktueller Rank)
+      bestMMR: peak?.mmr || modeData.mmr,
+      bestRank: peak?.rank || getRankFromMMR(modeData.mmr).name,
+      bestRankColor: peak?.color || getRankFromMMR(modeData.mmr).color,
 
       platform: p.platform,
       user: p.user
@@ -178,35 +168,26 @@ async function fetchPlayer(p) {
 }
 
 /* RENDER */
-function render(p, index, glowClass) {
+function render(p) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
 
   const rank = getRankFromMMR(p.mmr);
 
   return `
-  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
-       style="--rank-color:${rank.color}">
+  <div class="operator-card" style="--rank-color:${rank.color}">
 
-    <div class="operator-header">
-      <div class="operator-name">${p.username || "UNKNOWN"}</div>
-    </div>
+    <div class="operator-name">${p.username}</div>
 
     <div class="rank" style="color:${rank.color}">
-      ${rank.name} • ${p.mmr || 0} MMR
+      ${rank.name} • ${p.mmr}
     </div>
 
-    ${
-      p.bestMMR
-        ? `
-        <div class="peak-rank" style="color:${p.bestRankColor}">
-          🏆 ${p.bestRank} • ${p.bestMMR}
-        </div>
-      `
-        : ""
-    }
+    <div class="peak-rank" style="color:${p.bestRankColor}">
+      🏆 ${p.bestRank} • ${p.bestMMR}
+    </div>
 
     <div class="kd-value" style="color:${getKDColor(p.kd)}">
-      ${p.kd || "0.00"} KD
+      ${p.kd} KD
     </div>
 
   </div>
@@ -227,12 +208,12 @@ async function loadStats() {
     results.push(await fetchPlayer(p));
   }
 
-  el.innerHTML = results.map((p, i) =>
-    render(p, i, i === 0 ? "operator-glow-blue" : i === 1 ? "operator-glow-orange" : "")
-  ).join("");
+  el.innerHTML = results.map(render).join("");
 
   isLoading = false;
 }
 
 loadStats();
+
+});
 </script>
