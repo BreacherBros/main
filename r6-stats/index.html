@@ -159,12 +159,6 @@ function getWinrate(w, l) {
   return ((Number(w) / total) * 100).toFixed(1);
 }
 
-function getDeltaSymbol(v) {
-  if (v > 0) return "▲";
-  if (v < 0) return "▼";
-  return "•";
-}
-
 function safeText(v, fallback = "-") {
   if (v === null || v === undefined || v === "") return fallback;
   return v;
@@ -191,6 +185,7 @@ async function fetchPlayer(p) {
 
     const data = await res.json();
     console.log("FULL API:", data);
+    console.log("PEAK CHECK:", data.ranked?.bestRank, data.ranked?.bestMMR);
 
     if (!data || data.error) {
       return {
@@ -207,19 +202,13 @@ async function fetchPlayer(p) {
         deathsPerMatch: "0.00",
         abandonRate: "0.0",
         mmr: 0,
-        mmrChange: 0,
-        form: "—",
-        last10: { kd: "0.00", winrate: "0" },
-        seasonal: null,
         platform: p.platform,
         user: p.user
       };
     }
 
-    const source = currentMode === "ranked" ? data.ranked : data.casual;
-
     return {
-      ...source,
+      ...(currentMode === "ranked" ? data.ranked : data.casual),
       platform: p.platform,
       user: p.user
     };
@@ -241,14 +230,6 @@ function render(p, index, glowClass) {
   const killsPerMatch = p.killsPerMatch ?? "0.00";
   const deathsPerMatch = p.deathsPerMatch ?? "0.00";
   const abandonRate = p.abandonRate ?? "0.0";
-  const mmrChange = Number(p.mmrChange ?? 0);
-  const last10 = p.last10 || { kd: "0.00", winrate: "0" };
-  const form = typeof p.form === "string" && p.form.length ? p.form : "—";
-  const seasonal = p.seasonal || null;
-
-  const formHtml = form && form !== "—"
-    ? form.split("").map(ch => `<span class="form-chip ${ch === "W" ? "win" : "loss"}">${ch}</span>`).join("")
-    : `<span class="form-empty">—</span>`;
 
   return `
   <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
@@ -278,112 +259,57 @@ function render(p, index, glowClass) {
 
     <div class="section-title">COMBAT</div>
 
-    <div class="stats-grid">
-      <div class="stat-box">
+    <div class="stats-table">
+      <div class="stat-row">
         <div class="stat-label">WINRATE</div>
         <div class="stat-value">${winrate}%</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">MATCHES</div>
         <div class="stat-value">${matches ?? "-"}</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">KILLS</div>
         <div class="stat-value">${p.kills ?? "-"}</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">DEATHS</div>
         <div class="stat-value">${p.deaths ?? "-"}</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">WINS</div>
         <div class="stat-value">${p.wins ?? "-"}</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">LOSSES</div>
         <div class="stat-value">${p.losses ?? "-"}</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">WL RATIO</div>
         <div class="stat-value">${wlRatio}</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">KILLS / MATCH</div>
         <div class="stat-value">${killsPerMatch}</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">DEATHS / MATCH</div>
         <div class="stat-value">${deathsPerMatch}</div>
       </div>
 
-      <div class="stat-box">
+      <div class="stat-row">
         <div class="stat-label">ABANDON RATE</div>
         <div class="stat-value">${abandonRate}%</div>
       </div>
     </div>
-
-    <div class="section-title">FORM</div>
-
-    <div class="stats-grid stats-grid-small">
-      <div class="stat-box">
-        <div class="stat-label">MMR CHANGE</div>
-        <div class="stat-value ${mmrChange > 0 ? "positive" : mmrChange < 0 ? "negative" : ""}">
-          ${getDeltaSymbol(mmrChange)} ${mmrChange}
-        </div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">LAST 10 KD</div>
-        <div class="stat-value">${last10.kd ?? "0.00"}</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-label">LAST 10 WR</div>
-        <div class="stat-value">${last10.winrate ?? "0"}%</div>
-      </div>
-    </div>
-
-    <div class="form-row">
-      ${formHtml}
-    </div>
-
-    ${
-      seasonal
-        ? `
-        <div class="section-title">SEASONAL</div>
-        <div class="stats-grid stats-grid-small">
-          <div class="stat-box">
-            <div class="stat-label">S KILLS</div>
-            <div class="stat-value">${seasonal.kills ?? "-"}</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">S DEATHS</div>
-            <div class="stat-value">${seasonal.deaths ?? "-"}</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">S WINS</div>
-            <div class="stat-value">${seasonal.wins ?? "-"}</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">S LOSSES</div>
-            <div class="stat-value">${seasonal.losses ?? "-"}</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">S RP</div>
-            <div class="stat-value">${seasonal.rankPoints ?? "-"}</div>
-          </div>
-        </div>
-      `
-        : ""
-    }
 
   </div>
   `;
@@ -435,5 +361,4 @@ loadStats();
 <a href="/" class="home-btn">
   <span>HOME</span>
 </a>
-
 </html>
