@@ -11,7 +11,6 @@
 
 <body>
 
-
 <div id="smoke-bg">
   <div class="fog-layer"></div>
   <div class="energy-layer"></div>
@@ -127,10 +126,12 @@ function getRankFromMMR(mmr) {
     { name: "CHAMPION", color: "#ff0000" }
   ];
 
-  // 🔥 FIX: kein -2 mehr
   let tierIndex = Math.floor((mmr - 1000) / 500);
-
   tierIndex = Math.max(0, Math.min(tierIndex, tiers.length - 1));
+
+  if (mmr >= 5000) {
+    return { name: "CHAMPION", color: "#ff0000" };
+  }
 
   const division = 5 - Math.floor(((mmr - 1000) % 500) / 100);
 
@@ -140,7 +141,6 @@ function getRankFromMMR(mmr) {
   };
 }
 
-  
 /* HELPERS */
 function getKDColor(kd) {
   if (!kd) return "#aaa";
@@ -154,7 +154,20 @@ function getKDColor(kd) {
 
 function getWinrate(w, l) {
   if (w == null || l == null) return "-";
-  return ((w / (w + l)) * 100).toFixed(1);
+  const total = Number(w) + Number(l);
+  if (!total) return "-";
+  return ((Number(w) / total) * 100).toFixed(1);
+}
+
+function getDeltaSymbol(v) {
+  if (v > 0) return "▲";
+  if (v < 0) return "▼";
+  return "•";
+}
+
+function safeText(v, fallback = "-") {
+  if (v === null || v === undefined || v === "") return fallback;
+  return v;
 }
 
 /* FETCH */
@@ -178,46 +191,64 @@ async function fetchPlayer(p) {
 
     const data = await res.json();
     console.log("FULL API:", data);
-console.log("PEAK CHECK:", data.ranked?.bestRank, data.ranked?.bestMMR);
 
     if (!data || data.error) {
       return {
         username: p.names[p.platform],
-        kd: 0,
+        kd: "0.00",
         kills: 0,
         deaths: 0,
         wins: 0,
         losses: 0,
+        matches: 0,
+        winrate: "0.0",
+        wlRatio: "0.00",
+        killsPerMatch: "0.00",
+        deathsPerMatch: "0.00",
+        abandonRate: "0.0",
         mmr: 0,
+        mmrChange: 0,
+        form: "—",
+        last10: { kd: "0.00", winrate: "0" },
+        seasonal: null,
         platform: p.platform,
         user: p.user
       };
     }
 
-return {
-  ...(currentMode === "ranked" ? data.ranked : data.casual),
+    const source = currentMode === "ranked" ? data.ranked : data.casual;
 
-  /* 🔥 PEAK IMMER AUS RANKED */
-  bestRank: data.ranked?.bestRank || null,
-  bestMMR: data.ranked?.bestMMR || null,
-  bestRankColor: data.ranked?.bestRankColor || "#ffd700",
-
-  platform: p.platform,
-  user: p.user
-};
-
+    return {
+      ...source,
+      platform: p.platform,
+      user: p.user
+    };
   } catch (err) {
     console.error("Fetch Fehler:", err);
     return null;
   }
 }
 
-/* RENDER (FIXED FULL STATS) */
+/* RENDER */
 function render(p, index, glowClass) {
   if (!p) return `<div class="operator-card">NO DATA</div>`;
 
   const rank = getRankFromMMR(p.mmr);
-  const peak = getRankFromMMR(p.bestMMR);
+
+  const matches = p.matches ?? ((p.wins ?? 0) + (p.losses ?? 0));
+  const winrate = p.winrate ?? getWinrate(p.wins, p.losses);
+  const wlRatio = p.wlRatio ?? "0.00";
+  const killsPerMatch = p.killsPerMatch ?? "0.00";
+  const deathsPerMatch = p.deathsPerMatch ?? "0.00";
+  const abandonRate = p.abandonRate ?? "0.0";
+  const mmrChange = Number(p.mmrChange ?? 0);
+  const last10 = p.last10 || { kd: "0.00", winrate: "0" };
+  const form = typeof p.form === "string" && p.form.length ? p.form : "—";
+  const seasonal = p.seasonal || null;
+
+  const formHtml = form && form !== "—"
+    ? form.split("").map(ch => `<span class="form-chip ${ch === "W" ? "win" : "loss"}">${ch}</span>`).join("")
+    : `<span class="form-empty">—</span>`;
 
   return `
   <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
@@ -226,36 +257,23 @@ function render(p, index, glowClass) {
     <div class="star-layer"></div>
 
     <div class="operator-header">
-      <div class="operator-name">${p.username || "UNKNOWN"}</div>
+      <div class="operator-name">${safeText(p.username, "UNKNOWN")}</div>
 
       ${
         index <= 1
           ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
               ${p.platform === "psn" ? "PSN" : "UBISOFT"}
             </button>`
-          : `<div class="operator-tag">${p.platform}</div>`
+          : `<div class="operator-tag">${safeText(p.platform, "")}</div>`
       }
     </div>
 
-    <!-- 🔥 CURRENT RANK -->
     <div class="rank" style="color:${rank.color}">
       ${rank.name} • ${p.mmr || 0} MMR
     </div>
 
-    <!-- 🔥 PEAK RANK (JETZT RICHTIG) -->
- 
-${
-  p.bestMMR
-    ? `
-    <div class="peak-rank" style="color:${peak.color}">
-       ${peak.name} • ${p.bestMMR}
-    </div>
-  `
-    : ""
-}
-   
     <div class="kd-value" style="color:${getKDColor(p.kd)}">
-      ${p.kd || "0.00"} KD
+      ${safeText(p.kd, "0.00")} KD
     </div>
 
     <div class="section-title">COMBAT</div>
@@ -263,7 +281,12 @@ ${
     <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-label">WINRATE</div>
-        <div class="stat-value">${getWinrate(p.wins, p.losses)}%</div>
+        <div class="stat-value">${winrate}%</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">MATCHES</div>
+        <div class="stat-value">${matches ?? "-"}</div>
       </div>
 
       <div class="stat-box">
@@ -285,13 +308,88 @@ ${
         <div class="stat-label">LOSSES</div>
         <div class="stat-value">${p.losses ?? "-"}</div>
       </div>
+
+      <div class="stat-box">
+        <div class="stat-label">WL RATIO</div>
+        <div class="stat-value">${wlRatio}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">KILLS / MATCH</div>
+        <div class="stat-value">${killsPerMatch}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">DEATHS / MATCH</div>
+        <div class="stat-value">${deathsPerMatch}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">ABANDON RATE</div>
+        <div class="stat-value">${abandonRate}%</div>
+      </div>
     </div>
+
+    <div class="section-title">FORM</div>
+
+    <div class="stats-grid stats-grid-small">
+      <div class="stat-box">
+        <div class="stat-label">MMR CHANGE</div>
+        <div class="stat-value ${mmrChange > 0 ? "positive" : mmrChange < 0 ? "negative" : ""}">
+          ${getDeltaSymbol(mmrChange)} ${mmrChange}
+        </div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">LAST 10 KD</div>
+        <div class="stat-value">${last10.kd ?? "0.00"}</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-label">LAST 10 WR</div>
+        <div class="stat-value">${last10.winrate ?? "0"}%</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      ${formHtml}
+    </div>
+
+    ${
+      seasonal
+        ? `
+        <div class="section-title">SEASONAL</div>
+        <div class="stats-grid stats-grid-small">
+          <div class="stat-box">
+            <div class="stat-label">S KILLS</div>
+            <div class="stat-value">${seasonal.kills ?? "-"}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">S DEATHS</div>
+            <div class="stat-value">${seasonal.deaths ?? "-"}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">S WINS</div>
+            <div class="stat-value">${seasonal.wins ?? "-"}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">S LOSSES</div>
+            <div class="stat-value">${seasonal.losses ?? "-"}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">S RP</div>
+            <div class="stat-value">${seasonal.rankPoints ?? "-"}</div>
+          </div>
+        </div>
+      `
+        : ""
+    }
 
   </div>
   `;
 }
 
-/* LOAD (QUEUE SYSTEM) */
+/* LOAD */
 async function loadStats() {
   if (isLoading) {
     reloadQueued = true;
@@ -334,10 +432,8 @@ loadStats();
 
 </body>
 
-
-
 <a href="/" class="home-btn">
   <span>HOME</span>
 </a>
-    
+
 </html>
