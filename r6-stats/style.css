@@ -246,3 +246,10 @@ body > *:not(#smoke-bg):not(.home-btn){
   width: 20px;
   height: 20px;
 }
+
+.win {
+  color: #00ff88;
+}
+.loss {
+  color: #ff4d4d;
+}
