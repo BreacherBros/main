@@ -1,412 +1,365 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Rajdhani:wght@500;700&display=swap');
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>R6 Operator Stats</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-/* ============================= */
-/* RESET */
-/* ============================= */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  background: #0e0f11;
-}
+<link rel="stylesheet" href="./style.css">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+</head>
 
-* {
-  box-sizing: border-box;
-  font-family: 'Orbitron', system-ui, sans-serif;
-}
+<body>
 
-body {
-  color: #e5e7eb;
-}
+<div id="smoke-bg">
+  <div class="fog-layer"></div>
+  <div class="energy-layer"></div>
+  <div class="noise-layer"></div>
+  <div class="parallax-layer"></div>
+</div>
 
-/* ============================= */
-/* SMOKE BACKGROUND */
-/* ============================= */
-#smoke-bg{
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  filter: blur(90px);
-  opacity: 0.9;
-  overflow: hidden;
-}
+<header class="hud-header">
+  <h1>R6 OPERATOR STATS</h1>
+  <span class="hud-sub">LIVE COMBAT DATA</span>
+</header>
 
-#smoke-bg::before{
-  content: "";
-  position: absolute;
-  inset: -60%;
-  background:
-    radial-gradient(circle at 20% 30%, rgba(0,220,255,0.7), transparent 45%),
-    radial-gradient(circle at 80% 40%, rgba(0,200,255,0.6), transparent 50%),
-    radial-gradient(circle at 50% 80%, rgba(0,190,255,0.6), transparent 55%);
-  animation: smokeCyan 70s linear infinite;
-}
+<div class="search-box">
+  <input id="playerInput" placeholder="Gamertag eingeben">
+  
+  <select id="platformSelect">
+    <option value="psn">PSN</option>
+    <option value="uplay">UBISOFT</option>
+  </select>
 
-#smoke-bg::after{
-  content: "";
-  position: absolute;
-  inset: -60%;
-  background:
-    radial-gradient(circle at 30% 60%, rgba(255,130,0,0.5), transparent 45%),
-    radial-gradient(circle at 70% 20%, rgba(255,140,0,0.4), transparent 50%),
-    radial-gradient(circle at 60% 80%, rgba(255,120,0,0.35), transparent 55%);
-  animation: smokeOrange 80s linear infinite;
-}
+  <button onclick="searchPlayer()">ADD PLAYER</button>
+</div>
 
-@keyframes smokeCyan{
-  0% { transform: translate(-30%, -30%) rotate(0deg); }
-  50% { transform: translate(30%, 20%) rotate(180deg); }
-  100% { transform: translate(-30%, -30%) rotate(360deg); }
-}
+<div class="mode-switch">
+  <button id="rankedBtn" class="active">RANKED</button>
+  <button id="casualBtn">UNRANKED</button>
+</div>
 
-@keyframes smokeOrange{
-  0% { transform: translate(30%, 30%) rotate(360deg); }
-  50% { transform: translate(-30%, -20%) rotate(180deg); }
-  100% { transform: translate(30%, 30%) rotate(0deg); }
-}
+<main class="hud-dashboard">
+  <div class="operators-grid" id="players"></div>
+</main>
 
-/* ============================= */
-/* LAYER FIX */
-/* ============================= */
-body > *:not(#smoke-bg):not(.home-btn){
-  position: relative;
-  z-index: 2;
-}
+<script>
+const API = "https://r6-api-backend.onrender.com/api/stats";
 
-/* ============================= */
-/* HEADER */
-/* ============================= */
-.hud-header {
-  text-align: center;
-  padding: 30px 16px 10px;
-}
+let currentMode = "ranked";
+let isLoading = false;
+let reloadQueued = false;
 
-.hud-header h1 {
-  margin: 0;
-  font-size: 2rem;
-  letter-spacing: 3px;
-  background: linear-gradient(90deg, #00c8ff, #ff7a00);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
+let players = [
+  {
+    names: { psn: "BB_Pater_Odor", uplay: "BB_Pater_Odor" },
+    platform: "psn",
+    user: false
+  },
+  {
+    names: { psn: "SomaRay_Jr", uplay: "BB_SomaRay" },
+    platform: "psn",
+    user: false
+  }
+];
 
-.hud-sub {
-  display: inline-block;
-  margin-top: 8px;
-  font-family: 'Rajdhani', sans-serif;
-  letter-spacing: 2px;
-  color: rgba(229,231,235,0.7);
-}
-
-/* ============================= */
-/* SEARCH */
-/* ============================= */
-.search-box {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: 10px 20px 20px;
-}
-
-.search-box input,
-.search-box select {
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(8, 10, 16, 0.9);
-  color: #e5e7eb;
-  outline: none;
-  min-width: 220px;
-}
-
-.search-box button,
-.platform-toggle,
-.mode-switch button {
-  border: 0;
-  cursor: pointer;
-}
-
-.search-box button {
-  padding: 14px 18px;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #00c8ff, #ff7a00);
-  color: #0e0f11;
-  font-weight: 800;
-}
-
-/* ============================= */
 /* MODE SWITCH */
-/* ============================= */
-.mode-switch {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 10px 0 0;
+rankedBtn.onclick = () => {
+  currentMode = "ranked";
+  setActive("rankedBtn");
+  loadStats();
+};
+
+casualBtn.onclick = () => {
+  currentMode = "casual";
+  setActive("casualBtn");
+  loadStats();
+};
+
+function setActive(id) {
+  rankedBtn.classList.remove("active");
+  casualBtn.classList.remove("active");
+  document.getElementById(id).classList.add("active");
 }
 
-.mode-switch button {
-  padding: 12px 18px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.06);
-  color: #e5e7eb;
-  border: 1px solid rgba(255,255,255,0.08);
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  letter-spacing: 1px;
+/* ADD PLAYER */
+function searchPlayer() {
+  const name = playerInput.value.trim();
+  const platform = platformSelect.value;
+
+  if (!name) return;
+
+  players.push({
+    names: { psn: name, uplay: name },
+    platform,
+    user: true
+  });
+
+  playerInput.value = "";
+  loadStats();
 }
 
-.mode-switch button.active {
-  background: linear-gradient(90deg, rgba(0,200,255,0.18), rgba(255,122,0,0.18));
-  border-color: rgba(0,229,255,0.35);
-  box-shadow: 0 0 18px rgba(0,229,255,0.12);
+/* PLATFORM SWITCH */
+function togglePlatform(index) {
+  if (index > 1) return;
+
+  const p = players[index];
+  p.platform = p.platform === "psn" ? "uplay" : "psn";
+
+  console.log("SWITCH:", p);
+
+  loadStats();
 }
 
-/* ============================= */
-/* GRID */
-/* ============================= */
-.operators-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
-  gap: 30px;
-  padding: 40px;
-}
+/* RANK SYSTEM */
+function getRankFromMMR(mmr) {
+  if (!mmr) return { name: "UNRANKED", color: "#777" };
 
-/* ============================= */
-/* CARD */
-/* ============================= */
-.operator-card {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(180deg, #070a14, #05060a);
-  border-radius: 20px;
-  padding: 30px;
-  border: 1px solid rgba(255,255,255,0.06);
+  const tiers = [
+    { name: "COPPER", color: "#a52019" },
+    { name: "BRONZE", color: "#a97142" },
+    { name: "SILVER", color: "#c0c0c0" },
+    { name: "GOLD", color: "#ffd700" },
+    { name: "PLATINUM", color: "#4fc3f7" },
+    { name: "EMERALD", color: "#00ff88" },
+    { name: "DIAMOND", color: "#00e5ff" },
+    { name: "CHAMPION", color: "#ff0000" }
+  ];
 
-  box-shadow:
-    0 0 20px rgba(0,0,0,0.8),
-    0 0 40px var(--rank-color);
+  let tierIndex = Math.floor((mmr - 1000) / 500);
+  tierIndex = Math.max(0, Math.min(tierIndex, tiers.length - 1));
 
-  transition: 0.4s;
-}
-
-.operator-card:hover {
-  transform: translateY(-10px) scale(1.03);
-
-  box-shadow:
-    0 0 80px var(--rank-color),
-    0 0 140px var(--rank-color);
-}
-
-.operator-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.operator-name {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: 1px;
-}
-
-.platform-toggle {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  color: #fff;
-  font-size: 12px;
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-}
-
-.operator-tag {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.85);
-  font-size: 12px;
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-}
-
-.rank {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-shadow: 0 0 10px currentColor;
-  margin-top: 6px;
-}
-
-.kd-value {
-  margin-top: 14px;
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-shadow: 0 0 14px currentColor;
-}
-
-.section-title {
-  margin-top: 22px;
-  margin-bottom: 12px;
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: rgba(255,255,255,0.65);
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-}
-
-/* ============================= */
-/* TABLE STYLE STATS */
-/* ============================= */
-.stats-table {
-  display: grid;
-  gap: 8px;
-}
-
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.04);
-}
-
-.stat-row:nth-child(even) {
-  background: rgba(255,255,255,0.05);
-}
-
-.stat-row:nth-child(even) .stat-label,
-.stat-row:nth-child(even) .stat-value {
-  color: rgba(233, 240, 255, 0.88);
-}
-
-.stat-label {
-  font-size: 11px;
-  letter-spacing: 1.5px;
-  color: rgba(255,255,255,0.55);
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  min-width: 120px;
-}
-
-.stat-value {
-  font-size: 16px;
-  font-weight: 800;
-  color: #fff;
-  text-align: right;
-}
-
-.user-card {
-  outline: 1px solid rgba(0,229,255,0.25);
-}
-
-/* ============================= */
-/* HOME BUTTON */
-/* ============================= */
-.home-btn {
-  position: fixed !important;
-  bottom: 30px !important;
-  right: 30px !important;
-
-  z-index: 999999;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 14px 20px;
-
-  font-family: 'Rajdhani', sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-
-  color: #00e5ff;
-  text-decoration: none;
-
-  background: linear-gradient(
-    135deg,
-    rgba(10, 20, 40, 0.9),
-    rgba(0, 10, 25, 0.95)
-  );
-
-  border: 1px solid rgba(0, 229, 255, 0.4);
-  border-radius: 12px;
-
-  backdrop-filter: blur(8px);
-
-  box-shadow:
-    0 0 12px rgba(0, 229, 255, 0.3),
-    inset 0 0 10px rgba(0, 229, 255, 0.15);
-
-  transition: all 0.25s ease;
-  animation: floatBtn 4s ease-in-out infinite;
-
-  white-space: nowrap;
-}
-
-.home-btn:hover {
-  color: #000;
-  background: #00e5ff;
-
-  box-shadow:
-    0 0 20px #00e5ff,
-    0 0 40px rgba(0, 229, 255, 0.5);
-
-  transform: translateY(-4px) scale(1.05);
-}
-
-.home-btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #00e5ff, #ff7a00);
-  opacity: 0.2;
-  filter: blur(10px);
-  z-index: -1;
-}
-
-@keyframes floatBtn {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0px); }
-}
-
-/* ============================= */
-/* MOBILE */
-/* ============================= */
-@media (max-width: 600px) {
-  .operators-grid {
-    padding: 20px;
-    grid-template-columns: 1fr;
+  if (mmr >= 5000) {
+    return { name: "CHAMPION", color: "#ff0000" };
   }
 
-  .home-btn {
-    right: 20px;
-    bottom: 20px;
-  }
+  const division = 5 - Math.floor(((mmr - 1000) % 500) / 100);
 
-  .operator-card {
-    padding: 22px;
-  }
+  return {
+    name: `${tiers[tierIndex].name} ${division}`,
+    color: tiers[tierIndex].color
+  };
+}
 
-  .stat-row {
-    gap: 12px;
-  }
+/* HELPERS */
+function getKDColor(kd) {
+  if (!kd) return "#aaa";
+  kd = parseFloat(kd);
 
-  .stat-label {
-    min-width: 0;
-  }
+  if (kd >= 1.5) return "#00ff88";
+  if (kd >= 1.2) return "#4caf50";
+  if (kd >= 1.0) return "#ff9800";
+  return "#f44336";
+}
 
-  .stat-value {
-    font-size: 15px;
+function getWinrate(w, l) {
+  if (w == null || l == null) return "-";
+  const total = Number(w) + Number(l);
+  if (!total) return "-";
+  return ((Number(w) / total) * 100).toFixed(1);
+}
+
+function safeText(v, fallback = "-") {
+  if (v === null || v === undefined || v === "") return fallback;
+  return v;
+}
+
+/* FETCH */
+async function fetchPlayer(p) {
+  try {
+    await new Promise(r => setTimeout(r, 200));
+
+    const name = p.names[p.platform];
+    const platform = p.platform;
+
+    console.log("REQUEST:", name, platform);
+
+    const res = await fetch(
+      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${platform}`
+    );
+
+    if (!res.ok) {
+      console.error("API ERROR:", res.status);
+      return null;
+    }
+
+    const data = await res.json();
+    console.log("FULL API:", data);
+
+    if (!data || data.error) {
+      return {
+        username: p.names[p.platform],
+        kd: "0.00",
+        kills: 0,
+        deaths: 0,
+        wins: 0,
+        losses: 0,
+        matches: 0,
+        winrate: "0.0",
+        wlRatio: "0.00",
+        killsPerMatch: "0.00",
+        deathsPerMatch: "0.00",
+        abandonRate: "0.0",
+        mmr: 0,
+        platform: p.platform,
+        user: p.user
+      };
+    }
+
+    const source = currentMode === "ranked" ? data.ranked : data.casual;
+
+    return {
+      ...source,
+      platform: p.platform,
+      user: p.user
+    };
+  } catch (err) {
+    console.error("Fetch Fehler:", err);
+    return null;
   }
 }
+
+/* RENDER */
+function render(p, index, glowClass) {
+  if (!p) return `<div class="operator-card">NO DATA</div>`;
+
+  const rank = getRankFromMMR(p.mmr);
+
+  const matches = p.matches ?? ((p.wins ?? 0) + (p.losses ?? 0));
+  const winrate = p.winrate ?? getWinrate(p.wins, p.losses);
+  const wlRatio = p.wlRatio ?? "0.00";
+  const killsPerMatch = p.killsPerMatch ?? "0.00";
+  const deathsPerMatch = p.deathsPerMatch ?? "0.00";
+  const abandonRate = p.abandonRate ?? "0.0";
+
+  return `
+  <div class="operator-card ${glowClass} ${p.user ? "user-card" : ""}"
+       style="--rank-color:${rank.color}">
+
+    <div class="star-layer"></div>
+
+    <div class="operator-header">
+      <div class="operator-name">${safeText(p.username, "UNKNOWN")}</div>
+
+      ${
+        index <= 1
+          ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
+              ${p.platform === "psn" ? "PSN" : "UBISOFT"}
+            </button>`
+          : `<div class="operator-tag">${safeText(p.platform, "")}</div>`
+      }
+    </div>
+
+    <div class="rank" style="color:${rank.color}">
+      ${rank.name} • ${p.mmr || 0} MMR
+    </div>
+
+    <div class="kd-value" style="color:${getKDColor(p.kd)}">
+      ${safeText(p.kd, "0.00")} KD
+    </div>
+
+    <div class="section-title">COMBAT</div>
+
+    <div class="stats-table">
+      <div class="stat-row">
+        <div class="stat-label">WINRATE</div>
+        <div class="stat-value">${winrate}%</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">MATCHES</div>
+        <div class="stat-value">${matches ?? "-"}</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">KILLS</div>
+        <div class="stat-value">${p.kills ?? "-"}</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">DEATHS</div>
+        <div class="stat-value">${p.deaths ?? "-"}</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">WINS</div>
+        <div class="stat-value">${p.wins ?? "-"}</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">LOSSES</div>
+        <div class="stat-value">${p.losses ?? "-"}</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">WL RATIO</div>
+        <div class="stat-value">${wlRatio}</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">KILLS / MATCH</div>
+        <div class="stat-value">${killsPerMatch}</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">DEATHS / MATCH</div>
+        <div class="stat-value">${deathsPerMatch}</div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-label">ABANDON RATE</div>
+        <div class="stat-value">${abandonRate}%</div>
+      </div>
+    </div>
+
+  </div>
+  `;
+}
+
+/* LOAD */
+async function loadStats() {
+  if (isLoading) {
+    reloadQueued = true;
+    return;
+  }
+
+  isLoading = true;
+
+  const el = document.getElementById("players");
+  el.innerHTML = "Loading...";
+
+  const results = [];
+
+  for (const p of players) {
+    const data = await fetchPlayer(p);
+    results.push(data);
+  }
+
+  el.innerHTML = results
+    .map((p, i) =>
+      render(
+        p,
+        i,
+        i === 0 ? "operator-glow-blue" :
+        i === 1 ? "operator-glow-orange" : ""
+      )
+    )
+    .join("");
+
+  isLoading = false;
+
+  if (reloadQueued) {
+    reloadQueued = false;
+    loadStats();
+  }
+}
+
+loadStats();
+</script>
+
+</body>
+
+<a href="/" class="home-btn">
+  <span>HOME</span>
+</a>
+</html>
