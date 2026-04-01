@@ -40,82 +40,92 @@ body {
 #smoke-bg .parallax-layer {
   content: "";
   position: absolute;
-  inset: -80%;
-  filter: blur(42px);
+  inset: -85%;
+  filter: blur(28px);
   mix-blend-mode: screen;
   pointer-events: none;
 }
 
+/* cyan smoke */
 #smoke-bg::before{
   background:
-    radial-gradient(circle at 15% 20%, rgba(0,229,255,0.95), transparent 16%),
-    radial-gradient(circle at 32% 62%, rgba(0,200,255,0.65), transparent 18%),
-    radial-gradient(circle at 72% 25%, rgba(0,229,255,0.70), transparent 15%),
-    radial-gradient(circle at 85% 58%, rgba(0,180,255,0.50), transparent 20%);
-  animation: smokeCyan 70s linear infinite;
+    radial-gradient(circle at 12% 18%, rgba(0,229,255,0.95), transparent 10%),
+    radial-gradient(circle at 20% 35%, rgba(0,229,255,0.75), transparent 9%),
+    radial-gradient(circle at 32% 22%, rgba(0,180,255,0.55), transparent 11%),
+    radial-gradient(circle at 62% 18%, rgba(0,229,255,0.72), transparent 10%),
+    radial-gradient(circle at 72% 34%, rgba(0,200,255,0.60), transparent 12%),
+    radial-gradient(circle at 85% 22%, rgba(0,229,255,0.52), transparent 10%),
+    radial-gradient(circle at 48% 72%, rgba(0,180,255,0.42), transparent 13%);
+  animation: smokeCyan 78s linear infinite;
 }
 
+/* orange smoke */
 #smoke-bg::after{
   background:
-    radial-gradient(circle at 22% 70%, rgba(255,122,0,0.92), transparent 16%),
-    radial-gradient(circle at 48% 28%, rgba(255,150,0,0.72), transparent 18%),
-    radial-gradient(circle at 68% 75%, rgba(255,100,0,0.60), transparent 20%),
-    radial-gradient(circle at 84% 18%, rgba(255,122,0,0.55), transparent 16%);
-  animation: smokeOrange 85s linear infinite;
+    radial-gradient(circle at 18% 72%, rgba(255,122,0,0.88), transparent 10%),
+    radial-gradient(circle at 30% 58%, rgba(255,150,0,0.68), transparent 9%),
+    radial-gradient(circle at 42% 80%, rgba(255,95,0,0.55), transparent 12%),
+    radial-gradient(circle at 68% 68%, rgba(255,122,0,0.72), transparent 10%),
+    radial-gradient(circle at 78% 50%, rgba(255,150,0,0.60), transparent 9%),
+    radial-gradient(circle at 88% 76%, rgba(255,95,0,0.50), transparent 11%);
+  animation: smokeOrange 88s linear infinite;
 }
 
 #smoke-bg .fog-layer{
   background:
-    radial-gradient(circle at 40% 45%, rgba(255,255,255,0.03), transparent 24%),
-    radial-gradient(circle at 60% 55%, rgba(255,255,255,0.025), transparent 28%);
+    radial-gradient(circle at 34% 44%, rgba(255,255,255,0.035), transparent 18%),
+    radial-gradient(circle at 46% 54%, rgba(255,255,255,0.028), transparent 22%),
+    radial-gradient(circle at 58% 38%, rgba(255,255,255,0.02), transparent 20%),
+    radial-gradient(circle at 67% 66%, rgba(255,255,255,0.018), transparent 24%);
   animation: smokeFog 120s linear infinite;
 }
 
 #smoke-bg .energy-layer{
   background:
-    radial-gradient(circle at 10% 90%, rgba(0,229,255,0.25), transparent 18%),
-    radial-gradient(circle at 90% 90%, rgba(255,122,0,0.22), transparent 18%);
+    radial-gradient(circle at 8% 92%, rgba(0,229,255,0.18), transparent 10%),
+    radial-gradient(circle at 92% 90%, rgba(255,122,0,0.18), transparent 10%),
+    radial-gradient(circle at 52% 88%, rgba(0,229,255,0.10), transparent 12%);
   animation: smokeEnergy 95s linear infinite;
 }
 
 #smoke-bg .noise-layer{
   background:
-    radial-gradient(circle at 25% 30%, rgba(0,0,0,0.5), transparent 12%),
-    radial-gradient(circle at 70% 40%, rgba(0,0,0,0.45), transparent 10%),
-    radial-gradient(circle at 50% 80%, rgba(0,0,0,0.35), transparent 14%);
-  opacity: 0.8;
+    radial-gradient(circle at 25% 30%, rgba(0,0,0,0.45), transparent 8%),
+    radial-gradient(circle at 70% 40%, rgba(0,0,0,0.40), transparent 7%),
+    radial-gradient(circle at 50% 80%, rgba(0,0,0,0.35), transparent 9%);
+  opacity: 0.85;
   animation: smokeNoise 60s linear infinite;
 }
 
 #smoke-bg .parallax-layer{
   background:
-    radial-gradient(circle at 20% 15%, rgba(0,229,255,0.12), transparent 12%),
-    radial-gradient(circle at 80% 25%, rgba(255,122,0,0.10), transparent 14%),
-    radial-gradient(circle at 55% 75%, rgba(0,229,255,0.08), transparent 16%);
+    radial-gradient(circle at 16% 16%, rgba(0,229,255,0.08), transparent 8%),
+    radial-gradient(circle at 82% 24%, rgba(255,122,0,0.08), transparent 9%),
+    radial-gradient(circle at 58% 76%, rgba(0,229,255,0.06), transparent 11%);
   animation: smokeParallax 140s linear infinite;
 }
 
 @keyframes smokeCyan{
-  0% { transform: translate(-10%, -10%) scale(1) rotate(0deg); }
-  50% { transform: translate(10%, 8%) scale(1.08) rotate(180deg); }
-  100% { transform: translate(-10%, -10%) scale(1) rotate(360deg); }
+  0% { transform: translate(-6%, -6%) scale(1) rotate(0deg); }
+  50% { transform: translate(8%, 6%) scale(1.04) rotate(180deg); }
+  100% { transform: translate(-6%, -6%) scale(1) rotate(360deg); }
 }
 
 @keyframes smokeOrange{
-  0% { transform: translate(12%, 10%) scale(1) rotate(360deg); }
-  50% { transform: translate(-10%, -8%) scale(1.06) rotate(180deg); }
-  100% { transform: translate(12%, 10%) scale(1) rotate(0deg); }
+  0% { transform: translate(8%, 7%) scale(1) rotate(360deg); }
+  50% { transform: translate(-7%, -5%) scale(1.05) rotate(180deg); }
+  100% { transform: translate(8%, 7%) scale(1) rotate(0deg); }
 }
 
 @keyframes smokeFog{
   0% { transform: translate(0%, 0%) scale(1.02); }
-  50% { transform: translate(3%, -2%) scale(1.06); }
+  50% { transform: translate(2%, -1%) scale(1.05); }
   100% { transform: translate(0%, 0%) scale(1.02); }
 }
 
 @keyframes smokeEnergy{
   0% { transform: translate(0%, 0%) scale(1); }
-  50% { transform: translate(-2%, 2%) scale(1.03); }
+  50% { transform: translate(-1%, 1%) scale(1.02); }
   100% { transform: translate(0%, 0%) scale(1); }
 }
 
@@ -127,7 +137,7 @@ body {
 
 @keyframes smokeParallax{
   0% { transform: translate(0%, 0%) rotate(0deg); }
-  50% { transform: translate(-2%, 1%) rotate(180deg); }
+  50% { transform: translate(-1%, 1%) rotate(180deg); }
   100% { transform: translate(0%, 0%) rotate(360deg); }
 }
 
@@ -250,7 +260,11 @@ body > *:not(#smoke-bg):not(.home-btn){
 .operator-card {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(4,4,6,0.99), rgba(1,1,2,0.99));
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 14% 12%, color-mix(in srgb, var(--rank-color) 24%, transparent), transparent 42%),
+    radial-gradient(circle at 82% 82%, color-mix(in srgb, var(--rank-color) 15%, transparent), transparent 48%),
+    linear-gradient(180deg, rgba(4,4,6,0.99), rgba(1,1,2,0.99));
   border-radius: 16px;
   padding: 16px 16px 14px;
   border: 1px solid rgba(255,255,255,0.06);
@@ -258,16 +272,44 @@ body > *:not(#smoke-bg):not(.home-btn){
   box-shadow:
     0 0 16px rgba(0,0,0,0.9),
     0 0 22px var(--rank-color),
-    0 0 36px color-mix(in srgb, var(--rank-color) 45%, transparent);
+    0 0 42px color-mix(in srgb, var(--rank-color) 45%, transparent);
 
   transition: 0.25s ease;
+}
+
+.operator-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 18%, color-mix(in srgb, var(--rank-color) 28%, transparent), transparent 36%),
+    radial-gradient(circle at 78% 76%, color-mix(in srgb, var(--rank-color) 20%, transparent), transparent 42%);
+  opacity: 0.95;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.operator-card::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--rank-color) 18%, transparent), transparent 62%);
+  filter: blur(24px);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .operator-card:hover {
   transform: translateY(-4px);
   box-shadow:
     0 0 22px var(--rank-color),
-    0 0 44px color-mix(in srgb, var(--rank-color) 65%, transparent);
+    0 0 48px color-mix(in srgb, var(--rank-color) 60%, transparent);
+}
+
+.operator-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .operator-header {
