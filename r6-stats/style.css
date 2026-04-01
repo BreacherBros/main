@@ -312,13 +312,6 @@ body > *:not(#smoke-bg):not(.home-btn){
 }
 
 /* ============================= */
-/* OPTIONAL VISUAL CLASSES */
-/* ============================= */
-.user-card {
-  outline: 1px solid rgba(0,229,255,0.25);
-}
-
-/* ============================= */
 /* HOME BUTTON */
 /* ============================= */
 .home-btn {
