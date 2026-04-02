@@ -53,12 +53,12 @@ let reloadQueued = false;
 let players = [
   {
     names: { psn: "BB_Pater_Odor", uplay: "BB_Pater_Odor" },
-    platm: "psn",
+    platform: "psn",
     user: false
   },
   {
     names: { psn: "SomaRay_Jr", uplay: "BB_SomaRay" },
-    platm: "psn",
+    platform: "psn",
     user: false
   }
 ];
@@ -85,13 +85,13 @@ function setActive(id) {
 /* ADD PLAYER */
 function searchPlayer() {
   const name = playerInput.value.trim();
-  const platm = platmSelect.value;
+  const platform = platformSelect.value;
 
   if (!name) return;
 
   players.push({
     names: { psn: name, uplay: name },
-    platm,
+    platform,
     user: true
   });
 
@@ -99,12 +99,12 @@ function searchPlayer() {
   loadStats();
 }
 
-/* PLATM SWITCH */
-function togglePlatm(index) {
+/* PLATFORM SWITCH */
+function togglePlatform(index) {
   if (index > 1) return;
 
   const p = players[index];
-  p.platm = p.platm === "psn" ? "uplay" : "psn";
+  p.platform = p.platform === "psn" ? "uplay" : "psn";
 
   console.log("SWITCH:", p);
 
@@ -169,13 +169,13 @@ async function fetchPlayer(p) {
   try {
     await new Promise(r => setTimeout(r, 200));
 
-    const name = p.names[p.platm];
-    const platm = p.platm;
+    const name = p.names[p.platform];
+    const platform = p.platform;
 
-    console.log("REQUEST:", name, platm);
+    console.log("REQUEST:", name, platform);
 
     const res = await fetch(
-      `${API}?nameOnPlatm=${encodeURIComponent(name)}&platmType=${platm}`
+      `${API}?nameOnPlatform=${encodeURIComponent(name)}&platformType=${platform}`
     );
 
     if (!res.ok) {
@@ -188,7 +188,7 @@ async function fetchPlayer(p) {
 
     if (!data || data.error) {
       return {
-        username: p.names[p.platm],
+        username: p.names[p.platform],
         kd: "0.00",
         kills: 0,
         deaths: 0,
@@ -201,7 +201,7 @@ async function fetchPlayer(p) {
         deathsPerMatch: "0.00",
         abandonRate: "0.0",
         mmr: 0,
-        platm: p.platm,
+        platform: p.platform,
         user: p.user
       };
     }
@@ -210,7 +210,7 @@ async function fetchPlayer(p) {
 
     return {
       ...source,
-      platm: p.platm,
+      platform: p.platform,
       user: p.user
     };
   } catch (err) {
@@ -243,10 +243,10 @@ function render(p, index, glowClass) {
 
       ${
         index <= 1
-          ? `<button class="platm-toggle" onclick="togglePlatm(${index})">
-              ${p.platm === "psn" ? "PSN" : "UBISOFT"}
+          ? `<button class="platform-toggle" onclick="togglePlatform(${index})">
+              ${p.platform === "psn" ? "PSN" : "UBISOFT"}
             </button>`
-          : `<div class="operator-tag">${safeText(p.platm, "")}</div>`
+          : `<div class="operator-tag">${safeText(p.platform, "")}</div>`
       }
     </div>
 
@@ -330,29 +330,21 @@ async function loadStats() {
 
   const results = [];
 
-  /*hier 1.änderung*/
+  for (const p of players) {
+    const data = await fetchPlayer(p);
+    results.push(data);
+  }
 
-const results = await Promise.all(players.map(p => fetchPlayer(p)));
-
-    /*hier 2.änderung*/
-  
-const fragment = document.createDocumentFragment();
-
-results.forEach((p, i) => {
-  const wrapper = document.createElement("div");
-
-  wrapper.innerHTML = render(
-    p,
-    i,
-    i === 0 ? "operator-glow-blue" :
-    i === 1 ? "operator-glow-orange" : ""
-  );
-
-  fragment.appendChild(wrapper.firstElementChild);
-});
-
-el.innerHTML = "";
-el.appendChild(fragment);
+  el.innerHTML = results
+    .map((p, i) =>
+      render(
+        p,
+        i,
+        i === 0 ? "operator-glow-blue" :
+        i === 1 ? "operator-glow-orange" : ""
+      )
+    )
+    .join("");
 
   isLoading = false;
 
